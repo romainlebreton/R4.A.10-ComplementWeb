@@ -1,0 +1,14 @@
+baseurl: /R.4.A.10-ComplementWeb
+permalink: /:categories/:title
+
+markdown: kramdown
+
+kramdown:
+  input: GFM
+  parse_block_html: true
+  hard_wrap: false
+  syntax_highlighter: disable
+  syntax_highlighter_opts:
+    disable : true
+
+livereload: true
