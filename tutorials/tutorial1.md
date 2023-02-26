@@ -138,12 +138,17 @@ Commençons donc par remplacer notre *autoloader* `Psr4AutoloaderClass.php` par 
       }
    }
    ```
-   Ce contenu 
 2. Si vous modifiez le fichier `composer.json`, par exemple pour mettre à jour
    vos dépendances, vous devez exécuter la commande :
    ```bash
    composer update
    ```
+2. Quand on installe une application ou un nouveau composant, `composer` place
+   les librairies téléchargées dans un dossier `vendor`. Il n'est pas nécessaire
+   de versionner ce dossier souvent volumineux.  
+   **Rajoutez** donc une ligne `/vendor/` à votre `.gitignore`. **Dites** aussi
+   à *Git* d'ignorer son fichier de configuration interne `/composer.lock`.
+
 3. Modifiez le fichier `web/controleurFrontal.php` comme suit :
 
    ```diff
@@ -261,11 +266,6 @@ classes liées aux réponses HTTP : `Response`, `RedirectResponse` pour les redi
    composer require symfony/http-foundation
    ```
 
-2. Quand on installe une application ou un nouveau composant, `composer` place
-   les librairies téléchargées dans un dossier `vendor`. Il n'est pas nécessaire
-   de versionner ce dossier souvent volumineux.  
-   **Rajoutez** donc une ligne `vendor/` à votre `.gitignore`. 
-
 </div>
 
 Dans un premier temps, notre site va utiliser des URL comme 
@@ -283,6 +283,8 @@ chemin qui nous intéresse (`/`, `/connexion` ou `/inscription`).
 1. Dans `RouteurURL::traiterRequete()`, initialisez l'instance suivante de la
    classe `Requete`
    ```php
+   use Symfony\Component\HttpFoundation\Request;
+
    $requete = Request::createFromGlobals();
    ```
    **Explication :** La méthode `createFromGlobals()` récupère les informations de la requête depuis les variables globales `$_GET`, `$_POST`, ... Elle est à peu près équivalente à  
@@ -317,6 +319,9 @@ Comme l'indique sa
    `RouteurURL::traiterRequete()` : 
 
    ```php
+   use Symfony\Component\Routing\Route;
+   use Symfony\Component\Routing\RouteCollection;
+
    $routes = new RouteCollection();
 
    // Route feed
@@ -333,6 +338,8 @@ Comme l'indique sa
    `POST`, *query string*, paramètres *POST*, ...) sont extraites dans un objet
    séparé : 
    ```php
+   use Symfony\Component\Routing\RequestContext;
+
    $contexteRequete = (new RequestContext())->fromRequest($requete);
    ```
    **Ajoutez** cette ligne et affichez temporairement son contenu.
@@ -340,6 +347,8 @@ Comme l'indique sa
 4. Nous pouvons alors rechercher quelle route correspond au chemin de la requête
    courante : 
    ```php
+   use Symfony\Component\Routing\Matcher\UrlMatcher;
+
    $associateurUrl = new UrlMatcher($routes, $contexteRequete);
    $donneesRoute = $associateurUrl->match($requete->getPathInfo());
    ```
@@ -355,7 +364,7 @@ Comme l'indique sa
    préférerons donc.
 
 6. Votre site doit désormais répondre correctement à une requête à l'URL
-   `web/controleurFrontal.php/`.
+   `web/controleurFrontal.php`.
 
 <!-- ??
 
