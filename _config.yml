@@ -1,4 +1,4 @@
-baseurl: /R.4.A.10-ComplementWeb
+baseurl: /R4.A.10-ComplementWeb
 permalink: /:categories/:title
 
 markdown: kramdown
