@@ -7,6 +7,14 @@ lang: fr
 
 <!-- 
 
+TODO : 
+* code de base
+* setfacl -m u:www-data:rwx web/assets/img/utilisateurs
+
+* SQL avec login et message vérolés HTML
+* ? explication .htaccess réécriture d'URL ?
+* supprimer mon mot de passe de connexion à la BD
+
 Fournir script SQL pour mise en place BD
 ACL sur les photos de profil
 
@@ -17,17 +25,6 @@ ESLinter
 composer.json
 "App\\Covoiturage\\" pour produire la chaine "App\Covoiturage\" en JS (cf test node)
 Ce serait différent en PHP ou  "App\\Covoiturage\\" et "App\Covoiturage\\" marcheraient (mais pas "App\Covoiturage\")
-
-Appel de méthode statique avec
-call_user_func("App\Covoiturage\Controleur\ControleurPublication::feed]
-call_user_func(["App\Covoiturage\Controleur\ControleurPublication", "feed"]
-call_user_func([ControleurPublication::class, "feed"]
-call_user_func([new App\Covoiturage\Controleur\ControleurPublication(), "feed"]
-méthode dynamique avec 
-call_user_func([new App\Covoiturage\Controleur\ControleurPublication(), "feed"]
-https://www.php.net/manual/en/function.call-user-func.php
-Syntaxe liée aux `callable`
-https://www.php.net/manual/en/language.types.callable.php
 
 xDebug pour voir ce qui se passe dans le routeur en direct
 *  à l'IUT, avec le PHP builtin webserver
@@ -59,9 +56,6 @@ Regarder les notes sous Joplin (lecture livres)
 
 -->
 
-## But du TD
-
-### Point de départ
 
 Dans les 3 premiers TDs, nous allons développer une API REST en PHP. Afin de
 pouvoir se concentrer sur l'apprentissage des nouvelles notions, nous allons
@@ -83,20 +77,41 @@ L'intérêt de ce site est qu'il ne contient que 2 contrôleurs et un petit nomb
     * traitement (action `connecter`)
   * se déconnecter : action `deconnecter`
 
-### Démarrage
-
-Récupérer le code de base sur GitLab (avec 2 images de profils).
-
-Pour faire marche le site, il faut créer 2 tables SQL : description, fichier (avec 2 comptes et 2 + 1 posts).
-
-De plus, il faut donner les droits en lecture / exécution à Apache (utilisateur `www-data`). Enfin, comme le site enregistre une photo de profil pour chaque utilisateur, il faut donner les droits en écriture sur le dossier `web/assets/img/utilisateurs/`.
-
 
 <div class="exercise">
-   Faites marcher le site. Explorez toutes les pages.
-</div>
 
-## Routes utilisant l'URL
+1. Récupérer le code de base en forkant vous-même [ce dépôt
+   GitLab](https://gitlabinfo.iutmontp.univ-montp2.fr/r4.a.10-complementweb/TD1).
+
+2. Il faut donner les droits en lecture / exécution à Apache (utilisateur
+   `www-data`).
+   ```bash
+   setfacl -R -m u:www-data:r-x .
+   ```
+   
+   Comme le site enregistre une photo de profil pour chaque
+   utilisateur, il faut donner les droits en écriture sur le dossier
+   `web/assets/img/utilisateurs/`.
+   ```bash
+   setfacl -R -m u:www-data:rwx ./web/assets/img/utilisateurs
+   ```
+
+
+4. Importez les tables `utilisateurs` et `publications` dans votre base de
+   données SQL préférée (MySQL, PostgreSQL ou Oracle) depuis [ce
+   fichier]({{site.baseurl}}/assets/TD1/theFeedTD1Depart.sql). 
+   
+   Mettez à jour le fichier de configuration correspondant
+   `src/Configuration/Configurationxxx.php` avec votre identifiant et votre mot
+   de passe. 
+
+5. Créez un nouvel utilisateur et une nouvelle publication.  
+   *Souvenez-vous* bien de votre identifiant et mot de passe car nous nous en
+   resservirons. 
+
+3. Faites marcher le site. Explorez toutes les pages.
+ 
+</div>
 
 Dans l'optique de développer une *API REST*, nous aurons besoin que les URL des
 pages de notre site n'utilisent plus le *query string*.
@@ -111,17 +126,20 @@ web/controleurFrontal.php?controleur=utilisateur&action=afficherFormulaireConnex
 ```
 deviendra `web/connexion`. 
 
-Pour ceci, nous allons utiliser une bibliothèque PHP existante, et donc un gestionnaire de bibliothèques : `Composer`.
+Pour ceci, nous allons utiliser une bibliothèque PHP existante, et donc un
+gestionnaire de bibliothèques : `Composer`.
 
-### Le gestionnaire de paquets `Composer`
+## Le gestionnaire de paquets `Composer`
 
 `Composer` est utilisé dans le cadre du développement d'applications PHP pour
 installer des composants tiers. `Composer` gère un fichier appelé
 `composer.json` qui référence toutes les dépendances de votre application. 
 
-#### Initialisation et *Autoloading* de `Composer`
+### Initialisation et *Autoloading* de `Composer`
 
-`Composer` fournit un *autoloader*, *c.-à-d.* un chargeur automatique de classe, qui satisfait la spécification `PSR-4`. En effet, cet *autoloader* est très pratique pour utiliser les paquets que nous allons installer via `Composer`.
+`Composer` fournit un *autoloader*, *c.-à-d.* un chargeur automatique de classe,
+qui satisfait la spécification `PSR-4`. En effet, cet *autoloader* est très
+pratique pour utiliser les paquets que nous allons installer via `Composer`.
 
 Commençons donc par remplacer notre *autoloader* `Psr4AutoloaderClass.php` par celui de `Composer`.
 
@@ -209,7 +227,7 @@ Nous allons déplacer le code de routage actuel dans une classe séparée, dans 
 
 </div>
 
-### Nouveau routeur par Url
+## Nouveau routeur par Url
 
 
 <div class="exercise">
@@ -239,7 +257,7 @@ Nous allons déplacer le code de routage actuel dans une classe séparée, dans 
 
 Nous allons maintenant coder ce nouveau routeur.
 
-#### Le composant `HttpFoundation`
+### Le composant `HttpFoundation`
 
 Comme le dit sa
 [documentation](https://symfony.com/doc/current/components/http_foundation.html),
@@ -249,6 +267,13 @@ globales (`$_GET`, `$_POST`, `$_FILES`, `$_COOKIE`, `$_SESSION`, ...), et la
 réponse est générée par des fonctions (`echo`, `header()`, `setcookie()`, ...).
 Le composant `HttpFoundation` de `Symfony` remplace ces variables globales et
 fonctions par une couche orientée objet.
+
+Pour information, `Symfony` est l'un des 2 principaux *framework* de
+développement de site Web professionnels en PHP. Dans ce cours, nous nous
+attacherons aux notions derrière `Symfony` plutôt qu'à `Symfony` lui-même.
+Ainsi, vos connaissances vous permettront de vous adapter plus facilement à de
+nouveaux outils, que ce soit `Symfony` ou autre chose... Pour ces raisons, nous
+n'utiliserons que des composants de `Symfony`.
 
 
 Dans notre cas, nous allons tout d'abord utiliser la classe `Request` de
@@ -300,11 +325,13 @@ chemin qui nous intéresse (`/`, `/connexion` ou `/inscription`).
 
 </div>
 
-#### Le composant `Routing`
+### Le composant `Routing`
 
 Comme l'indique sa
 [documentation](https://symfony.com/doc/current/routing.html), le composant
-`Routing` de `Symfony` va permettre de faire l'association entre une URL (par ex. `/` ou `/connexion`) et une action, c'est-à-dire une fonction PHP comme `ControleurPublication::feed`.
+`Routing` de `Symfony` va permettre de faire l'association entre une URL (par
+ex. `/` ou `/connexion`) et une action, c'est-à-dire une fonction PHP comme
+`ControleurPublication::feed`.
 
 
 <div class="exercise">
@@ -366,553 +393,369 @@ Comme l'indique sa
 6. Votre site doit désormais répondre correctement à une requête à l'URL
    `web/controleurFrontal.php`.
 
-<!-- ??
+</div>
 
-$requete = Request::createFromGlobals();
-which is almost equivalent to the more verbose, but also more flexible, __construct() call:
+### Réécriture d'URL
 
- Copy
-$requete = new Request(
-    $_GET,
-    $_POST,
-    [],
-    $_COOKIE,
-    $_FILES,
-    $_SERVER
-);
+Passons à notre deuxième route : `/connexion`.
 
-voir aussi 
-$requete->getPathInfo(); -->
+<div class="exercise">
+
+1. Ajoutez la deuxième route : 
+
+   ```php
+   use TheFeed\Controleur\ControleurUtilisateur;
+
+   // Route afficherFormulaireConnexion
+   $route = new Route("/connexion", [
+      "_controller" => "\TheFeed\Controleur\ControleurUtilisateur::afficherFormulaireConnexion",
+      // Syntaxes équivalentes 
+      // "_controller" => ControleurUtilisateur::class . "::afficherFormulaireConnexion",
+      // "_controller" => [ControleurUtilisateur::class, "afficherFormulaireConnexion"],
+   ]);
+   $routes->add("afficherFormulaireConnexion", $route);
+   ```
+
+   Notez les syntaxes équivalentes : 
+   * l'attribut statique constant `NomDeClasse::class` d'une classe
+   `NomDeClasse` est remplacé par le nom de classe qualifié, c.-à-d. le nom de
+   classe précédé du nom de package.
+   <!-- au moment de la compilation. -->
+   * De manière générale, la valeur associée à `_controller` devra être au
+     format
+     [`callable`](https://www.php.net/manual/en/language.types.callable.php),
+     car c'est ce qui est accepté par `call_user_func()`. Parmi les `callable`,
+     on trouve le format `["NomDeClasseQualifie", "NomMethodeStatique"]` pour
+     les méthodes statiques, ou encore `[$instanceDeLaClasse, "NomMethode"]`
+     pour les méthodes classiques.
+
+1. Testez la page `web/controlerFrontal.php/connexion` qui doit marcher, sauf
+   les liens vers le CSS et les photos qui deviennent invalides. Cherchez
+   pourquoi ces liens se sont cassés.
+
+   **Aide :** Dans le code source de la page Web (`Ctrl+U`), cliquez sur ces
+   liens cassés pour voir sur quel URL ils renvoient.
+
+    <!-- Ce sont des liens relatifs, et la base a changé de  web/ vers web/controlerFrontal.php  -->
 
 </div>
 
+Nous allons régler ce problème en changeant l'URL de nos pages de
+`web/controlerFrontal.php/connexion` vers une URL plus classique
+`web/connexion`. Pour ceci, nous allons configurer *Apache* pour rediriger la
+requête `web/connexion` vers l'URL `web/controlerFrontal.php/connexion`.
+
+<div class="exercise">
+
+1. Enregistrez [ce fichier de configuration d'*Apache* fourni par
+   *Symfony*]({{ site.baseurl }}/assets/TD1/htaccessURLRewrite) à
+   la place de `web/.htaccess`. 
+
+2. Testez que la page `web/connexion` marche et que le CSS et les images sont
+   revenus. En effet, l'URL de base des liens relatifs est de nouveau `web/`.
+
+3. Changez les liens dans `vueGenerale.php` : 
+
+   ```diff
+   -<a href="controleurFrontal.php?controleur=publication&action=feed"><span>The Feed</span></a>
+   +<a href="./"><span>The Feed</span></a>
+
+   -<a href="controleurFrontal.php?controleur=publication&action=feed">Accueil</a>
+   +<a href="./">Accueil</a>
+
+   -<a href="controleurFrontal.php?action=afficherFormulaireConnexion&controleur=utilisateur">Connexion</a>
+   +<a href="./connexion">Connexion</a>
+   ```
+
+</div>
+
+<!-- TODO ? 
+Explication du .htaccess reprises de mes notes Joplin.
+
+Expliquer ce que fait ce fichier : 
+* voir la redirection permanente dans les DevTools avec le code HTTP 301.
+* Fichier repris de Symfony
+*  -->
 
 
+### Route selon la méthode HTTP
 
+L'un des avantages de notre routage est qu'il peut rediriger différemment selon
+ la méthode *HTTP* employée. Voici ce que nous allons faire :  
+* URL `/connexion`, méthode `GET` → action `afficherFormulaireConnexion` du contrôleur utilisateur
+* URL `/connexion`, méthode `POST` → action `connecter` du contrôleur utilisateur
 
-Debuggage
+Pour limiter une route à certaines méthodes *HTTP*, on utilise par exemple
+```php
+$route->setMethods(["GET"]);
+``` 
 
-On pourrait se passer de `ControllerResolver` actuellement. Mais cette classe est
-plus flexible et vous évitera des problèmes plus tard (si l'action n'est pas une méthode statique par exemple).
+<div class="exercise">
+
+1. Modifiez votre routeur pour avoir les 2 routes `web/connexion` selon la
+   méthode *HTTP*.
+
+2. Corrigez l'URL vers laquelle renvoie
+   `src/vue/utilisateur/formulaireConnexion.php`.
+
+3. Vérifiez que la connexion au site marche bien.
+
+</div>
+
+### Ajout des routes manquantes
+
+<div class="exercise">
+
+1. Ajoutez les routes manquantes (sauf celle vers `pagePerso`) : 
+   * URL `/deconnexion`, méthode `GET` → action `deconnecter` du contrôleur
+     utilisateur
+   * URL `/feedy`, méthode `POST` → action `submitFeedy` du contrôleur
+     publication
+   * URL `/inscription`, méthode `GET` → action `afficherFormulaireCreation` du
+     contrôleur utilisateur
+   * URL `/inscription`, méthode `POST` → action `creerDepuisFormulaire` du
+     contrôleur utilisateur
+
+2. Modifiez les liens correspondants dans
+   *  `src/vue/publication/liste.php`, 
+   *  `src/vue/utilisateur/formulaireCreation.php` 
+   *  `src/vue/vueGenerale.php`.
+   
+</div>
+
+### Routes variables
+
+Avec l'ancien routeur `RouteurQueryString`, nous pouvions envoyer des
+informations supplémentaires dans l'URL, par exemple l'identifiant d'un
+utilisateur avec `controleur=utilisateur&action=pagePerso&idUser=19`.
+
+Dans notre nouveau système d'URL, certaines parties de l'URL serviront à
+récupérer ces informations supplémentaires. Par exemple, nous allons configurer
+notre site pour que l'URL `web/utilisateur/19` renvoie vers la page personnelle
+de l'utilisateur d'identifiant `19`. Le routeur fourni par `Symfony` permet des
+routes variables `/utilisateur/{idUser}` qui permettront d'extraire `$idUser` de
+l'URL. 
+
+<div class="exercise">
+
+1. Créez une nouvelle route : 
+   * URL `/utilisateur/{idUser}`, méthode `GET` → action `pagePerso` du contrôleur utilisateur
+
+1. Modifiez `pagePerso()` pour qu'il prenne `$idUser` en argument au lieu de le lire depuis le *query string* avec `$_REQUEST['idUser']`.
+   
+   ```diff
+   -public static function pagePerso(): void
+   +public static function pagePerso($idUser): void
+
+   -    if (isset($_REQUEST['idUser'])) {
+   -        $idUser = $_REQUEST['idUser'];
+
+   -    } else {
+   -        MessageFlash::ajouter("error", "Login manquant.");
+   -        ControleurUtilisateur::rediriger("publication", "feed");
+   -    }
+   ```
+
+2. Si vous testez la route, vous verrez qu'elle ne marche pas, car
+   `call_user_func` appelle `pagePerso` sans lui donner d'arguments (qu'il
+   attend `$idUser`).
+
+3. Affichez `$donneesRoute` pour voir comment `UrlMatcher` a extrait `idUser` de
+   l'URL.
+
+</div>
+
+Nous allons résoudre ce problème en introduisant un nouveau composant.
+
+### Le composant `HttpKernel` de `Symfony`
+
+Selon sa
+[documentation](https://symfony.com/doc/current/components/http_kernel.html), le
+composant `HttpKernel` de `Symfony` fournit un processus structuré pour
+convertir une `Request` en `Response`. Sa classe principale `HttpKernel` est
+similaire à notre `RouteurURL`, mais en plus évolué. Nous ne nous servirons donc
+pas de `HttpKernel` puisque nous recodons une version simplifiée plus
+compréhensible. 
+
+Nous allons plutôt nous concentrer sur les classes `ControllerResolver` et
+`ArgumentResolver`. La responsabilité du résolveur de contrôleur est de
+déterminer le contrôleur et la méthode à appeler en fonction de la requête. La
+classe `ControllerResolver` se limite plus ou moins à lire
+`$donneesRoute["_controller"]`. Nous pourrions nous en passer, mais elle sera
+utile plus tard quand vous aurez des actions qui sont des méthodes non statiques
+(*cf.* séance sur les tests avec `PhpUnit`).
+ <!-- car ControllerResolver instancie un objet de la classe -->
+
+La classe `ArgumentResolver` va construire la liste des arguments de l'action du
+contrôleur. Par exemple, c'est cette classe qui va créer l'argument `$idUser`
+avec la valeur `19` pour la méthode `ControleurUtilisateur::pagePerso($idUser)`.
 
 
 <div class="exercise">
 
-1. Créez une nouvelle classe `src/Controleur/RouteurURL.php` avec le code suivant.
-
-   ```php
-   <?php
-   namespace TheFeed\Controleur;
-
-   use Symfony\Component\HttpFoundation\Request;
-   use Symfony\Component\HttpKernel\Controller\ArgumentResolver;
-   use Symfony\Component\HttpKernel\Controller\ControllerResolver;
-   use Symfony\Component\Routing\Matcher\UrlMatcher;
-   use Symfony\Component\Routing\RequestContext;
-   use Symfony\Component\Routing\Route;
-   use Symfony\Component\Routing\RouteCollection;
-
-   class RouteurURL
-   {
-      public static function traiterRequete() {
-         $requete = Request::createFromGlobals();
-         $contexteRequete = (new RequestContext())->fromRequest($requete);
-
-         $routes = new RouteCollection();
-
-         // Route feed
-         $route = new Route("/", [
-               "_controller" => "\App\Covoiturage\Controleur\ControleurPublication::feed",
-         ]);
-         $routes->add("feed", $route);
-
-         $urlMatcher = new UrlMatcher($routes, $contexteRequete);
-         $routeData = $urlMatcher->match($requete->getPathInfo());
-         $requete->attributes->add($routeData);
-
-         $controllerResolver = new ControllerResolver();
-         $controller = $controllerResolver->getController($requete);
-
-         call_user_func($controller);
-      }
-   }
-   ```
-
-2. Pour faire marcher ce code, nous devons installer de nouveaux paquets PHP.
-   Ouvrez un terminal à la racine de votre projet et exécutez la commande
-   suivante :
+1. Importez le composant `HttpKernel`
 
    ```bash
    composer require symfony/http-foundation symfony/routing symfony/http-kernel
    ```
 
-3. Il ne vous reste plus qu'à appeler le nouveau routeur
+1. Faites évoluer le code de `RouteurURL` en rajoutant à la fin (juste avec
+   `call_user_func`)
+
+   ```php
+   use Symfony\Component\HttpKernel\Controller\ArgumentResolver;
+   use Symfony\Component\HttpKernel\Controller\ControllerResolver;
+
+   $requete->attributes->add($donneesRoute);
+
+   $resolveurDeControleur = new ControllerResolver();
+   $controleur = $resolveurDeControleur->getController($requete);
+
+   $resolveurDArguments = new ArgumentResolver();
+   $arguments = $resolveurDArguments->getArguments($requete, $controleur);
+   ```
+
+   et en modifiant
 
    ```diff
-   -TheFeed\Controleur\RouteurQueryString::traiterRequete();
-   +// TheFeed\Controleur\RouteurQueryString::traiterRequete();
-   +\TheFeed\Controleur\RouteurURL::traiterRequete();
+   -call_user_func($donneesRoute["_controller"]);
+   +call_user_func_array($controleur, $arguments);
    ```
 
-**ici** commencer l'explication du nouveau routeur. Debuggage
-
-On pourrait se passer de `ControllerResolver` actuellement. Mais cette classe est
-plus flexible et vous évitera des problèmes plus tard (si l'action n'est pas une méthode statique par exemple).
-
-
-
+1. Testez la route `web/utilisateur/19` en remplaçant `19` par un identifiant
+   d'utilisateur ayant quelques publications. La page doit remarcher, mais pas
+   le CSS ni les images.
 
 </div>
 
+**Plus d'explications (optionnel) :** 
+Revenons sur la classe `ArgumentResolver` pour expliquer [son fonctionnement
+(simplifié)](https://symfony.com/doc/current/components/http_kernel.html#4-getting-the-controller-arguments)
+sur l'exemple `pagePerso()` : 
+* En utilisant [l'introspection de
+  PHP](https://www.php.net/manual/en/book.reflection.php), le code accède à la
+  liste des arguments (type et nom)
+* pour chaque argument, [on essaye itérativement l'un des résolveurs
+  d'arguments](https://symfony.com/doc/current/controller/value_resolver.html)
+  pour déterminer la valeur de l'argument.  
+  Dans notre exemple, le premier résolveur (classe
+  `RequestAttributeValueResolver`) va regarder si le nom de l'argument `idUser`
+  est présent dans `$requete->attributes` (équivalent à `$donneesRoute`). Comme
+  c'est le cas alors on renvoie cette valeur.
 
+L'avantage de ce mécanisme est qu'il permet de récupérer beaucoup de types
+d'arguments dans le contrôleur : 
+* un attribut extrait de la requête (attribut `GET` ou `POST`). Pour ceci, le
+  nom de l'attribut doit correspondre,
+* la requête `Request $requete` (l'argument doit avoir le type `Request`),
+* la valeur par défaut d'une route variable,
+* des services du conteneur de service (*cf.* future séance SAÉ sur les tests
+  avec `PHPUnit`),
+* des éléments de la base de données si le type correspond à celui d'une entité
+  (`DataObject` dans ce cours)
+ 
 
+### Générateur d'URL et conteneur global
 
+Les liens vers le style CSS et les images de profil de notre site sont souvent
+cassés car elles utilisent des URL relatives. En effet, la base de l'URL varie
+selon le chemin demandé : 
+* pour le chemin `web/connexion`, les URL relatives utilisent la base `web/`. 
+* pour le chemin `web/utilisateur/19`, les URL relatives utilisent la base
+  `web/utilisateur`. Du coup, les liens relatifs sont cassés. 
 
+Nous allons utiliser des classes de `Symfony` pour générer automatiquement des
+URL absolues. D'un côté, nous allons utiliser `UrlHelper` pour générer des URL absolues : 
+```php
+use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\Routing\Generator\UrlGenerator;
 
+$assistantUrl = new UrlHelper(new RequestStack(), $contexteRequete);
+$assistantUrl->getAbsoluteUrl("assets/css/styles.css");
+// Renvoie l'URL .../web/assets/css/styles.css, peu importe l'URL courante
+```
 
+D'un autre côté, la classe `UrlGenerator` génère des URL absolues à partir du
+nom d'une route. C'est pratique si on doit changer le chemin de la route *a
+posteriori*.
+```php
+use Symfony\Component\Routing\Generator\UrlGenerator;
 
+$generateurUrl = new UrlGenerator($routes, $contexteRequete);
+$generateurUrl->generate("submitFeedy");
+// Renvoie ".../web/feedy"
+$generateurUrl->generate("pagePerso", ["idUser" => 19]);
+// Renvoie ".../web/utilisateur/19"
+```
 
+Comme nous allons avoir besoin de ces services de génération d'URL dans
+différentes vues, il faut pouvoir les initialiser au début de l'application, et
+de pouvoir y accéder globalement. Dans le cours de [développement Web du
+semestre 3](http://romainlebreton.github.io/R3.01-DeveloppementWeb/), nous
+avions fait le choix d'avoir des classes statiques utilisant le patron de
+conception *Singleton*. Ce choix a l'inconvénient de rendre difficile les tests.
 
-### Installation
+En attendant la séance de SAÉ sur les tests avec *PhpUnit*, nous allons utiliser
+une classe `Conteneur` pour stocker globalement les services dont nous aurons
+besoin.
 
-Pour installer `Twig` dans votre application, nous allons utiliser le **gestionnaire de dépendances** 
-
-Rajoutez vendor au .gitignore
-
-En effet, quand vous souhaiterez installer votre application dans un autre environnement (une autre machine), seul le fichier `composer.json` suffit. Lors de l'installation, ce fichier sera lu et les dépendances seront téléchargées et installées automatiquement.
-
-Pour utiliser `composer`, il faut se placer à la **racine du projet**, là où se trouve (ou se trouvera après l'installation de `Twig`) le fichier `composer.json`.
 
 <div class="exercise">
 
-1. Ouvrez un terminal à la racine de votre projet et exécutez la commande suivante :
-
-   ```bash
-   composer require twig/twig
-   ```
-
-2. Attendez la fin de l'installation. Allez observer le contenu du fichier `composer.json` fraichement créé ainsi que le contenu du dossier `vendor`.
-</div>
-
-Quelques conseils :
-
-   * Sur une autre machine (ou dans un nouvel environnement), pour installer les dépendances (et donc initialiser le dossier `vendor`), il suffit d'exécuter la commande :
-
-   ```bash
-   composer install
-   ```
-
-   * Si vous modifiez le fichier `composer.json` ou que vous souhaitez simplement mettre à jour vos dépendances, vous pouvez exécuter la commande :
-
-   ```bash
-   composer update
-   ```
-
-
-
-## Composant Twig
-
-`Twig` est un **moteur de templates** qui permet de générer tout type de document (pas seulement de l'HTML!) en utilisant des données passées en paramètres. Twig fournit toutes les structures de contrôles utiles (if, for, etc...) et permet de placer les données de manière fluide. Il est aussi possible d'appeler des méthodes sur certaines données (des objets) et d'appliquer certaines fonctions (ou filtres) pour transformer les données (par exemple, mettre en majuscule la première lettre...).
-
-Twig permet également de construire des modèle de templates qui peuvent être étendus et modifiés de manière optimale. Le template va définir des espaces nommés `blocs` qu'il est alors possible de redéfinir indépendamment dans un sous-template. Cela va nous être très utile par la suite!
-
-Il est aussi possible d'installer (ou de définir soi-même) des extensions pour ajouter de nouvelles fonctions de filtrage! On peut aussi définir certaines variables globales accessibles dans tous les templates.
-
-Dans notre contexte, nous utiliserons `Twig` pour générer nos pages HTML car cela présente différents avantages non négligeables :
-
-   * Le langage est beaucoup moins verbeux que du PHP, il est beaucoup plus aisé de placer les données aux endroits désirés de manière assez fluide.
-   * En spécifiant un petit paramètre, les pages générées avec `Twig` seront naturellement protégées contre les failles `XSS`! (plus besoin d'utiliser `htmlspecialchars`).
-   * Nous allons pouvoir définir des templates globaux pour l'affichage des éléments identiques à chaque page (header, footer, etc...) et ainsi de pas répéter le code à plusieurs endroits.
-
-### Le langage
-
-* L'instruction ```{% raw %}{{ donnee }}{% endraw %}``` permet d'afficher une donnée à l'endroit souhaité (à noter : **les espaces après et avant les accolades sont importants!**). On peut également appeler des méthodes (si c'est un objet) : ```{% raw %}{{ donnee.methode() }}{% endraw %}```. On peut aussi appeler une fonction définie par `Twig` ou une de ses extensions : ```{% raw %}{{ fonction(donnee)) }}{% endraw %}```. Ou bien un filtre, par exemple : ```{% raw %}{{ donnee|upper }}{% endraw %}``` pour passer une chaîne de caractères en majuscule. Il est aussi possible de combiner plusieurs filtres, par exemple ```{% raw %}{{ donnee|lower|truncate(20) }}{% endraw %}```.
-
-* Il est possible de définir une variable locale : 
-
-```twig
-{% raw %}
-{% set exemple = "coucou" %}
-<p>{{exemple}}</p>
-{% endraw %}
-```
-
-* La structure conditionnelle `if` permet de ne générer une partie du document que si une condition est remplie :
-
-```twig
-{% raw %}
-{% if test %}
-   Code HTML....
-{% endif %}
-{% endraw %}
-```
-
-Il est bien sûr possible de construire des conditions complexes avec les opérateur : `not`, `and`, `or`, `==`, `<`, `>`, `<=`, `>=`, etc... par exemple :
-
-```twig
-{% raw %}
-{% if test and (not (user.getName() == 'Simith') or user.getAge() <= 20) %}
-   Code HTML....
-{% endif %}
-{% endraw %}
-```
-
-* La structure conditionnelle `for` permet de parcourir une structure itérative (par exemple, un tableau) :
-
-```twig
-{% raw %}
-{% for data in tab %}
-   <p>{{ data }}</p>
-{% endfor %}
-{% endraw %}
-```
-
-Si c'est un tableau associatif et qu'on veut accèder aux clés et aux valeurs en même temps :
-
-```twig
-{% raw %}
-<ul>
-{% for key, value in tab %}
-   <li>{{ key }} = {{ value }}</li>
-{% endfor %}
-<ul>
-{% endraw %}
-```
-
-On peut aussi faire une boucle variant entre deux bornes : 
-
-```twig
-{% raw %}
-{% for i in 0..10 %}
-    <p>{{ i }}ème valeur</p>
-{% endfor %}
-{% endraw %}
-```
-
-Pour créer un `bloc` qui pourra être **redéfini** dans un sous-template, on écrit simplement :
-
-```twig
-{% raw %}
-{% block nom_block %}
-   Contenu du bloc...
-{% endblock %}
-{% endraw %}
-```
-
-Pour **étendre** un template, au début du novueau template, on écrit simplement :
-
-```twig
-{% raw %}
-{% extends "nomFichier.html.twig" %}
-{% endraw %}
-```
-
-Par exemple, imaginons le template suivant, `test.html.twig` :
-
-```twig
-{% raw %}
-<html>
-   <head>
-      <title>{% block titre %}Test {% endblock %}</title>
-   </head>
-   <body>
-      <header>...</header>
-      <main>{% block main %} ... {% endblock %}</main>
-      <footer>...</footer>
-   </body>
-</html>
-{% endraw %}
-```
-
-Vous pouvez alors créer le sous-template suivant qui copiera exactement le contenu de `test.html.twig` et modifiera seulement le titre et le contenu du main : 
-
-```twig
-{% raw %}
-{% extends "test.html.twig" %}
-{% block titre %}Mon titre custom{% endblock %}
-{% block main %} <p>Coucou!</p> {% endblock %}
-{% endraw %}
-```
-
-Il n'est pas obligatoire de redéfinir tous les blocs quand on étend un template. Dans l'exemple ci-dessus, on aurait pu seulement redéfinir le bloc `main` sans changer le titre de la page, par exemple.
-
-Il est tout à fait possible d'utiliser un bloc de structure à l'intérieur d'un autre bloc de structure. Il est aussi tout à fait possible de créer un bloc rédéfinissable à l'intérieur d'un autre bloc...Il est aussi possible de faire des sous-templates de sous-templater. Voyez ça comme une hiéarchie entre classes! Les blocs sont comme des méthodes de la classe parente qu'il est possible de redéfinir!
-
-Pour en savoir plus sur `Twig`, vous pouvez consulter [La documentation officielle](https://www.branchcms.com/learn/docs/developer/twig).
-
-### Initialisation de Twig
-
-`Twig` s'initialise comme suit :
-
-```php
-//Au début du fichier, après avoir chargé l'autodloader
-use Twig\Environment;
-use Twig\Loader\FilesystemLoader;
-
-//On doit indiquer à Twig où sont situés nos templates. 
-$twigLoader = new FilesystemLoader(cheminVersDossierTemplate);
-
-//Permet d'échapper le texte contenant du code HTML et ainsi éviter la faille XSS!
-$twig = new Environment($twigLoader, ["autoescape" => "html"]);
-```
-
-<div class="exercise">
-
-1. Créez un dossier `templates` à la racine de votre projet.
-
-2. Dans votre fichier `feed.php`, chargez l'autoloader de `composer` au tout début.
-
-3. Importez les classes de `Twig` nécéssaires (avec `use`).
-
-4. Initialisez `Twig`. Vous préciserez que les templates se trouvent dans le sous dossier `templates` par rapport au fichier `feed.php`. Vous pouvez pour cela réeutiliser une syntaxe similaire au chemin utilisé pour charger l'autoloader.
-
-5. Rechargez votre page. S'il n'y a pas d'erreurs, c'est que c'est bon! Nous allons maintenant l'utiliser...
-
-</div>
-
-### Un premier template
-
-Vous allez maintenant utiliser un **template** Twig pour réaliser l'affichage de la page principale de **The Feed**.
-
-Pour générer le résultat obtenu via un **template** Twig, il faut éxécuter le code :
-
-```php
-//sousCheminTemplate : Correspond au sous-chemin du template à partir du dossier de template indiqué à twig. S'il se trouve à la racine du dossier de templates, on indique alors seulement son nom
-
-// tableauAssociatif : Un tableau associatif de paramètres passés au template. Par exemple si on lui donne ["message" => $test], une variable "message" sera utilisable dans le template twig.
-
-$page = $twig->render(sousCheminTemplate, tableauAssociatif);
-
-//Puis, pour l'afficher comme réponse
-echo $page
-```
-
-Par exemple, si je veux charger le fichier `personne.html.twig` situé à la racine du dossier `templates` en lui passant un objet Personne en paramètre, je peux faire :
-
-```php
-$personne = ...
-
-$page = $twig->render('personne.html.twig', ["personne" => $personne]);
-echo $page
-```
-
-Bien sûr, on peut passer plusieurs paramètres (il suffit de les ajouter au tableau associatif).
-
-<div class="exercise">
-
-1. Dans le dossier `templates`, créez un fichier nommé `firstFeed.html.twig`.
-
-2. Déplacez le code HTML (mêlé de PHP) permettant de générer la page dans votre nouveau template. Pour rappel, il devrait avoir cette allure :
+1. Créez une classe `src/Lib/Conteneur.php` avec le code suivant : 
 
    ```php
-   <!DOCTYPE html>
-   <html lang="fr">
-      <head>
-         <title>The Feed</title>
-         <meta charset="utf-8">
-         <link rel="stylesheet" type="text/css" href="styles.css">
-      </head>
-      <body>
-         <header>
-               <div id="titre" class="center">
-                  <a href="feed.php"><span>The Feed</span></a>
-               </div>
-         </header>
-         <main id="the-feed-main">
-               <div id="feed">
-                  <form id="feedy-new" action="feed.php" method="post">
-                     <fieldset>
-                           <legend>Nouveau feedy</legend>
-                           <div>
-                              <textarea minlength="1" name="message" placeholder="Qu'avez-vous en tête?"></textarea>
-                           </div>
-                           <div>
-                              <input id="feedy-new-submit" type="submit" value="Feeder!">
-                           </div>
-                     </fieldset>
-                  </form>
-                  <?php foreach ($publis as $publi) { ?>
-                     <div class="feedy">
-                           <div class="feedy-header">
-                              <img class="avatar" src="anonyme.jpg" alt="avatar de l'utilisateur">
-                              <div class="feedy-info">
-                                 <span><?php echo $publi->getLoginAuteur() ?> </span>
-                                 <span> - </span>
-                                 <span><?php echo $publi->getDateFormatee()?></span>
-                                 <p><?php echo $publi->getMessage() ?></p>
-                              </div>
-                           </div>
-                     </div>
-                  <?php } ?>
-               </div>
-         </main>
-      </body>
-   </html>
-   ```
-3. Adaptez ce code pour utiliser le langage de `Twig` à la place, en remplaçant toutes les parties PHP. Vous pouvez considérer qu'un tableau nommé `publications` est passé en paramètre à ce template. 
+   <?php
 
-4. Dans `feed.php` récupérez la page généré par `Twig` en utilisant ce template en passant en paramètres les `publications` récupérées depuis le repository. Affichez cette page avec `echo`.
+   namespace TheFeed\Lib;
 
-5. Rechargez la page et observez qu'elle s'affiche toujours bien, mais cette fois, en étant générée par `Twig`!
+   class Conteneur
+   {
+      private static array $listeServices;
 
-</div>
+      public static function ajouterService(string $nom, $service) : void {
+         Conteneur::$listeServices[$nom] = $service;
+      }
 
-
-### Division des tâches
-
-Dans notre page, on peut distinguer clairement une partie commune qui sera similaire à toutes nos futures pages et une autre partie spécifique à la page courante. :
-
-* La strucutre de base de la page, une partie du head et le header seront communs à toutes les pages
-
-* Le titre de la page et une partie du body seront spécifiques à la page courante.
-
-<div class="exercise">
-
-1. Créez un template `base.html.twig` dans le dossier `templates`.
-
-2. Dans ce template, reprenez tout le contenu du template `firstFeed.html.twig` sauf le `<main>`.
-
-3. Effacez le titre contenu dans `<title>` et à la place, créez un `block` nommé `page_title`.
-
-4. Au tout début du **body**, créez un `block` nommé `page_content`.
-
-</div>
-
-Vous venez de créer le template "de base". Toutes les pages de notre application vont l'étendre afin de posséder la même structure et injecteront leur propre titre et leur propre contenu dans les blocs correspondants.
-
-<div class="exercise">
-
-1. Dans le dossier `templates`, créez un sous-dossier `Publications`.
-
-2. Créez un template `feed.html.twig` dans le dossier `Publications` et faites en sorte qu'il **étende** le template `base.html.twig`.
-
-3. Dans ce template, redéfinissez les `blocks` **page_title** et **page_content** afin d'y placer respectivement le `titre` de la page et le `main` initialement définis dans `firstFeed.html.twig`.
-
-4. Supprimez le template `firstFeed.html.twig`
-
-5. Modifiez `feed.php` afin qu'il génère la page en utilisant le template `Publications/feed.html.twig`.
-
-6. Rechargez votre page et vérifiez que tout fonctionne bien.
-
-</div>
-
-Pour mieux comprendre l'efficacité de ces templates et vérifier que vous savez les mainpuler, vous allez créer une autre page.
-
-<div class="exercise">
-
-1. Dans le dossier `templates`, créez un sous-dossier `Test`.
-
-2. Créez un template `exemple.html.twig` dans le dossier `Test` et faites en sorte qu'il **étende** le template `base.html.twig`.
-
-3. Dans ce template, redéfinissez les `blocks` **page_title** et **page_content** afin d'y placer respectivement le `titre` "Exemple" et un élément HTML `<main> ... </main>` contenant `<p>Coucou!</p>`.
-
-4. A la racine de votre projet, créez un fichier `exempleTemplate.php`.
-
-5. Dans ce fichier, faites en sorte d'afficher la page générée par le template `exemple.html.twig`.
-
-6. Chargez cette page à l'adresse : 
-
-   [http://webinfo.iutmontp.univ-montp2.fr/~mon_login_IUT/TD2/exempleTemplate.php)](http://webinfo.iutmontp.univ-montp2.fr/~mon_login_IUT/TD2/exempleTemplate.php) et observez le résultat!
-
-</div>
-
-### Les composants et phases essentiels d'une application web
-
-Si l'architecure logicielle a une place importante dans le cadre du développement d'une application web, d'autres composants sont aussi essentiels à son bon fonctionnement. Comme nous sommes dans le cadre d'une application **client / serveur**, la partie **cliente** (navigateur web) ne peut pas appeler directement la bonne fonction d'un **controller**. Pour cela, une **requête** est transmise et traitée par l'application côté **serveur** avant de trouver le bon controller et la bonne fonction à éxécuter. Ce mécanisme est appellé le **routing**. On va donc généralement avoir besoin :
-
-   * D'un **point d'entrée** qui est le premier fichier éxécuté lors de la reception d'une requête sur votre application. Son rôle est de récupérer les informations utiles de la requête et de la transmettre à votre application.
-
-   * D'un **routeur**, c'est-à-dire une portion de code qui associe des chemins (des **routes**) à des fonctions sur des controllers bien précis et permet donc d'éxécuter le bon code en se basant sur les données fournies par la requête. Par exemple, on pourrait créer une association : `/product/1/details` => `ProductController` => `getProductDetailsAction($idProduct)`. Le rôle du routeur serait alors de reconnaitre ce chemin quand il est présent dans l'URL d'une requête et d'éxécuter la fonction `getProductDetailsAction` qui renverra un nouveau résultat (une page web, des données...).
-
-   * D'un **résolveur d'arguments** qui permet d'extraire des données fournies dans l'URL de la route. Dans l'exemple précédent, nous avions l'id du produit dans l'URL. Le résolveur doit donc permettre d'extraire cette donnée et de la passer à la fonction getProductDetailsAction. A noter que cela ne concerne pas les données envoyées par les méthodes `GET`, `POST` ou autre, qui sont accessibles dans le corps de la requête.
-
-### Un premier controleur et des routes
-
-Maintenant que nous avons quelques actions, il nous faut créer les routes pour y accèder! Pour cela, nous allons nous aider du **composant de routing** de Symfony.
-
-Le fonctionnement de ce composant est assez simple :
-
-   * On initialise un objet `RouteCollection` dont le rôle est d'enregistrer et gérer toutes les routes de notre application.
-
-   * On crée un onjet `Route` en spécifiant :
-
-      * Le chemin de la route (à partir de la racine de notre site), par exemple `/products`, `/users/login`...On peut aussi spécifier des **paramètres** dans le chemin qui seront lus lors du décodage de la route et transmis au controller. Il faut alors que la fonction prenant en charge l'action dans le controller possède un paramètre du même nom. Par exemple : `/products/{id}`. Ici, le chemin possède un paramètre `id`. Les routes correspondantes peuvent donc être `/products/0`, `/products/1`, etc...De son côté, la fonction correspondate dans le **controller** devra possèder un paraètre `$id`. Il est bien sur possibles de préciser plusieurs paramètres à divers endroits du chemin.
-
-      * Le **controller** (en utilisant son namespace, comme pour importer sa `classe`) et le nom de la `fonction` à éxécuter. Ces deux éléments sont séparés par `::`. Par exemple, on pourrait avoir : `MyApp\\Application\\MyController::maFonction` (donc, la fonction `maFonction` du controller MyController).
-
-      * Des valeurs par défaut pour les éventuels paramètres définis dans le chemin.
-
-   * Il faut ensuite ajouter la route dans la **collection de routes** en l'associant avec un **nom**.
-
-   Tout cela peut se résumer avec deux exemples :
-
-   ```php
-   use Symfony\Component\Routing\Route;
-   use Symfony\Component\Routing\RouteCollection;
-
-   $routes = new RouteCollection();
-
-   $firstRoute = new Route("/hello", [
-      "_controller" => "MyApp\\Application\\HelloController::hello" //Le _ devant "controller" est important.
-   ]);
-
-   $routes->add('hello_world', $firstRoute);
-
-   $secondRoute = new Route("/products/{id}", [
-      "_controller" => "MyApp\\Application\\ProductController::details" //La fonction "details" doit avoir un paramètre $id!
-      "id" => 0 // Valeur par défaut...non obligatoire!
-   ]);
-
-   $routes->add('product_details', $secondRoute);
+      public static function recupererService(string $nom) {
+         return Conteneur::$listeServices[$nom];
+      }
+   }
    ```
 
-   Par défaut (avec ce que nous allons construire) l'objet `Request` contenant les données de la requête est automatiquement transmis à la fonction du controller qui va s'éxécuter si celle-ci précise un paramètre de type `Request`. On ne le précise donc pas au niveau des routes.
+1. Initialisez les deux services `$assistantUrl` et `$generateurUrl` dans
+   `RouteurUrl` (*cf.* code plus haut). Puis stockez-les dans le conteneur avec
+   le nom que vous souhaitez.
 
-### La classe principale du framework
+1. Récupérez les deux services en haut de la vue `vueGenerale.php`. Puis
+   utilisez-les dans toutes les vues pour passer tous les liens en URL
+   absolues (`<a href="">`, `<img src="">`, `<form action="">` et `<link
+   href="">`).
 
-Nous avons notre **controller** et nos **routes** mais rien pour les faire fonctionner...C'est-à-dire, un bout de code qui puisse permettre de traiter la requête reçue de manière à identifier la route correspondante, extraire les éventuelles données et donc éxécuter la bonne fonction sur le bon controller (avec les bons paramètres!).
+   **Remarques :** 
+   * `$generateurUrl->generate()` échappe les caractères spéciaux des URLs. Vous
+     devez donc lui donner les données brutes, et non celles échappées par
+     `rawurlencode()`.
+   * `$assistantUrl->getAbsoluteUrl()` n'échappe pas les caractères spéciaux des
+     URL. À vous de le faire.
+   * Vous pouvez utiliser la syntaxe raccourcie `<?= $var ?>` équivalente à
+   `<?php echo $var ?>` pour améliorer la lisibilité de vos vues.
 
-Encore une fois, quelques composants et classes de Symfony vont pouvoir nous aider :
+</div>
 
-   * Un **URL Matcher** : permet d'identifier la route correspondant au chemin visé par l'URL dans un ensemble de routes. On va s'en servir pour spécifier les informations relatives à la route dans les attributs de la requête.
+Il ne nous reste qu'à mettre à jour la méthode de redirection et notre site aura
+fini sa première migration pour des routes basées sur les URL !
 
-   * Un **résolveur de controller** : permet de récupérer la focntion du controller à utiliser, à partir de la requête.
+<div class="exercise">
 
-   * Un **résolveur d'arguments** : permet de récupérer les valeurs des paramètres à passer à la fonction du controller à éxécuter. C'est ce composant qui va notamment permettre de récupèrer les éventuels paramètres spécifiés dans le chemin de la route. Il va également ajouter la requpete elle-même aux paramètres (utile pour récupérer les données dans le corps de la requête transmis par un formulaire, via GET, POST, etc...).
+1. Changer la méthode `ControleurGenerique::rediriger()` pour qu'elle prenne en
+   entrée le nom d'une route et un tableau optionnel de paramètres pour les
+   routes variables (mêmes arguments que `$generateurUrl->generate()`). Cette
+   fonction doit maintenant rediriger vers l'URL absolue correspondante. Vous
+   aurez besoin de récupérer un service du `Conteneur`.
 
-En utilisant ces trois composants, on peut donc récupérer à partir de la requête la fonction à appeler et les paramètres à lui donner. Il suffit alors d'utiliser la fonction PHP : `call_user_func_array($fonction, $parametres)`. Le paramètre `$fonction` est un objet de type `callable`, c'est à dire quelquechose qui peut être appellé, comme une fonction. `$parametres` correspond à un tableau associatif associant chaque nom de paramètre à une valeur. Cette fonction appelle donc la fonction désigné par `$fonction` en lui passant les paramètres définis dans `$parametres`.
+2. Mettez-à-jour tous les appels à `ControleurGenerique::rediriger()`.
 
-Dans notre cas, cette fonction appellera donc une action définie dans un `controller` qui renverra un objet `Response` (contenant, normalement, le code HTML de la page à renvoyer). On peut également y spécifier un **code de réponse** qui indique le **status** de la requpete (success, not found, etc...). Par défaut, si on ne précise rien, le code `200` est utilisé (success == tout va bien).
+3. Testez votre site.
 
-Dans le cadre de notre **Framework**, nous allons regroupper tout cela dans une classe `AppFramework` qui se chargera de reçevoir une requête, trouver la bonne focntion à éxécuter, récupérer la réponse de l'action déclenchée et la retourner. Notre application se chargera ensuite de transmettre la réponse au client.
-
-### Limiter les méthodes d'une route
-
-Actuellement, quand nous créons une **route**, il est possible de la "déclencher" avec n'importe quel méthode HTTP : GET, POST mais également certaines que nous n'avons pas encore utilisé : PUT, PATCH, DELETE...En effet, le controller ne peut pas faire la différence quand il récupère une donnée dans l'objet `Request` avec la methode `get`. Néamoins, il est tout à fait possible d'iniquer qu'une route n'est accessible qu'avec certaines méthodes.
-
-Pour cela, après avoir créé un objet `Route`, il suffit d'utiliser cette fonction :
-
-```php
-$route->setMethods([..., ..., ...]);
-```
-
-Comme vous pouvez le constater, cette fonction prend un tableau en entrée. Ce tableau contient simplements le nom des méthodes autorisés sous la forme de chaînes de caractères. Par exemple :
-
-```php
-//N'autorise que la méthode "GET" et la méthode "PUT" sur cette route
-$route->setMethods(["GET", "PUT"]);
-```
-
-Si on souhaite éxécuter deux actions différentes pour deux méthodes différentes pour une même route, il faut créer deux routes avec le même chemin et limiter les méthodes autorisées. Par exemple :
-
-```php
-$firstRoute = new Route("/test", [
-   "_controller" => "MyApp\\Application\\HelloController::bonjourGet"
-]);
-$firstRoute->setMethods(["GET"]);
-
-$secondRoute = new Route("/test", [
-   "_controller" => "MyApp\\Application\\HelloController::bonjourPost"
-]);
-$secondRoute->setMethods(["POST"]);
-```
+</div>
