@@ -1,6 +1,6 @@
 ---
 title: TD1 &ndash; Paquets PHP
-subtitle: Composer, Routage vie l'URL, Twig
+subtitle: Composer, Routage via l'URL
 layout: tutorial
 lang: fr
 ---
@@ -98,8 +98,10 @@ L'intérêt de ce site est qu'il ne contient que 2 contrôleurs et un petit nomb
 
 
 4. Importez les tables `utilisateurs` et `publications` dans votre base de
-   données SQL préférée (MySQL, PostgreSQL ou Oracle) depuis [ce
-   fichier]({{site.baseurl}}/assets/TD1/theFeedTD1Depart.sql). 
+   données SQL préférée
+   ([MySQL]({{site.baseurl}}/assets/TD1/theFeedTD1DepartMySQL.sql),
+   [PostgreSQL]({{site.baseurl}}/assets/TD1/theFeedTD1DepartPostgreSQL.sql) (ou
+   Oracle sur demande)). 
    
    Mettez à jour le fichier de configuration correspondant
    `src/Configuration/Configurationxxx.php` avec votre identifiant et votre mot
@@ -109,7 +111,7 @@ L'intérêt de ce site est qu'il ne contient que 2 contrôleurs et un petit nomb
    *Souvenez-vous* bien de votre identifiant et mot de passe car nous nous en
    resservirons. 
 
-3. Faites marcher le site. Explorez toutes les pages.
+6. Faites marcher le site. Explorez toutes les pages.
  
 </div>
 
@@ -291,6 +293,11 @@ classes liées aux réponses HTTP : `Response`, `RedirectResponse` pour les redi
    composer require symfony/http-foundation
    ```
 
+   **Remarque :** Certaines dépendances de *Symfony* nécessite une version de
+     PHP `> 8.1`. Si vous n'avez pas cette version sur votre machine
+     personnelle, vous pouvez peut-être demander une version plus ancienne de
+     cette dépendance.  
+
 </div>
 
 Dans un premier temps, notre site va utiliser des URL comme 
@@ -449,12 +456,16 @@ requête `web/connexion` vers l'URL `web/controlerFrontal.php/connexion`.
 
 1. Enregistrez [ce fichier de configuration d'*Apache* fourni par
    *Symfony*]({{ site.baseurl }}/assets/TD1/htaccessURLRewrite) à
-   la place de `web/.htaccess`. 
+   la place de `web/.htaccess`.
 
-2. Testez que la page `web/connexion` marche et que le CSS et les images sont
+   **Remarque :** Si la réécriture d'URL sur votre machine personnelle ne marche
+     pas, une cause possible est qu'il faut activer le module `mod_rewrite` de
+     votre serveur Apache.
+
+1. Testez que la page `web/connexion` marche et que le CSS et les images sont
    revenus. En effet, l'URL de base des liens relatifs est de nouveau `web/`.
 
-3. Changez les liens dans `vueGenerale.php` : 
+2. Changez les liens dans `vueGenerale.php` : 
 
    ```diff
    -<a href="controleurFrontal.php?controleur=publication&action=feed"><span>The Feed</span></a>
@@ -557,7 +568,7 @@ l'URL.
    ```
 
 2. Si vous testez la route, vous verrez qu'elle ne marche pas, car
-   `call_user_func` appelle `pagePerso` sans lui donner d'arguments (qu'il
+   `call_user_func` appelle `pagePerso` sans lui donner d'arguments (il
    attend `$idUser`).
 
 3. Affichez `$donneesRoute` pour voir comment `UrlMatcher` a extrait `idUser` de
@@ -668,7 +679,6 @@ Nous allons utiliser des classes de `Symfony` pour générer automatiquement des
 URL absolues. D'un côté, nous allons utiliser `UrlHelper` pour générer des URL absolues : 
 ```php
 use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\Routing\Generator\UrlGenerator;
 
 $assistantUrl = new UrlHelper(new RequestStack(), $contexteRequete);
 $assistantUrl->getAbsoluteUrl("assets/css/styles.css");
@@ -759,3 +769,15 @@ fini sa première migration pour des routes basées sur les URL !
 3. Testez votre site.
 
 </div>
+
+## Conclusion
+
+Dans ce TD, nous avons découvert comment changer les URL associées à notre site
+pour qu'elles soient plus standard. Cela a été l'occasion de plonger dans le
+fonctionnement interne d'un routeur professionnel. Ceci vous sera utile si vous
+apprenez *Symfony* ou un autre framework *backend* plus tard. Concernant le
+cours *Complément Web*, le passage à ces URL est une étape nécessaire dans notre
+chemin pour développer une *API REST*.
+
+Enfin, maintenant que vous connaissez les bases de *Composer*, vous pouvez facilement
+rajouter des bibliothèques à votre site web *PHP*. 
