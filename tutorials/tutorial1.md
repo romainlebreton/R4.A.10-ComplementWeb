@@ -105,7 +105,9 @@ L'intérêt de ce site est qu'il ne contient que 2 contrôleurs et un petit nomb
    
    Mettez à jour le fichier de configuration correspondant
    `src/Configuration/Configurationxxx.php` avec votre identifiant et votre mot
-   de passe. 
+   de passe. Si vous choissiez une base de données différente de MySQL, mettez 
+   aussi à jour le fichier `src/Modele/Repository/ConnexionBaseDeDonnees.php` 
+   afin de préciser la bonne classe au niveau du constructeur.
 
 5. Créez un nouvel utilisateur et une nouvelle publication.  
    *Souvenez-vous* bien de votre identifiant et mot de passe car nous nous en
