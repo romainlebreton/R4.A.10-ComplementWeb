@@ -98,16 +98,23 @@ L'intérêt de ce site est qu'il ne contient que 2 contrôleurs et un petit nomb
 
 
 4. Importez les tables `utilisateurs` et `publications` dans votre base de
-   données SQL préférée
-   ([MySQL]({{site.baseurl}}/assets/TD1/theFeedTD1DepartMySQL.sql),
-   [PostgreSQL]({{site.baseurl}}/assets/TD1/theFeedTD1DepartPostgreSQL.sql) (ou
-   Oracle sur demande)). 
-   
-   Mettez à jour le fichier de configuration correspondant
-   `src/Configuration/Configurationxxx.php` avec votre identifiant et votre mot
-   de passe. Si vous choisissez une base de données différente de MySQL, mettez 
-   aussi à jour le fichier `src/Modele/Repository/ConnexionBaseDeDonnees.php` 
-   afin de préciser la bonne classe au niveau du constructeur.
+   données SQL préférée : 
+   * Pour *MySQL*, vous devez : 
+     * exécuter le [script d'import MySQL]({{site.baseurl}}/assets/TD1/theFeedTD1DepartMySQL.sql),
+     * mettre à jour le fichier de configuration `src/Configuration/ConfigurationBDDMySQL.php` 
+       avec votre login et mot de passe.
+   * Pour *PostgreSQL*, vous devez : 
+     * exécuter le [script d'import PostgreSQL]({{site.baseurl}}/assets/TD1/theFeedTD1DepartPostgreSQL.sql),
+     * mettre à jour le fichier de configuration `src/Configuration/ConfigurationBDDPostgreSQL.php` 
+       avec votre login et mot de passe,
+     * préciser la bonne classe de configuration `ConfigurationBDDPostgreSQL` au
+       niveau du constructeur de
+       `src/Modele/Repository/ConnexionBaseDeDonnees.php`
+     * dans les classes `PublicationRepository` et `UtilisateurRepository`,
+       modifier les `$data['nomDeColonne']` pour mettre tous les noms de
+       colonnes en minuscule. En effet, *PostgreSQL* passe en minuscule tous les
+       identifiants (sauf s'ils sont entourés de guillemets doubles `"`, auquel
+       car il faudra toujours y faire référence avec des guillemets doubles).
 
 5. Créez un nouvel utilisateur et une nouvelle publication.  
    *Souvenez-vous* bien de votre identifiant et mot de passe car nous nous en
