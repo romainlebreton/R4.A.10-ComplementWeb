@@ -4,16 +4,19 @@
 
 SET client_encoding = 'UTF8';
 
+CREATE SEQUENCE utilisateurs_id_seq START WITH 3 INCREMENT BY 1;
+CREATE SEQUENCE publications_id_seq START WITH 3 INCREMENT BY 1;
+
 CREATE TABLE utilisateurs (
-    idutilisateur integer NOT NULL,
+    idUtilisateur INT NOT NULL DEFAULT NEXTVAL('utilisateurs_id_seq'),
     login character varying(20),
     password text,
-    adressemail text,
-    profilepicturename character varying(64)
+    adresseMail text,
+    profilePictureName character varying(64)
 );
 
 CREATE TABLE publications (
-    idpublication integer NOT NULL,
+    idPublication INT NOT NULL DEFAULT NEXTVAL('publications_id_seq'),
     message text,
     date timestamp without time zone,
     idauteur integer
@@ -26,10 +29,10 @@ INSERT INTO publications VALUES (1, 'Un exemple de publication', '2023-01-30 14:
 INSERT INTO publications VALUES (2, '<script>alert("message")</script>', '2023-02-25 07:23:09', 2);
 
 ALTER TABLE ONLY publications
-    ADD CONSTRAINT publications_pk PRIMARY KEY (idpublication);
+    ADD CONSTRAINT publications_pk PRIMARY KEY (idPublication);
 
 ALTER TABLE ONLY utilisateurs
-    ADD CONSTRAINT utilisateurs_pk PRIMARY KEY (idutilisateur);
+    ADD CONSTRAINT utilisateurs_pk PRIMARY KEY (idUtilisateur);
 
 ALTER TABLE ONLY publications
-    ADD CONSTRAINT publications_fk FOREIGN KEY (idauteur) REFERENCES rletud.utilisateurs(idutilisateur) ON UPDATE CASCADE ON DELETE CASCADE;
+    ADD CONSTRAINT publications_fk FOREIGN KEY (idauteur) REFERENCES utilisateurs(idUtilisateur) ON UPDATE CASCADE ON DELETE CASCADE;

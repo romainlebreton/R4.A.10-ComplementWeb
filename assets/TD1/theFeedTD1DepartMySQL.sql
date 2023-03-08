@@ -23,7 +23,7 @@ CREATE TABLE `publications` (
 `message` text,
 `date` datetime DEFAULT NULL,
 `idAuteur` int DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
 -- Déchargement des données de la table `publications`
@@ -45,7 +45,7 @@ CREATE TABLE `utilisateurs` (
 `password` text,
 `adresseMail` varchar(256) DEFAULT NULL,
 `profilePictureName` varchar(64) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
 --
 -- Déchargement des données de la table `utilisateurs`

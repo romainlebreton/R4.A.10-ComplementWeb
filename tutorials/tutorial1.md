@@ -105,7 +105,7 @@ L'intérêt de ce site est qu'il ne contient que 2 contrôleurs et un petit nomb
    
    Mettez à jour le fichier de configuration correspondant
    `src/Configuration/Configurationxxx.php` avec votre identifiant et votre mot
-   de passe. 
+   de passe.
 
 5. Créez un nouvel utilisateur et une nouvelle publication.  
    *Souvenez-vous* bien de votre identifiant et mot de passe car nous nous en
@@ -163,6 +163,14 @@ Commençons donc par remplacer notre *autoloader* `Psr4AutoloaderClass.php` par 
    ```bash
    composer update
    ```
+
+   **Aide :** Pour ceux qui sont sur leur machine personnelle, vous devrez
+   installer `composer` sur votre machine. Aller voir la [documentation de
+   `composer`](https://getcomposer.org/doc/00-intro.md#installation-linux-unix-macos)
+   à cet effet. Pour Linux, il suffit d'installer un paquet. Pour Windows avec
+   *XAMPP*, [l'installateur Windows](https://getcomposer.org/doc/00-intro.md#using-the-installer)
+   marche très bien.
+
 2. Quand on installe une application ou un nouveau composant, `composer` place
    les librairies téléchargées dans un dossier `vendor`. Il n'est pas nécessaire
    de versionner ce dossier souvent volumineux.  
@@ -436,21 +444,21 @@ Passons à notre deuxième route : `/connexion`.
      les méthodes statiques, ou encore `[$instanceDeLaClasse, "NomMethode"]`
      pour les méthodes classiques.
 
-1. Testez la page `web/controlerFrontal.php/connexion` qui doit marcher, sauf
+1. Testez la page `web/controleurFrontal.php/connexion` qui doit marcher, sauf
    les liens vers le CSS et les photos qui deviennent invalides. Cherchez
    pourquoi ces liens se sont cassés.
 
    **Aide :** Dans le code source de la page Web (`Ctrl+U`), cliquez sur ces
    liens cassés pour voir sur quel URL ils renvoient.
 
-    <!-- Ce sont des liens relatifs, et la base a changé de  web/ vers web/controlerFrontal.php  -->
+    <!-- Ce sont des liens relatifs, et la base a changé de  web/ vers web/controleurFrontal.php  -->
 
 </div>
 
 Nous allons régler ce problème en changeant l'URL de nos pages de
-`web/controlerFrontal.php/connexion` vers une URL plus classique
+`web/controleurFrontal.php/connexion` vers une URL plus classique
 `web/connexion`. Pour ceci, nous allons configurer *Apache* pour rediriger la
-requête `web/connexion` vers l'URL `web/controlerFrontal.php/connexion`.
+requête `web/connexion` vers l'URL `web/controleurFrontal.php/connexion`.
 
 <div class="exercise">
 
@@ -458,14 +466,18 @@ requête `web/connexion` vers l'URL `web/controlerFrontal.php/connexion`.
    *Symfony*]({{ site.baseurl }}/assets/TD1/htaccessURLRewrite) à
    la place de `web/.htaccess`.
 
-   **Remarque :** Si la réécriture d'URL sur votre machine personnelle ne marche
+   **Remarque :**
+   * Si la réécriture d'URL ne marche pas à l'IUT (message d'erreur `Internal Server Error`),
+     vous avez peut-être enregistré le fichier dans `.htaccess`
+     au lieu de `web/.htaccess`.
+   * Si la réécriture d'URL sur votre machine personnelle ne marche
      pas, une cause possible est qu'il faut activer le module `mod_rewrite` de
      votre serveur Apache.
 
-1. Testez que la page `web/connexion` marche et que le CSS et les images sont
+2. Testez que la page `web/connexion` marche et que le CSS et les images sont
    revenus. En effet, l'URL de base des liens relatifs est de nouveau `web/`.
 
-2. Changez les liens dans `vueGenerale.php` : 
+3. Changez les liens dans `vueGenerale.php` : 
 
    ```diff
    -<a href="controleurFrontal.php?controleur=publication&action=feed"><span>The Feed</span></a>
@@ -505,6 +517,9 @@ $route->setMethods(["GET"]);
 
 1. Modifiez votre routeur pour avoir les 2 routes `web/connexion` selon la
    méthode *HTTP*.
+
+   **Attention :** Le nom de chaque route doit être unique (`$routes->add("nomRoute", $route);`).
+   Si vous définissez deux routes avec le même nom, la deuxième écrase la première.
 
 2. Corrigez l'URL vers laquelle renvoie
    `src/vue/utilisateur/formulaireConnexion.php`.
