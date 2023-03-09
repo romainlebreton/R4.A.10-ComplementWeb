@@ -13,7 +13,8 @@ Cours *R4.A.10 -- Complément Web* en
 
 
 ## TDs
-1. Lundi 6 février 2023 -- [TD 1](tutorials/tutorial1) -- Composer, Twig
+1. Lundi 6 mars 2023 -- [TD 1](tutorials/tutorial1) -- Routage par URL, Composer
+2. Lundi 13 mars 2023 -- [TD 2](tutorials/tutorial2) -- Réponses *HTTP*, Moteur de template *Twig* 
 
 ## SAÉ du Parcours A
 
