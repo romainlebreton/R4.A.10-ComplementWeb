@@ -1,10 +1,10 @@
 ---
-title: TD2 &ndash; Réponses *HTTP*
-subtitle: Réponses *HTTP*, Moteur de template Twig 
+title: TD2 &ndash; Réponses HTTP
+subtitle: Réponses HTTP, Moteur de template Twig 
 layout: tutorial
 lang: fr
 ---
-
+{% raw %}
 <!-- 
 
 xDebug ? Attention .htaccess !
@@ -52,14 +52,14 @@ L'objectif de ce TD est d'améliorer nos réponses *HTTP* sur plusieurs points :
   *REST*, qui est l'objectif principal de ces 3 premiers TPs ;
 * pouvoir répondre du *JSON*, ce qui est aussi un des fondamentaux des API
   *REST* ;
-* utiliser un moteur de *template* (`Twig`), c'est-à-dire à un langage spécifique pour la
+* utiliser un *template engine* (`Twig`), c'est-à-dire à un langage spécifique pour la
   création de vues.
 
 ## La classe `Response`
 
 Nous allons utiliser la classe `Response` du composant `HttpFoundation` de
 `Symfony`. Selon la 
-[documentation de Symfony](https://symfony.com/doc/current/components/http_foundation.html#response), 
+[documentation de *Symfony*](https://symfony.com/doc/current/components/http_foundation.html#response), 
 un objet `Response` contient toute l'information qui doit être renvoyée au client *HTTP* : des en-têtes, un code de réponse et un corps de réponse. Voici un exemple d'appel au constructeur (tous les arguments sont optionnels) : 
 
 ```php
@@ -187,52 +187,6 @@ cache la redirection et l'effectue lui-même sans envoyer de requête au serveur
 
 ### Utilisation des codes de réponses pour les erreurs
 
-<!-- 
-
-public const HTTP_BAD_REQUEST = 400;
-public const HTTP_UNAUTHORIZED = 401;
-public const HTTP_PAYMENT_REQUIRED = 402;
-public const HTTP_FORBIDDEN = 403;
-public const HTTP_NOT_FOUND = 404;
-public const HTTP_METHOD_NOT_ALLOWED = 405;
-
-400 Bad Request
-Cette réponse indique que le serveur n'a pas pu comprendre la requête à cause d'une syntaxe invalide.
-
-401 Unauthorized
-Bien que le standard HTTP indique « non-autorisé », la sémantique de cette réponse correspond à « non-authentifié » : le client doit s'authentifier afin d'obtenir la réponse demandée.
-
-402 Payment Required Expérimental
-Ce code de réponse est réservé à une utilisation future. Le but initial justifiant la création de ce code était l'utilisation de systèmes de paiement numérique. Cependant, il n'est pas utilisé actuellement et aucune convention standard n'existe à ce sujet.
-
-403 Forbidden
-Le client n'a pas les droits d'accès au contenu, donc le serveur refuse de donner la véritable réponse.
-
-404 Not Found
-Le serveur n'a pas trouvé la ressource demandée. Ce code de réponse est principalement connu pour son apparition fréquente sur le web.
-
-405 Method Not Allowed
-La méthode de la requête est connue du serveur mais n'est pas prise en charge pour la ressource cible. Par exemple, une API peut ne pas autoriser l'utilisation du verbe DELETE pour supprimer une ressource.
-
-/**
- * @throws NoConfigurationException  If no routing configuration could be found
- * @throws ResourceNotFoundException If the resource could not be found
- * @throws MethodNotAllowedException If the resource was found but the request method is not allowed
- */
-// $donneesRoute = $associateurUrl->matchRequest($requete);
-$donneesRoute = $associateurUrl->match($requete->getPathInfo());
-
-/**
- * @throws \LogicException If a controller was found based on the request but it is not callable
- */
-$controleur = $resolveurDeControleur->getController($requete);
-
-/**
- * @throws \RuntimeException When no value could be provided for a required argument
- */
-$arguments = $resolveurDArguments->getArguments($requete, $controleur);
--->
-
 Les méthodes `UrlMatcher::match()`, `ControllerResolver::getController()` et
 `ArgumentResolver::getArguments()` utilisés dans `RouteurURL` peuvent lever des
 exceptions. Nous allons les traiter en envoyant une réponse *HTTP* adéquate, en
@@ -260,14 +214,35 @@ faisant particulièrement attention au code de réponse.
 
 </div>
 
+
+<!-- 
+/**
+ * @throws NoConfigurationException  If no routing configuration could be found
+ * @throws ResourceNotFoundException If the resource could not be found
+ * @throws MethodNotAllowedException If the resource was found but the request method is not allowed
+ */
+// $donneesRoute = $associateurUrl->matchRequest($requete);
+$donneesRoute = $associateurUrl->match($requete->getPathInfo());
+
+/**
+ * @throws \LogicException If a controller was found based on the request but it is not callable
+ */
+$controleur = $resolveurDeControleur->getController($requete);
+
+/**
+ * @throws \RuntimeException When no value could be provided for a required argument
+ */
+$arguments = $resolveurDArguments->getArguments($requete, $controleur);
+-->
+
 Nous allons maintenant traiter ces exceptions avec une réponse *HTTP* adaptée.
 Les codes de réponse qui signalent une erreur de l'utilisateur sont en `4xx`.
 Voici quelques codes de réponse *HTTP* utiles : 
-* `400 Bad Request`  (attribut `HTTP_BAD_REQUEST` de la classe `Response`)
+* `400 Bad Request` (attribut `HTTP_BAD_REQUEST` de la classe `Response`)
    Cette réponse indique que le serveur n'a pas pu comprendre la requête à cause d'une syntaxe invalide.
 
 * `401 Unauthorized` (attribut `HTTP_UNAUTHORIZED`)  
-   Bien que le standard HTTP indique « non-autorisé », la sémantique de cette réponse correspond à « non-authentifié » : le client doit s'authentifier afin d'obtenir la réponse demandée.
+   Bien que le standard HTTP indique « non autorisé », la sémantique de cette réponse correspond à « non authentifié » : le client doit s'authentifier afin d'obtenir la réponse demandée.
 
 * `403 Forbidden` (attribut `HTTP_FORBIDDEN`)  
    Le client n'a pas les droits d'accès au contenu, donc le serveur refuse de
@@ -278,9 +253,9 @@ Voici quelques codes de réponse *HTTP* utiles :
    principalement connu pour son apparition fréquente sur le web.
 
 * `405 Method Not Allowed` (attribut `HTTP_METHOD_NOT_ALLOWED`)  
-   La méthode de la requête est connue du serveur mais n'est pas prise en charge
+   La méthode de la requête est connue du serveur, mais n'est pas prise en charge
    pour la ressource cible. Par exemple, une API peut ne pas autoriser
-   l'utilisation du verbe DELETE pour supprimer une ressource.
+   l'utilisation du verbe `DELETE` pour supprimer une ressource.
    
 * `409 Conflict` (attribut `HTTP_CONFLICT`)  
   Quand la requête entraîne un conflit entre les ressources. L'exemple typique est celle de deux utilisateurs ayant la même adresse mail, alors que ce champ est unique dans la BDD.
@@ -336,3 +311,603 @@ Voici quelques codes de réponse *HTTP* utiles :
    d'erreur et le code de retour avec les outils de développement.
 
 </div>
+
+## Un langage de gabarit : *Twig*
+
+Le principe des langages de gabarit (*template engines*) est de fournir un langage adapté aux vues.
+Voyons les contraintes d'un bon langage de gabarits : 
+
+* **Concision** : Au lieu du code PHP, `<?php echo $var ?>`, *Twig* propose un
+  code concis
+  ```twig
+  {{ var }}
+  ```
+  
+* **Syntaxe adaptée** aux besoins courants : 
+  Par exemple, disons que vous voulez itérer sur un tableau et afficher un texte par défaut lorsque le tableau est vide.
+
+   ```twig
+   {% for item in items %}
+   - {{ item }}
+   {% else %}
+   No item has been found.
+   {% endfor %}
+   ```
+
+* **Réutilisation** : 
+  L'héritage de gabarit permet de reprendre une mise en page existante (comme `vueGenerale.php`) en spécifiant des parties (le titre, le corps de la page, ...)
+
+* **Sécurité** : La sécurité est activée par défaut, en particulier
+  l'échappement des caractères spéciaux du *HTML*. Ceci viser à protéger les
+   non-développeurs des menaces web courantes telles que XSS ou CSRF dont ils ne
+   sont pas nécessairement conscients.
+
+* **Rapide** : 
+  *Twig* compile les gabarits en code PHP simple, ce qui permet leur évaluation à un surcoût minimum.
+
+* Favoriser la **séparation des préoccupations** (*separation of concerns*) :  
+
+  Dans les grands projets Web, des développeurs (*web developer*) travaillent
+  sur le code (les contrôleurs et le modèle) et les concepteurs (*web designer*)
+  sur l'aspect visuel.
+
+   Un langage de gabarit permet d'écrire des gabarits qui respectent cette
+   séparation des préoccupations. Un langage de gabarit doit trouver un bon
+   équilibre entre offrir suffisamment de fonctionnalités pour faciliter
+   l'implémentation de la logique de présentation, et limiter les
+   fonctionnalités avancées pour éviter l'apparition de logique métier dans les
+   gabarits. On fournit aux vues la liste des variables qu'elles peuvent
+   utiliser. Idéalement, la vue n'accède aux variables qu'en lecture, ce qui
+   évite de modifier l'état du système.
+
+   <!-- Les concepteurs de sites web (*web designer*) doivent comprendre Twig et un peu
+   de PHP. Mais s'ils doivent comprendre l'architecture MVC et la séparation des préoccupations, alors ce ne sont plus de *web designer*, mais des développeurs de sites web (*web developer*). -->
+
+Sources : 
+* [Blog de Fabien Potentier (fondateur de *Symfony*) sur la naissance de *Twig*](http://fabien.potencier.org/templating-engines-in-php.html)
+* [Documentation officielle de *Twig*](https://twig.symfony.com/doc/3.x/)
+
+
+
+
+
+
+### Initialisation de *Twig*
+
+<!-- 
+SRP de RouteurURL loupé : 
+* traiterRequete($requete, $contexteRequete)
+* Twig, requete, contexteRequete dans un autre fichier (init ? controleurFrontal ?)
+-->
+
+<div class="exercise">
+
+1. Installez le paquet *Twig* avec la commande
+   ```bash
+   composer require twig/twig
+   ```
+
+2. Initialisez *Twig* dans `RouteurURL.php`. : 
+   ```php
+   use Twig\Environment;
+   use Twig\Loader\FilesystemLoader;
+
+   $twigLoader = new FilesystemLoader(__DIR__ . '/../vue/');
+   $twig = new Environment(
+       $twigLoader,
+       [
+           'autoescape' => 'html',
+           'strict_variables' => true
+       ]
+   );
+   Conteneur::ajouterService("twig", $twig);
+   ```
+
+   <!-- TODO : autoescape html par défaut ? -->
+
+   **Explication :** Ce code indique le répertoire de base des vues *Twig* à
+   l'aide du `FilesystemLoader`. Puis, nous créons l'objet `$twig` en lui
+   indiquant [des
+   options](https://twig.symfony.com/doc/3.x/api.html#environment-options) :
+   échappement automatique des variables pour du *HTML* et signaler avec une
+   exception les variables invalides. Enfin, nous stockons ce service dans le
+   `Conteneur` pour pouvoir s'en resservir dans une autre partie du code.
+
+3. Dans le `ControleurGenerique`, créez une nouvelle méthode `afficherTwig` : 
+
+    ```php
+    protected static function afficherTwig(string $cheminVue, array $parametres = []): Response
+    {
+        /** @var Environment $twig */
+        $twig = Conteneur::recupererService("twig");
+        return new Response($twig->render($cheminVue, $parametres));
+    }
+    ```
+
+   **Explication :** La méthode `render` de *Twig* exécute une vue et renvoie la
+   chaîne de caractères produite.
+
+</div>
+
+### Premier gabarit *Twig*, héritage de gabarit
+
+Nous allons créer notre premier gabarit *Twig* qui correspond à
+`formulaireConnexion.php`. Pour que cette vue s'insère sans une mise-en-page
+générale (anciennement `vueGenerale.php`), nous allons utiliser le mécanisme
+d'héritage de gabarit.
+
+<!-- Reprenons l'exemple fourni par la 
+[documentation de *Twig*](https://twig.symfony.com/doc/3.x/tags/extends.html) :  -->
+
+Nous allons remplacer `src/vue/vueGenerale.php` par le fichier
+`src/vue/base.html.twig` suivant : 
+
+```twig
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <title>{% block page_title %}The Feed{% endblock %}</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css" href="{# lien vers le CSS #}">
+</head>
+<body>
+<header>
+    <div id="titre" class="center">
+        <a href="{# lien #}"><span>The Feed</span></a>
+        <nav>
+            <a href="{# lien #}">Accueil</a>
+            {# si l'utilisateur est connecte #}
+            <a href="{# lien #}">Ma page</a>
+            <a href="{# lien #}">Déconnexion</a>
+            {# sinon #}
+            <a href="{# lien #}">Inscription</a>
+            <a href="{# lien #}">Connexion</a>
+            {# fin si #}
+        </nav>
+    </div>
+</header>
+<div id="flashes-container">
+    {# boucle sur les types de messages flash #}
+        {# boucle sur les messages flash de ce type #}
+            <span class="flashes flashes-{# type du message #}">{# message flash #}</span>
+        {# fin boucle #}
+    {# fin boucle #}
+</div>
+{% block page_content %}{% endblock %}
+</body>
+</html>
+```
+
+*Remarque :* c'est normal que plusieurs aspects de la page soient cassés (menu,
+lien, CSS). Nous implémenterons toutes les fonctionnalités entre commentaire
+*Twig* `{# #}` dans la suite.
+
+Les balises *Twig* `{% block page_title %}{% endblock %}` définissent un bloc,
+c'est-à-dire une partie de la page qui pourra être remplacée dans une autre vue.
+Nous allons justement reprendre cette vue et remplacer le titre et le contenu de
+la page dans une nouvelle vue `src/vue/utilisateur/connexion.html.twig` : 
+
+```twig
+{% extends "base.html.twig" %}
+
+{% block page_title %}Connexion{% endblock %}
+
+{% block page_content %}
+    <main>
+        <form action="{# lien vers la page de traitement #}" id="form-access" class="center" method="post">
+            <fieldset>
+                <legend>Connexion</legend>
+                <div class="access-container">
+                    <label for="login">Login</label>
+                    <input id="login" type="text" name="login" required/>
+                </div>
+                <div class="access-container">
+                    <label for="password">Mot de passe</label>
+                    <input id="password" type="password" name="password" required/>
+                </div>
+                <input id="access-submit" type="submit" value="Se connecter">
+            </fieldset>
+        </form>
+    </main>
+{% endblock %}
+```
+
+La balise Twig `{% extends %}` permet d'hériter d'un gabarit. On peut alors
+remplacer le contenu d'un bloc en le redéfinissant.
+
+<div class="exercise">
+
+1. Créez les vues `src/vue/base.html.twig` et `src/vue/utilisateur/connexion.html.twig` comme précédemment.
+1. Changer la méthode `afficherFormulaireConnexion` du `ControleurUtilisateur`
+   pour appeler cette vue à l'aide de `afficherTwig`.
+  
+   *Rappel :* Le chemin de la vue est relatif au dossier `src/vue/` que nous
+   avions donné à `FilesystemLoader`.
+
+1. L'URL `web/connexion` doit afficher le formulaire de connexion, mais sans CSS.
+
+</div>
+
+### Syntaxe de base de *Twig*
+
+* L'instruction `{{ donnee }}` permet d'afficher une donnée. Elle sera
+  automatiquement échappée pour le *HTML*.
+
+  On peut accéder à une méthode d'un objet avec `{{ donnee.methode() }}`, et à
+  un attribut avec `{{ donnee.attribut }}`. *Twig* essayera d'abord de trouver
+  un attribut public `$donnes->attribut`, puis appellera sinon
+  `$donnes->getAttribut()`, `$donnes->isAttribut()` et `$donnes->hasAttribut()`
+  (*cf.* [documentation de Twig](https://twig.symfony.com/doc/3.x/templates.html#variables)).
+
+* La structure conditionnelle `if` permet de ne générer une partie du document que si une condition est remplie :
+
+   ```twig
+   {% if test %}
+      Code HTML....
+   {% endif %}
+   ```
+
+   Il est bien sûr possible de construire des conditions complexes avec les
+   opérateurs : `not`, `and`, `or`, `==`, `<`, `>`, `<=`, `>=`, etc... par
+   exemple :
+
+   ```twig
+   {% if test and (not (user.getName() == 'Smith') or user.getAge() <= 20) %}
+      Code HTML....
+   {% endif %}
+   ```
+
+* La structure conditionnelle `for` permet de parcourir une structure itérative (par exemple, un tableau) :
+
+   ```twig
+   {% for data in tab %}
+      <p>{{ data }}</p>
+   {% endfor %}
+   ```
+
+   Comme indiqué dans la présentation de *Twig*, une syntaxe `{% else %}` permet de traiter le cas particulier d'un tableau vide :  
+
+   ```twig
+   {% for data in tab %}
+      <p>{{ data }}</p>
+   {% else %}
+   No data has been found.
+   {% endfor %}
+   ```
+
+<div class="exercise">
+
+1. Créez une nouvelle vue `src/vue/publication/feed.html.twig` avec le contenu suivant : 
+
+   ```twig
+   {% extends "base.html.twig" %}
+
+   {% block page_title %}The Feed{% endblock %}
+
+   {% block page_content %}
+      <main id="the-feed-main">
+         <div id="feed">
+               {# si l'utilisateur est connecté #}
+                  <form id="feedy-new" action="{# lien #}" method="post">
+                     <fieldset>
+                           <legend>Nouveau feedy</legend>
+                           <div>
+                              <textarea required id="message" minlength="1" maxlength="250" name="message"
+                                       placeholder="Qu'avez-vous en tête?"></textarea>
+                           </div>
+                           <div>
+                              <input id="feedy-new-submit" type="submit" value="Feeder!">
+                           </div>
+                     </fieldset>
+                  </form>
+               {# fin si #}
+               {# boucle sur les publications #}
+                  <div class="feedy">
+                     <div class="feedy-header">
+                           <a href="{# lien vers pagePerso #}">
+                              <img class="avatar"
+                                    src="{# lien vers l'image de profil de l'auteur de la publication #}"
+                                    alt="avatar de l'utilisateur">
+                           </a>
+                           <div class="feedy-info">
+                              <span>{# login de l'auteur de la publication #}</span>
+                              <span> - </span>
+                              <span>{# date de la publication #}</span>
+                              <p>{# message de la publication #}</p>
+                           </div>
+                     </div>
+                  </div>
+               {# s'il n'y a pas de publication #}
+                  <p id="no-publications" class="center">Pas de publications pour le moment!</p>
+               {# fin de boucle #}
+         </div>
+      </main>
+   {% endblock %}
+   ```
+1. Changer les action `ControleurPublication::feed()` et
+   `ControleurUtilisateur::pagePerso` pour appeler cette vue.
+
+2. Codez avec la syntaxe *Twig* la boucle des publications, son cas particulier
+   quand il n'y a pas de publication, et les affichages liés aux publications.
+   
+   *Note :* les liens et la gestion de l'utilisateur connecté seront fait plus
+   tard. 
+
+</div>
+
+
+### Les filtres de *Twig*
+
+Les variables peuvent être modifiées par des filtres. Les filtres sont
+séparés de la variable par un symbole de pipe `|`. Plusieurs filtres peuvent
+être enchaînés, auquel cas la sortie d'un filtre est appliquée au suivant.
+Par exemple, 
+
+```twig
+{{ donnee|lower|truncate(20) }} {# minuscule puis tronque à 20 caractères #}
+```
+
+Le [filtre `escape`](https://twig.symfony.com/doc/3.x/filters/escape.html) (ou
+son raccourci `e`) permet d'appliquer un échappement personnalisé :  
+
+```twig
+{{ user.username|e('js') }} {# échappement dans un contexte JavaScript #}
+{{ user.username|e('css') }} {# contexte CSS #}
+{{ user.username|e('url') }} {# contexte bout d'URL, par ex. query string #}
+{{ user.username|e('html_attr') }} {# contexte attribut d'une balise HTML #}
+```
+
+Le [filtre `date`](https://twig.symfony.com/doc/3.x/filters/date.html) formate
+une date avec un [format personnalisé](https://www.php.net/manual/fr/datetime.format.php).
+La documentation liste [les filtres de
+*Twig*](https://twig.symfony.com/doc/3.x/filters/index.html) fournis par défaut.
+
+<div class="exercise">
+
+1. Ajoutez un filtre à la date de la publication pour que la date soit affichée comme suit : `09 March 2023`.
+
+   *Aide :* Allez voir les liens précédents sur la documentation pour trouver le bon format.
+
+   <!-- date('d F Y') -->
+
+</div>
+
+### Étendre la syntaxe de *Twig*
+
+*Twig* peut être étendu de nombreuses façons : vous pouvez ajouter des filtres,
+des fonctions, des variables globales. Ou, plus rarement, des balises, des
+tests et des opérateurs.
+
+À la [manière de *Symfony*](https://symfony.com/doc/current/reference/twig_reference.html), 
+nous allons rajouter des fonctions à *Twig* pour gérer les liens liés aux routes ou aux *assets*.
+
+La syntaxe pour 
+[rajouter une fonction](https://twig.symfony.com/doc/3.x/advanced.html#functions) 
+est 
+```php
+use Twig\TwigFunction;
+
+$twig->addFunction(new TwigFunction("route", $callable));
+```
+où `$callable` est une variable au 
+[format `callable`](https://www.php.net/manual/en/language.types.callable.php#example-71) 
+(comme avec `call_user_func()` au TD1).
+Pour exemple, pour donner la méthode d'un objet, on peut utiliser la syntaxe
+```php
+$callable = [$objet, "nomMethode"];
+```
+ou la 
+[syntaxe `callable` de première classe](https://www.php.net/manual/fr/functions.first_class_callable_syntax.php) 
+apparue avec PHP 8.1
+```php
+$callable = $objet->nomMethode(...); // Les ... font parti de la syntaxe
+```
+
+La fonction est alors disponible dans *Twig*, par exemple comme ceci : 
+```twig
+{{ route("feed") }}
+```
+
+<div class="exercise">
+
+1. Dans `RouteurURL`, ajoutez deux fonctions à *Twig* : 
+   * une fonction `route` pour la méthode `$generateurUrl->generate()` ;
+   * une fonction `asset` pour la méthode `$assistantUrl->getAbsoluteUrl()` ;
+
+1. Utilisez ces fonctions dans toutes vos vues *Twig* pour réparer tous les
+   liens (CSS, menu, action du formulaire).
+
+   *Aide* : 
+   * pour la route vers l'action `pagePerso`, la méthode
+   `$generateurUrl->generate()` attend un tableau associatif comme deuxième
+   argument. Les tableaux associatifs se créent avec la syntaxe JSON
+   ```twig
+   {'nomCle' : 'valeur'}
+   ```
+   * pour l'*asset* correspondant à la photo de profil, vous aurez besoin de
+     concaténer des chaînes de caractères avec `~` en *Twig*.
+
+
+2. Testez votre site ; le CSS et les liens doivent remarcher.
+
+</div>
+
+Il ne nous reste plus qu'à restaurer les utilisateurs connectés et les messages
+Flash. Pour ceci, nous allons rajouter des variables globales à *Twig* :
+```php
+$twig->addGlobal('nomVariableTwig', $variablePHP);
+```
+
+
+<div class="exercise">
+
+1. Dans `RouteurURL`, rajoutez une variable globale contenant l'identifiant de
+   l'utilisateur connecté (cf. la classe `ConnexionUtilisateur`).
+
+   *Rappel :* Par convention dans notre site, cette variable vaut `null` si
+   l'utilisateur n'est pas connecté.
+
+1. Mettez à jour `base.html.twig` et `publication/feed.html.twig` pour prendre
+   en compte si l'utilisateur est connecté au niveau de l'interface.
+
+   *Aide :* Pour tester si un objet n'est pas `null`, vous pouvez faire
+   ```twig
+   {% if objectVariable is not null %}
+   ```
+   ou 
+   ```twig
+   {% if objectVariable %}
+   ```
+   car la conversion d'un objet en booléen est `true` si et seulement l'objet
+   est non nul (comme en PHP).
+
+</div>
+
+Pour rajouter les messages Flash, nous pourrions être tentés de faire
+```php
+$twig->addGlobal('messagesFlash', MessageFlash::lireTousMessages());
+```
+dans `RouteurURL`. Cependant, nous aimerions que les messages *Flash* soient lus
+au moment de l'évaluation des vues, et non pas au début du script PHP. Du coup,
+nous proposons de stocker une instance de `MessageFlash` : 
+```php
+$twig->addGlobal('messagesFlash', new MessageFlash());
+```
+et d'appeler la méthode `lireMessage()` dans la vue *Twig* avec `messagesFlash.lireMessage()`.
+
+<div class="exercise">
+
+1. Dans `RouteurURL`, rajoutez une variable globale `messagesFlash`.
+
+2. Dans `base.html.twig`, affichez les messages *Flash*.
+  
+3. Créez la dernière vue manquante
+   `src/vue/utilisateur/inscription.html.twig`. Changez l'action
+   `ControleurUtilisateur::afficherFormulaireCreation()` pour appeler cette vue.
+
+4. Il ne reste plus qu'à gérer la vue d'erreur, qui est appelée en cas d'exception : 
+   * créez une vue d'erreur `src/vue/erreur.html.twig` qui étend
+     `base.html.twig` et affiche une variable `errorMessage` qui lui sera donné
+     en paramètre.
+   * Modifiez la méthode `ControleurGenerique::afficherErreur()` pour appeler
+     cette vue.
+   * Testez si la vue d'erreur fonctionne en demandant par exemple une route inconnue.
+
+</div>
+
+## Bonus : pour le projet ?
+
+
+
+2. Il est facile d'adopter une approche par composant dans les vues,
+   c'est-à-dire de définir des bouts de vues facilement réutilisables.
+
+   Allez voir la documentation des 
+   [macros](https://twig.symfony.com/doc/3.x/tags/macro.html), 
+   de la [fonction `include`](https://twig.symfony.com/doc/3.x/functions/include.html) ou de la 
+   [balise `embed`](https://twig.symfony.com/doc/3.x/tags/embed.html). 
+
+3. La compilation des vues *Twig* peut être précalculée et [stockée dans un
+   cache](https://twig.symfony.com/doc/2.x/api.html#basics). Utilisez la
+   [configuration `auto_reload`](https://twig.symfony.com/doc/3.x/api.html#environment-options)
+   lors du développement pour mettre à jour le cache
+   à chaque changement de code source des vues.
+4. La [fonction `dump`](https://twig.symfony.com/doc/3.x/functions/dump.html)
+   facilite le débogage en affichant un résultat similaire à `var_dump()`.
+
+<!-- 
+
+1. Si vous trouvez que la liste des routes s'allonge, vous pouvez 
+
+   https://github.com/symfony/framework-bundle/blob/6.2/Routing/AnnotatedRouteControllerLoader.php
+
+AnnotationRegistry::registerLoader([$loader, 'loadClass']);
+$loader = new AnnotationDirectoryLoader(
+    new FileLocator(__DIR__ . '/src/Controller/'),
+    new AnnotatedRouteControllerLoader(
+        new AnnotationReader()
+    )
+);
+$routes = $loader->load(__DIR__ . '/src/Controller/');
+https://code.tutsplus.com/tutorials/set-up-routing-in-php-applications-using-the-symfony-routing-component--cms-31231
+-->
+
+<!-- 
+TODO : formulaire d'inscription sans auto-complétion  (car affichage et traitement séparés 
+TODO : pagePerso renvoie sur feed.html.twig
+* if login sur le titre
+-->
+
+<!-- 
+
+### Twig reference
+Tags
+https://twig.symfony.com/doc/3.x/tags/index.html
+* Composants : embed / include / extends
+  * A block provides a way to change how a certain part of a template is
+    rendered but it does not interfere in any way with the logic around it.
+
+    The block inside the for loop is just a way to make it overridable by a
+    child template:
+    https://twig.symfony.com/doc/3.x/tags/extends.html#how-do-blocks-work 
+    
+* for : 
+  * {% for i in 0..10 %} {% endfor %}
+  * {% for user in users %} {% endfor %}
+  * If no iteration took place because the sequence was empty, you can render a replacement block by using else:
+      <ul>
+         {% for user in users %}
+            <li>{{ user.username|e }}</li>
+         {% else %}
+            <li><em>no user found</em></li>
+         {% endfor %}
+      </ul>
+
+   * if : The rules to determine if an expression is true or false are the same as in PHP; here are the edge cases rules:
+     empty string false, /!\ string "0" or '0'	false
+     empty array false / non-empty array true
+     null false/ object true
+
+   * macro !!!
+
+Filters
+https://twig.symfony.com/doc/3.x/filters/index.html
+
+Variables can be modified by filters. Filters are separated from the variable by
+a pipe symbol (|). Multiple filters can be chained. The output of one filter is
+applied to the next.
+
+* date : format https://www.php.net/manual/fr/datetime.format.php
+* 
+
+Functions
+https://twig.symfony.com/doc/3.x/functions/index.html
+* include function, rather than tag, which outputs the rendered content of that file
+  https://twig.symfony.com/doc/3.x/functions/include.html
+
+Tests
+https://twig.symfony.com/doc/3.x/tests/index.html
+* is equiv to ==
+* same as() equiv to ===
+* empty
+
+Operators
+
+
+Twig for Developers
+* Environment Options : 
+  * debug : the generated templates have a __toString() method
+  * cache avec auto_reload
+  * autoescape : name (based on the template filename extension), html, js, css, url, html_attr,
+
+Twig Reference for Symfony 
+https://symfony.com/doc/current/reference/twig_reference.html
+* absolute_url, asset
+* csrf_token
+* form : Exercice Form rendering using https://symfony.com/doc/current/form/form_customization.html
+* path
+* url / absolute_url (équivalent de notre route) 
+-->
+
+
+{% endraw %}
