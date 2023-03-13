@@ -34,8 +34,10 @@ Comme toute librairie PHP, **PHPUnit** s'installe à l'aide de **composer**. Nou
 1. A la racine de votre projet, exécutez la commande suivante :
 
     ```bash
-    composer require phpunit/phunit:9.0
+    composer require phpunit/phpunit:9.6.5
     ```
+
+    S'il vous est demandé si vous préférez placer le package dans `require-dev`, vous pouvez répondre `yes`. Cela permet de différencier dans le `composer.json` les dépendances liées aux fonctionnement global de l'application (celles de la section `require`) et celles exclusivement liées à la phase de développement, au test, etc...(comme `phpunit`). La commande `composer install` installe toutes les dépendances, mais si on utilise l'option `--no-dev`, seules les dépendances de `require` seront installées.
    
 2. Dans le dossier `src`, créez un dossier `Test`.
 
@@ -43,7 +45,9 @@ Comme toute librairie PHP, **PHPUnit** s'installe à l'aide de **composer**. Nou
 
 4. Nommez la nouvelle configuration **Tests unitaires**. Au niveau de l'option `Test Scope` sélectionnez `Directory` puis indiquez le chemin du dossier `Test` créé précedemment. Concernant l'option `Prefred Coverage Engine` sélectionnez `PHPDBG` et enfin, au niveau de la case `Interpreter`, veillez à bien indiquer `PHP 8.1`. Appliquez et validez.
 
-5. Exécutez le projet en choissisant la configuration `Tests unitaires` (bouton "play" en haut à droite). Vous devriez obtenir un message vous informant qu'aucun tests n'a été éxécuté (c'est normal, pour le moment!)
+5. Rendez-vous dans `File` -> `Settings` -> `PHP` -> `Test Framework`. Cochez la case `Use Composer autoloader`. Appliquez et validez.
+
+6. Exécutez le projet en choissisant la configuration `Tests unitaires` (bouton "play" en haut à droite). Vous devriez obtenir un message vous informant qu'aucun tests n'a été éxécuté (c'est normal, pour le moment!)
 
 </div>
 
