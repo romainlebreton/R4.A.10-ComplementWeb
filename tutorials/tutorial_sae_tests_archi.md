@@ -43,7 +43,7 @@ Comme toute librairie PHP, **PHPUnit** s'installe à l'aide de **composer**. Nou
 
 3. Sur votre IDE, cliquez sur `Run` puis `Edit Configurations`. Ajoutez une nouvelle configuration (bouton `+`) et sélectionnez `PHPUnit`.
 
-4. Nommez la nouvelle configuration **Tests unitaires**. Au niveau de l'option `Test Scope` sélectionnez `Directory` puis indiquez le chemin du dossier `Test` créé précédemment. Concernant l'option `Prefred Coverage Engine` sélectionnez `PHPDBG` et enfin, au niveau de la case `Interpreter`, veillez à bien indiquer `PHP 8.1`. Appliquez et validez.
+4. Nommez la nouvelle configuration **Tests unitaires**. Au niveau de l'option `Test Scope` sélectionnez `Directory` puis indiquez le chemin du dossier `Test` créé précédemment. Concernant l'option `Prefered Coverage Engine` sélectionnez `PHPDBG` et enfin, au niveau de la case `Interpreter`, veillez à bien indiquer `PHP 8.1`. Appliquez et validez.
 
 5. Rendez-vous dans `File` → `Settings` → `PHP` → `Test Framework`. Cochez la case `Use Composer autoloader`. Appliquez et validez.
 
@@ -478,6 +478,8 @@ Il faut également se poser la question de **la portée** des tests. Doit-on (pe
 <div class="exercise">
 
 1. Lancez vos tests unitaires **avec couverture de code**. Pour cela, rendez-vous dans le menu `Run` puis `Run ... with  Coverage`.
+
+   *Aide :* Si `Run ... with  Coverage` tourne longtemps puis s'arrête avec une erreur `Memory exhausted`, il faut dans *PHPStorm* faire clic droit sur le dossier `src/` → `Mark Directory As` → `Sources Root`.
 
 2. Un panneau d'analyse s'ouvre à droite. Explorez son contenu.
 
