@@ -1,6 +1,6 @@
 ---
-title: Seance SAÉ &ndash; Tests unitaires, Architecture, Injection de dépendances
-subtitle: PHPUnit, Services, Conteneur, Mocks
+title: Consignes de la SAÉ
+subtitle: 
 layout: tutorial
 lang: fr
 ---
