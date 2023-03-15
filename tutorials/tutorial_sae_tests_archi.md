@@ -993,7 +993,7 @@ Généralement, pour la base de données de tests, deux choix sont possibles :
 
 * On réalise nos tests avec une base de données **SQLite** qui est une base de données stockée dans un fichier qui ne nécessite pas de serveur.
 
-Généralement, quand cela est possible, on préfère choisir la seconde option, mais ce n'est pas toujours envisageable, notamment quand la structure de la base de données ou les requêtes utilisent des concepts spécifiques à un SGBD donné (c'est le cas dans votre *SAÉ*). Dans ce cas, on réalisera une copie locale de la structure de la base, sur le même type de SGBD.
+Généralement, quand cela est possible, on préfère choisir la seconde option, mais ce n'est pas toujours envisageable, notamment quand la structure de la base de données ou les requêtes utilisent des concepts spécifiques à un SGBD donné (c'est le cas dans votre *SAÉ* avec *PostGIS*). Dans ce cas, on réalisera une copie locale de la structure de la base, sur le même type de SGBD.
 
 En tout cas, dans le contexte de l'application **The Feed**, il vous faudra créer un fichier de configuration dédié ou bien un mock de `ConfigurationBDDInterface`.
 
