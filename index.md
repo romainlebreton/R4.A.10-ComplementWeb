@@ -22,3 +22,5 @@ Cours *R4.A.10 -- Complément Web* en
    [Slides](classes/SAE4A.html)  
    [Enregistrement du cours](https://scalelite.umontpellier.fr/playback/presentation/2.3/e49b10a7c1ccf0690a9d9fd7621261207c1f81ec-1675846964015)
 2. Lundi 13 mars 2023 -- [TD SAE](tutorials/tutorial_sae_tests_archi) -- Tests unitaires, Architecture, Injection de dépendances
+3. [Fiche d'aide SAÉ : mise en route](https://docs.google.com/document/d/10r3KsMhyRJp3YKPRL6erLP3su77PbnM2_-oE6xxXfVI/edit?usp=sharing)
+   -- PostgreSQL, xDebug, serveur Web local, Windows
