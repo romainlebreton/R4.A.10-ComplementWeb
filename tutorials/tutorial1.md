@@ -758,12 +758,28 @@ besoin.
    ```
 
 1. Initialisez les deux services `$assistantUrl` et `$generateurUrl` dans
-   `RouteurUrl` (*cf.* code plus haut). Puis stockez-les dans le conteneur avec
-   le nom que vous souhaitez.
+   `RouteurUrl` (*cf.* code plus haut). Puis stockez-les dans le conteneur.
 
-1. Récupérez les deux services en haut de la vue `vueGenerale.php`. Puis
-   utilisez-les dans toutes les vues pour passer tous les liens en URL
-   absolues (`<a href="">`, `<img src="">`, `<form action="">` et `<link
+   ```php
+   $generateurUrl = new UrlGenerator($routes, $contexteRequete);
+   $assistantUrl = new UrlHelper(new RequestStack(), $contexteRequete);
+
+   Conteneur::ajouterService("generateurUrl", $generateurUrl);
+   Conteneur::ajouterService("assistantUrl", $assistantUrl);
+   ```
+
+2. Récupérez les deux services en haut de la vue `vueGenerale.php`. 
+
+   ```php
+   /** @var UrlGenerator $generateurUrl */
+   $generateurUrl = Conteneur::recupererService("generateurUrl");
+   /** @var UrlHelper $assistantUrl */
+   $assistantUrl = Conteneur::recupererService("assistantUrl");
+   ```
+
+   Puis utilisez-les dans toutes les vues pour passer tous les liens en URL
+   absolues, soit à partir du nom d'une route, soit à partir du chemin relatif
+   d'un `asset` (`<a href="">`, `<img src="">`, `<form action="">` et `<link
    href="">`).
 
    **Remarques :** 

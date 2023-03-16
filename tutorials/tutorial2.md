@@ -286,16 +286,27 @@ Voici quelques codes de réponse *HTTP* utiles :
    générique : 
    ```php
    try {
-      // 3 méthodes qui lèvent des exceptions
+      $associateurUrl = new UrlMatcher($routes, $contexteRequete);
+      $donneesRoute = $associateurUrl->match($requete->getPathInfo());
+      $requete->attributes->add($donneesRoute);
+
+      $resolveurDeControleur = new ContainerControllerResolver($conteneur);
+      $controleur = $resolveurDeControleur->getController($requete);
+
+      $resolveurDArguments = new ArgumentResolver();
+      $arguments = $resolveurDArguments->getArguments($requete, $controleur);
+
+      $reponse = call_user_func_array($controleur, $arguments);
    } catch (TypeExceptionSpecifique1 $exception) {
       // Remplacez xxx par le bon code d'erreur
       $reponse = ControleurGenerique::afficherErreur($exception->getMessage(), xxx);
    } catch (TypeExceptionSpecifique2 $exception) {
       // Remplacez xxx par le bon code d'erreur
       $reponse = ControleurGenerique::afficherErreur($exception->getMessage(), xxx);
-   } catch (TypeExceptionGenerique $exception) {
+   } catch (\Exception $exception) {
       $reponse = ControleurGenerique::afficherErreur($exception->getMessage()) ;
    }
+   $reponse->send();
    ```
 
 3. Testez votre code en appelant une route qui n'existe pas. Observez le message
