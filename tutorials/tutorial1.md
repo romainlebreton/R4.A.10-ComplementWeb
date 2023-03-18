@@ -779,11 +779,11 @@ besoin.
 
    Puis utilisez-les dans toutes les vues pour passer tous les liens en URL
    absolues, soit à partir du nom d'une route, soit à partir du chemin relatif
-   d'un `asset` (`<a href="">`, `<img src="">`, `<form action="">` et `<link
-   href="">`).
+   d'un `asset`. À la fin, vous devez avoir corrigé tous les liens : `<a href="">`,
+   `<img src="">`, `<form action="">` et `<link href="">`.
 
    **Remarques :** 
-   * `$generateurUrl->generate()` échappe les caractères spéciaux des URLs. Vous
+   * `$generateurUrl->generate()` échappe les caractères spéciaux des URL. Vous
      devez donc lui donner les données brutes, et non celles échappées par
      `rawurlencode()`.
    * `$assistantUrl->getAbsoluteUrl()` n'échappe pas les caractères spéciaux des
