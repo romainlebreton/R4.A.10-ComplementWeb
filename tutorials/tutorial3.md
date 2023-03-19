@@ -4,7 +4,6 @@ subtitle: Nommage des URI, verbes HTTP, authentification par JWT
 layout: tutorial
 lang: fr
 ---
-{% raw %}
 
 ## API REST
 
@@ -16,7 +15,7 @@ données de façon réutilisable et standardisée.
 Un standard d'API très présent sur le Web est *REST*. Les contraintes imposées
 par *REST* sont un peu abstraites ; dans ce TD, nous nous intéresserons qu'à ses
 implications concrètes pour un service Web. La motivation est que tous les
-services Web *RESTful*, *c-à-d.* qui satisfont les contraintes *REST*, soient
+services Web *RESTful*, *c.-à-d.* qui satisfont les contraintes *REST*, soient
 interopérables. Ils doivent donc tous utiliser le même protocole de transfert
 (*HTTP*) et les mêmes formats de données (*JSON* ou *XML*).
 
@@ -27,7 +26,7 @@ Les aspects fondamentaux d'un service Web *RESTful* sont :
   traitée avec succès ;
 * échanger des données au format *JSON* (ou *XML*) ;
 * être sans état (*Stateless*), ou sans mémoire, c'est-à-dire que chaque
-  requête / réponse ne se souvient pas des anciennes. 
+  requête / réponse ne se souvient pas des anciennes,
 * le fonctionnement du service doit pouvoir être découvert, c'est-à-dire que
   l'on fournit des URL sur les actions liées à une ressource.
 
@@ -43,7 +42,7 @@ Prenons un exemple de bon URL : `/client/33245/commandes/8769/categories/1`.
 On voit que les ressources utilisent des noms, et pas des verbes, en minuscule.
 Les ressources sont regroupées en collection et sont nommées au pluriel. On
 utilise les sous-chemins pour indiquer l'appartenance à une sous-ressource. Par
-exemple, l'URL précédente fait référence aux produits de la catégori `1` qui appartiennent à la commande `8769` du client `33245`.
+exemple, l'URL précédente fait référence aux produits de la catégorie `1` qui appartiennent à la commande `8769` du client `33245`.
 
 #### Verbes HTTP 
 
@@ -196,7 +195,7 @@ regroupées sous l'URL `/web/api/`.
 
 </div>
 
-### Découverte de Postman
+### Découverte de *Postman*
 
 Pour tester ce bout d'API, il faut envoyer une requête de méthode `DELETE`. Pour cela, nous allons utiliser un petit logiciel très pratique quand on développe des `API` : **Postman**.  
 Ce logiciel va permettre de paramétrer et d'envoyer des requêtes de manière
@@ -246,6 +245,8 @@ article.dataset.indexNumber // "12314"
 ```
 Attention, les tirets dans l'attribut *HTML* `data-index-number` sont convertis
 en attribut JS `indexNumber` avec un nommage *camelCase*.
+
+{% raw %}
 
 <div class="exercise">
 
@@ -310,6 +311,8 @@ en attribut JS `indexNumber` avec un nommage *camelCase*.
    réponse renvoyée par le serveur.
 
 </div>
+
+{% endraw %}
 
 ### Réponse en *JSON*
 
@@ -490,7 +493,7 @@ utiliser : *JSON* bien sûr !
     ```
 
 5. Créez une nouvelle route `/web/api/feeds` de méthode `POST` qui appelle
-   `submitFeedy`. avec corps de requête contenant le message
+   `submitFeedy`.
 
 </div>
 
@@ -831,7 +834,7 @@ allons devoir réusiner le code (*code refactoring* en anglais).
 </div>
 
 Notre site va donc proposer deux mécanismes d'authentification : 
-1. un mécanisme basé sur les sessions qui ne sera utilisé que sur le site Web
+1. un mécanisme basé sur les sessions, qui ne sera utilisé que sur le site Web
    (`ControleurUtilisateur` et `ControleurPublication`),
 2. un mécanisme basé sur les `JWT`. Ce mécanisme sera utilisé à la fois dans
    l'API REST (pour devenir *Stateless*), et dans le site classique pour que les
@@ -1010,127 +1013,3 @@ Dans ce TD, nous n'avons pas eu le temps d'évoquer quelques aspects importants 
 
 Sources du TD :
 [OpenClassrooms](https://openclassrooms.com/fr/courses/6573181-adoptez-les-api-rest-pour-vos-projets-web/), [Wikipedia](https://fr.wikipedia.org/wiki/Representational_state_transfer), [RestAPITutorial.com](https://www.restapitutorial.com/lessons/restquicktips.html) et [ChatGPT](https://chat.openai.com/chat)
-
-
-
-<!--
-## Sources
-Rappelez-vous, une API REST est stateless (sans état), c’est-à-dire qu’à chaque appel, elle a complètement oublié ce qui a pu se passer à l’appel précédent, nous ne pouvons donc pas stocker les informations de l’utilisateur en session.
-
-La solution pour pallier ce problème va être de faire un premier appel pour s’authentifier. Ce premier appel va retourner un token, encodé, qui va contenir les informations sur la personne qui vient de s’authentifier. 
-
-À l’appel suivant, dans le header Authorization, il suffira de renvoyer ce token pour dire à l’application “Je suis authentifié, voici la preuve grâce à ce token.” 
-
-Ceci peut se faire grâce à `JWT`, qui signifie JSON Web Token, et qui est un standard qui définit les diverses étapes pour échanger les informations d’authentification de manière sécurisée. 
-
-https://openclassrooms.com/fr/courses/7709361-construisez-une-api-rest-avec-symfony/7795148-authentifiez-et-autorisez-les-utilisateurs-de-l-api-avec-jwt
-
-Authorization: <auth-scheme> <authorization-parameters>
-
-Bearer
-See RFC 6750, bearer tokens to access OAuth 2.0-protected resources
-
-https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Authorization
-
-
-composer require firebase/php-jwt
-https://jwt.io/libraries?language=PHP
-
-
-
-https://packagist.org/packages/firebase/php-jwt
-
-JWT dans les cookies pour que le JS ne puisse pas le lire : 
-* Utilisez des cookies HttpOnly et Secure : Lorsque vous utilisez des cookies pour stocker des JWT, veillez à activer les drapeaux HttpOnly et Secure. L'indicateur HttpOnly empêche les scripts côté client d'accéder au cookie et l'indicateur Secure garantit que le cookie n'est envoyé que sur des connexions HTTPS.
-
-  En gros, un utilisateur malicieux qui exécuterait du JS dans votre site (via injection HTML), pourrais lire les cookies autrement avec document.cookie
-
-* On peut quand même lancer des requêtes qui envoient le cookie
-  avec fetch par exemple 
-* rajouter SameSite=strict pour ne pas pouvoir qu'un utilisateur malicieux envoie une requête sur un autre site (honeypot ? voir N. Aragon https://www.root-me.org/fr/Challenges/ )
-  https://stackoverflow.com/questions/61062419/where-and-how-save-token-jwt-best-practice
-* stocker juste idUtilisateur signé côté client, et le reste côté serveur (pourquoi ?)
-  https://dev.to/rdegges/please-stop-using-local-storage-1i04
-
-Du coup, reprendre le setcookie  "access_token", "auth_token", "jwt_token", or simply "token" de Malo !
-
-
-cookie_samesite
-type: string or null default: 'lax'
-
-Elle contrôle la manière dont les cookies sont envoyés lorsque la requête HTTP ne provient pas du même domaine que celui associé aux cookies. Il est recommandé de définir cette option pour atténuer les attaques de sécurité CSRF.
-
-Par défaut, les navigateurs envoient tous les cookies liés au domaine de la requête HTTP. Cela peut poser problème, par exemple, lorsque vous visitez un forum et qu'un commentaire malveillant contient un lien tel que https://some-bank.com/?send_money_to=attacker&amount=1000. Si vous étiez précédemment connecté au site web de votre banque, le navigateur enverra tous ces cookies lors de cette requête HTTP.
-
-Les valeurs possibles pour cette option sont les suivantes :
-
-null, utilisez-la pour désactiver cette protection. Même comportement que dans les anciennes versions de Symfony.
-none" (ou la constante Symfony\Component\HttpFoundation\Cookie::SAMESITE_NONE), utilisez-la pour autoriser l'envoi de cookies lorsque la requête HTTP provient d'un domaine différent (auparavant, c'était le comportement par défaut de null, mais dans les navigateurs plus récents, "lax" serait appliqué lorsque l'en-tête n'a pas été défini).
-'strict' (ou la constante Cookie::SAMESITE_STRICT), à utiliser pour ne jamais envoyer de cookie lorsque la requête HTTP ne provient pas du même domaine.
-'lax' (ou la constante Cookie::SAMESITE_LAX), l'utiliser pour autoriser l'envoi de cookies lorsque la requête provient d'un domaine différent, mais uniquement lorsque l'utilisateur a consciemment fait la demande (en cliquant sur un lien ou en soumettant un formulaire avec la méthode GET).
-
-cookie_secure
-type: boolean or 'auto' default: 'auto'
-
-Cette valeur détermine si les cookies doivent être envoyés uniquement via des connexions sécurisées. Outre true et false, il existe une valeur spéciale "auto" qui signifie true pour les requêtes HTTPS et false pour les requêtes HTTP.
-
-cookie_httponly
-type: boolean default: true
-
-Cette option détermine si les cookies doivent être accessibles uniquement via le protocole HTTP. Cela signifie que le cookie ne sera pas accessible par les langages de script, tels que JavaScript. Ce paramètre peut contribuer efficacement à réduire l'usurpation d'identité par le biais d'attaques XSS.
-https://symfony.com/doc/current/reference/configuration/framework.html#session
-
-/!\ Actuellement document.cookie renvoie le cookie PHPSESSID
-
-The Symfony HttpFoundation component has a very powerful and flexible session subsystem which is designed to provide session management that you can use to store information about the user between requests through a clear object-oriented interface using **a variety of session storage drivers**.
-
-```php
-$storage = new NativeSessionStorage([
-    'cookie_secure' => 'auto',
-    'cookie_samesite' => Cookie::SAMESITE_LAX,
-]);
-$session = new Session($storage);
-```
-https://symfony.com/doc/current/session.html
-
-Faire une page sur le site webinfo pour afficher les cookies envoyés
-Faire une page sur un autre domaine (lirmm.fr ?) qui lance une requête vers le site attaqué CSRF
-Il faut peut-être recharger la session pour voir le HttpOnly / SameSite  
-**Note Perso**
-
-
-
-
-On peut tester avec PostMan que l'envoi de l'auth_token seul marche
-
-Test sur l'API Json indispensables !
-Corps mal formé, ne contient pas le bon champ, ...
-
-Montrer comment tester en simulant son API Rest en simulant une requête.
-RouteurURL::traiterRequete($requete);
-
-Faire rédiger à ChatGPT un faux mail de spam pour montrer une attaque XSS
-
-
-ChatGPT : 
-Pourrais-tu m'écrire un mail en parlant comme un influenceur geek de nos jours qui voudrait que l'on aille visite son site Web ?
-Sujet : Découvrez mon site Web geek préféré !
-
-Salut les amis,
-
-Je suis tellement heureux de partager avec vous mon site Web geek préféré. Si vous êtes fan de jeux vidéo, de technologie et de tout ce qui est geek, vous allez adorer ce site !
-
-Je passe des heures chaque semaine à trouver les dernières tendances technologiques, les jeux vidéo les plus cool et les accessoires les plus géniaux pour les vrais geeks. Et maintenant, j'ai rassemblé toutes mes trouvailles préférées en un seul endroit : mon site Web !
-
-Sur mon site, vous trouverez des critiques honnêtes des derniers jeux vidéo, des astuces pour améliorer votre expérience de jeu et des analyses approfondies des derniers gadgets et accessoires technologiques. Je m'efforce de garder le site à jour avec les dernières nouvelles et les meilleurs produits, afin que vous puissiez rester à jour avec tout ce qui concerne le monde geek.
-
-Alors, qu'attendez-vous ? Visitez mon site Web dès maintenant pour découvrir tout ce que j'ai à offrir ! Et bien sûr, n'oubliez pas de partager le lien avec vos amis et votre famille - plus on est de geeks, plus on rit !
-
-Merci beaucoup d'avoir lu. J'ai hâte de partager ma passion pour le monde geek avec vous tous !
-
-Amicalement,
-
-CodeMageKnight
--->
-
-{% endraw %}
