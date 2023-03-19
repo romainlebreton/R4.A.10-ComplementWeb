@@ -141,11 +141,15 @@ ul.menu {
 }
 
 .centered {
+    max-width: 100%;
+    width: fit-content;
     margin: auto;
     text-align: center;
 }
 
 .blockcenter {
+    max-width: 100%;
+    width: fit-content;
     display: block;
     margin: 0 auto;
 }
