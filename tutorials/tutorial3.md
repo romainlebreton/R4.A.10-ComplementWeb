@@ -7,90 +7,54 @@ lang: fr
 {% raw %}
 
 
-<!-- 
-## Début d'une API *REST*
+Les API permettent la communication entre différents composants de votre
+application et entre votre application et d’autres développeurs, par
+l’utilisation de requêtes et de réponses. Elles donnent un moyen d’accès aux
+données de façon réutilisable et standardisée.
 
-Historiquement 
-SOAP est un autre type d’API, mais est plus utilisé dans les grandes entreprises 
-puis REST / RESTful beaucoup utilisé dans le Web
+Un standard d'API très présent sur le Web est *REST*. Les contraintes imposées
+par *REST* sont un peu abstraites ; dans ce TD, nous nous intéresserons qu'à ses
+implications concrètes pour un service Web. La motivation est que tous les
+services Web *RESTful*, *c-à-d.* qui satisfont les contraintes *REST*, soient
+interopérables. Ils doivent donc tous utiliser le même protocole de transfert
+(*HTTP*) et les mêmes formats de données (*JSON* ou *XML*).
 
-Pourquoi et comment : 
-Les API permettent de communiquer des données.
-Elles permettent la communication entre différents composants de votre application et entre votre application et d’autres développeurs, par l’utilisation de requêtes et de réponses.
-Elles donnent un moyen d’accès aux données de façon réutilisable et standardisée.
-Les développeurs peuvent utiliser des API publiques et privées.
-Les API publiques sont utilisables par tous sans restriction.
-Les API privées sont utilisables seulement par ceux qui ont un accès et y sont autorisés.
-Source : https://openclassrooms.com/fr/courses/6573181-adoptez-les-api-rest-pour-vos-projets-web/6816951-initiez-vous-au-fonctionnement-des-api
+Les aspects fondamentaux d'un service Web *RESTful* sont : 
+* adopter une convention de nommage pour les identifiants de ressources (URI) ;
+* utiliser des verbes HTTP ;
+* utiliser les codes de réponse *HTTP* pour indiquer si une requête a pu être
+  traitée avec succès ;
+* échanger des données au format *JSON* (ou *XML*) ;
+* être sans état (*Stateless*), c'est-à-dire que chaque requête / réponse ne se souvient pas des anciennes. 
+* le fonctionnement du service doit pouvoir être découvert, c'est-à-dire que
+  l'on fournit des URL sur les actions liées à une ressource.
 
-Les avantages clés des API REST sont les suivants :
-la séparation du client et du serveur, qui aide à scaler plus facilement les applications ;
-le fait d’être stateless, ce qui rend les requêtes API très spécifiques et orientées vers le détail ;
-la possibilité de mise en cache, qui permet aux clients de sauvegarder les données, et donc de ne pas devoir constamment faire des requêtes aux serveurs.
-Source : https://openclassrooms.com/fr/courses/6573181-adoptez-les-api-rest-pour-vos-projets-web/6817216-identifiez-les-avantages-d-une-api-rest
 
-Une ressource est un objet de type nominal utilisé pour sauvegarder des données dans une API.
-Une ressource peut contenir des informations supplémentaires.
+
+
+
+Une ressource est un objet de type nominal 
 Les ressources sont regroupées en collection et sont nommées au pluriel.
-Vous pouvez accéder aux ressources dans les API avec des URI.
 Les données REST peuvent être en langage JSON ou XML, mais le JSON est le plus courant.
 Source : https://openclassrooms.com/fr/courses/6573181-adoptez-les-api-rest-pour-vos-projets-web/6817356-utilisez-les-ressources-et-collections-rest
 
-Postman est un logiciel gratuit qui vous permet d’effectuer des requêtes API sans coder.
-Les requêtes prennent la forme suivante :
-Verbe HTTP + URI + Version HTTP + Headers + Body facultatif.
-Les verbes HTTP sont des types d’actions que l’on peut faire lors de la formulation d’une requête.
-Les réponses prennent la forme suivante :
-Code de réponse HTTP + Version HTTP + Headers + Body.
-Les codes de réponse HTTP sont des sortes de feux de signalisation 🚦 avec des codes spécifiques, pour informer les clients si la requête est un succès ou un échec.
-Les codes HTTP sont codifiés en fonction du type de réponse ; vous trouverez la liste ici.
-Source : https://openclassrooms.com/fr/courses/6573181-adoptez-les-api-rest-pour-vos-projets-web/7498761-utilisez-postman-pour-formuler-vos-requetes
 
-[SWAPI - The Star Wars API](https://swapi.dev/)
 
-**Utiliser une API avant de la coder ? GitLab ?**
-https://docs.gitlab.com/ee/api/projects.html#create-project
-https://docs.gitlab.com/ee/api/projects.html#edit-project
-Source : https://openclassrooms.com/fr/courses/6573181-adoptez-les-api-rest-pour-vos-projets-web/6818136-realisez-vos-premieres-requetes-sur-une-api
 
-**S'authentifier auprès d'une API**
-https://openclassrooms.com/fr/courses/6573181-adoptez-les-api-rest-pour-vos-projets-web/6818386-authentifiez-une-api-pour-plus-de-securite
 
-Vous pouvez utiliser POST pour créer des ressources.
-PUT ou PATCH vous permet de mettre à jour des ressources.
-DELETE vous permet de supprimer des ressources !
-Source :  https://openclassrooms.com/fr/courses/6573181-adoptez-les-api-rest-pour-vos-projets-web/6820251-entrainez-vous-avec-l-api-github
+## Autre source
 
-**Important**
-Le filtrage, la recherche et le tri sont des moyens d’ajouter de la complexité à vos requêtes API.
-La pagination aide vos clients et utilisateurs API à éviter d’être submergés par trop de données.
-Le versionnage vous permet de continuer à mettre à jour votre API sans casser le code des personnes qui en dépendent déjà.
-Source: https://openclassrooms.com/fr/courses/6573181-adoptez-les-api-rest-pour-vos-projets-web/6825136-utilisez-les-fonctionnalites-avancees-des-endpoints
 
-Peut-être qu'il faut mieux attendre le TP6 JS qui utilise une API REST avant de dev une  API REST
 
-Autre cours OpenClassRoom
-Le modèle de maturité de Richardson
-standard HAL pour liens JSON
-https://openclassrooms.com/fr/courses/7709361-construisez-une-api-rest-avec-symfony/7795161-rendez-votre-api-autodecouvrable
--->
-
-<!--
-Les aspects fondamentaux d'une API Web *REST* sont : 
-* utiliser des verbes HTTP ;
-* adopter une convention de nommage pour les identifiants de ressources (URI) ;
-* utiliser les codes de réponse *HTTP* pour indiquer si une requête a pu être
-  traitée avec succès ;
-* échanger des données au format *JSON* ;
-* le fonctionnement du service doit pouvoir être découvert, c'est-à-dire que l'on fournit des URL sur les actions liées à une ressource.
 
 Reprenons ces aspects plus en détail : 
 * utiliser des verbes HTTP : 
   * `GET` : lire une ressource,
   * `POST` : créer une nouvelle ressource,
-  * `PUT` : mettre à jour une ressource,
+  * `PUT` : mettre à jour une ressource complètement en la remplaçant,
+  * `PATCH` : mettre à jour une ressource partiellement en la modifiant 
+     <!-- https://stackoverflow.com/questions/28459418/use-of-put-vs-patch-methods-in-rest-api-real-life-scenarios -->
   * `DELETE` : supprimer une ressource,
-  * PATCH ? https://stackoverflow.com/questions/28459418/use-of-put-vs-patch-methods-in-rest-api-real-life-scenarios
 * adopter une convention de nommage pour les identifiants de ressources (URI).
   En pratique, cela signifie : 
   *  indiquer les identifiants dans l'URL plutôt que dans le *query string*  
@@ -118,24 +82,19 @@ Reprenons ces aspects plus en détail :
       Ne devrait jamais être renvoyé intentionnellement. Généralement, ce code provient d'un `try / catch` global sur le serveur qui traite les exceptions inattendues avec un code `500`. 
 * Échanger des données au format *JSON*. Idéalement, on devrait aussi supporter le format `XML` et passer de l'un à l'autre en fonction de l'en-tête [*HTTP* *Accept*](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept).
 
-* Etre un service découvrable : 
-  * lien vers comment l'entité a été ou peut être récupérée
-  * Location avec lien vers la ressource créée
-  * pour les collections, des liens 'first', 'last', 'next' et 'prev' sont un minimum
 
 
-| Verbe *HTTP* | CRUD           | Collection entière (par ex. `/customers`)                                                                       | Item spécifique (par ex. `/customers/{id}`)                                                 |
-| ------------ | -------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `POST`       | Create         | `201` (`Created`), en-tête `Location` avec un lien vers `/customers/{id}` contenant le nouvel ID.               | `404` (`Not Found`), `409` (`Conflict`) si la ressource existe déjà.                        |
-| `GET`        | Read           | `200` (`OK`), liste de clients. Utiliser la pagination, le tri et le filtrage pour parcourir de grandes listes. | `200` (`OK`), client particulier. `404` (`Not Found`), si l'ID est inconnu ou invalide.     |
-| `PUT`        | Update/Replace | `405` (`Method Not Allowed`), à moins que vous ne vouliez mettre à jour toutes les ressources de la collection. | `200` (`OK`) ou `204` (`No Content`). `404` (`Not Found`), si l'ID est inconnu ou invalide. |
-| `PATCH`      | Update/Modify  | `405` (`Method Not Allowed`), à moins que vous ne vouliez modifier la collection elle-même.                     | `200` (`OK`) ou `204` (`No Content`). `404` (`Not Found`), si l'ID est inconnu ou invalide. |
-| `DELETE`     | Delete         | `405` (`Method Not Allowed`), à moins que vous ne vouliez tout supprimer, ce qui n'est souvent pas souhaitable. | `200` (`OK`). `404` (`Not Found`), si l'ID est inconnu ou invalide.                         |
+| Verbe *HTTP* | CRUD           | Collection entière (par ex. `/customers`)                                                                                                             | Item spécifique (par ex. `/customers/{id}`)                                                 |
+| ------------ | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `POST`       | Create         | `201` (`Created`), en-tête `Location` avec un lien vers `/customers/{id}` contenant le nouvel ID. <br> `409` (`Conflict`) si la ressource existe déjà | `405` (`Method Not Allowed`)                                                                |
+| `GET`        | Read           | `200` (`OK`), liste de clients. Utiliser la pagination, le tri et le filtrage pour parcourir de grandes listes.                                       | `200` (`OK`), client particulier. `404` (`Not Found`), si l'ID est inconnu ou invalide.     |
+| `PUT`        | Update/Replace | `405` (`Method Not Allowed`)                                       | `200` (`OK`) ou `204` (`No Content`). `404` (`Not Found`), si l'ID est inconnu ou invalide. |
+| `PATCH`      | Update/Modify  | `405` (`Method Not Allowed`)                                                           | `200` (`OK`) ou `204` (`No Content`). `404` (`Not Found`), si l'ID est inconnu ou invalide. |
+| `DELETE`     | Delete         | `405` (`Method Not Allowed`)                                       | `200` (`OK`) ou `204` (`No Content`). `404` (`Not Found`), si l'ID est inconnu ou invalide. |
 {: .centered .pretty}
 
 Source : [RestAPITutorial.com](https://www.restapitutorial.com/lessons/restquicktips.html)
 
--->
 
 ## Échange de données en *JSON*
 
@@ -707,16 +666,45 @@ pour traiter les erreurs (par. ex. utilisateur déconnecté entre temps)
 
 ### Authentification avec des `JWT`
 
-Notre `API` ne respecte pas le principe **Stateless** (qu'il faut traduire "sans état" ou
-"sans mémoire") car on utilise des `sessions` pour garder en mémoire que
-l'utilisateur est connecté et ainsi l'autoriser à accéder à des routes
-sécurisées ou bien supprimer ses propres ressources.
+Rappelons qu'un service Web *RESTful* doit être sans état (*Stateless*). Ceci
+signifie que l'échange client–serveur s'effectue sans conservation de l'état de
+la session de communication sur le serveur entre deux requêtes successives.
+L'état de la session est conservé par le client et transmis à chaque nouvelle
+requête. Les requêtes du client contiennent donc toute l'information nécessaire
+pour que le serveur puisse y répondre.
 
-Pour changer cela tout en gardant le comportement désiré, on pourrait utiliser le mécanisme des `Json Web Tokens` (ou `JWT`) qui permettent au client de stocker les informations nécessaires de son côté. Le serveur stocke des informations dans ce `jeton` et dispose d'une *clé privée* secrète avec laquelle il *signe* cette entité de données envoyée au client. Le client peut librement lire et décoder ce `token` (jeton) mais ne peut pas le falsifier, car le serveur pourra le détecter (grâce au mécanisme de signature).
+Notre `API` ne respecte pas le principe **Stateless** car on utilise des
+sessions pour garder en mémoire que l'utilisateur est connecté et ainsi
+l'autoriser à accéder à des routes sécurisées ou bien supprimer ses propres
+ressources.
 
-À chaque requête, le client envoie alors son `token`. Le serveur le décode et vérifie s'il n'a pas été altéré. Si tout va bien, il peut donc extraire l'information de ce token et l'utiliser en toute confiance (il n'a pas été altéré entre temps) sans avoir besoin de `sessions` et de maintenir un **état** côté `backend`. 
+Nous allons donc stocker l'identifiant de l'utilisateur côté client dans des
+cookies. Mais attention, nous avons vu au 
+[semestre 3](http://romainlebreton.github.io/R3.01-DeveloppementWeb/tutorials/tutorial7.html)
+que les données stockées dans les cookies sont modifiables par le client. 
+Le client pourrait donc se connecter tout seul sans avoir à s'authentifier.
 
-On peut alors, par exemple, stocker des choses comme l'identifiant d'un utilisateur, pour savoir s'il est connecté ou non, comme nous le faisons actuellement. Attention néanmoins, contrairement aux sessions, il ne faut pas stocker de donner sensibles dans le `JWT` car tout le monde peut facilement le décoder (sa sécurité réside dans le fait qu'il ne peut pas être falsifié seulement).
+Une solution classique consiste pour le serveur à rajouter une signature
+cryptographique dans le cookie. Ainsi, le client n'a plus la possibilité de
+modifier son cookie ; sinon il devrait falsifier la signature, ce qui est
+pratiquement impossible puisque seul le serveur est en capacité de signer. 
+Ce mécanisme est fourni par les *Json Web Token* (`JWT`).
+
+En pratique, le serveur stocke les informations d'authentification dans un jeton
+(*token* en anglais). Le serveur dispose d'une *clé privée* secrète avec
+laquelle il *signe* le jeton. Puis le serveur dépose le jeton chez le client
+dans un cookie. Le client peut librement lire ce jeton `JWT`. Mais il ne pourra pas le
+modifier sans que le serveur ne le détecte (grâce au mécanisme de signature).
+
+À chaque requête, le client envoie alors son cookie contenant son jeton `JWT`.
+Le serveur le décode et vérifie s'il n'a pas été altéré. Si tout va bien, il
+peut donc extraire l'information de ce token et l'utiliser en toute confiance
+(il n'a pas été altéré entre temps) sans avoir besoin de `sessions` et de
+maintenir un **état** côté serveur.
+
+Attention néanmoins, contrairement aux sessions, il ne faut pas stocker de
+donner sensibles dans le `JWT` car tout le monde peut facilement le lire ; sa
+sécurité réside dans le fait qu'il ne peut pas être falsifié seulement.
 
 ### Présentation du format `JWT`
 
@@ -986,6 +974,37 @@ Qui dit deux codes pour le même problème, dit héritage et en particulier inte
 
 </div>
 
+## Bilan sur les API REST
+
+En se basant sur le protocole de transfert *HTTP* et le format de donnée *JSON*,
+les API REST permettent l'interopérabilité en services Web *Restful*. Quelques
+avantages clés des API REST sont les suivants :
+* la séparation du client et du serveur : il est plus facile de fournir de nouvelles interfaces (par ex. une application mobile),
+* le fait d’être *Stateless* permet la mise en cache, qui permet aux clients
+  d'économiser des requêtes aux serveurs. 
+* Dans le cas d'un site Web déployé sur plusieurs serveurs, l'élimination des
+  sessions évite de devoir synchroniser ces informations de sessions entre
+  serveurs.
+
+Dans ce TD, nous n'avons pas eu le temps d'évoquer quelques aspects importants : 
+* un service Web *Restful* doit être un service découvrable, c'est-à-dire qu'il
+  fournit des liens dans ses réponses qui permettent de découvrir les
+  fonctionnalités du service sans documentation.  
+  Par exemple, 
+  * lors de la création d'une ressource, on renvoie des liens sur les actions liées à
+    la ressource créée (lire, modifier, supprimer),
+  * lors de la lecture d'une collection, chaque entité renvoie ses liens d'actions,
+  * toujours lors de la lecture d'une collection, des liens `first`, `last`,
+    `next` et `prev` sont un minimum pour permettre de pouvoir naviguer
+    facilement dans la collection.
+*  Le filtrage, la recherche et le tri sont des moyens d’ajouter de la
+   complexité à vos requêtes API. La pagination aide vos clients et utilisateurs
+   API à éviter d’être submergés par trop de données. Le versionnage vous permet
+   de continuer à mettre à jour votre API sans casser le code des personnes qui
+   en dépendent déjà.
+
+Sources :
+[OpenClassrooms](https://openclassrooms.com/fr/courses/6573181-adoptez-les-api-rest-pour-vos-projets-web/), [Wikipedia](https://fr.wikipedia.org/wiki/Representational_state_transfer), [ChatGPT](https://chat.openai.com/chat)
 
 ## Bonus pour la SAÉ : Sécurité 
 
@@ -1318,14 +1337,7 @@ Il faut peut-être recharger la session pour voir le HttpOnly / SameSite
 **Note Perso**
 
 
-Passage à l'échelle : L'API ne stockant pas d'informations de session sur le serveur, elle peut traiter un grand nombre de demandes sans avoir à gérer les informations de session. Il est donc plus facile de faire évoluer l'API horizontalement, en ajoutant des serveurs supplémentaires pour gérer la charge accrue.
 
-Mise en cache : étant donné que chaque demande est autonome et contient toutes les informations nécessaires pour répondre à la demande, les réponses peuvent être facilement mises en cache. Cela signifie que si la même demande est renouvelée, le serveur peut renvoyer une réponse mise en cache, plutôt que de traiter à nouveau la demande, ce qui peut améliorer considérablement les performances de l'API.
-
-Simplicité : En ne stockant pas les informations de session sur le serveur, l'API devient plus simple et plus facile à maintenir. Cela facilite le développement, le test et le déploiement de l'API et réduit le risque de bogues et d'erreurs.
-
-Fiabilité : En ne s'appuyant pas sur les informations de session côté serveur, l'API devient plus fiable, car il y a moins de risques d'erreurs liées à la session, telles que des conditions de course, des problèmes de synchronisation ou des données périmées.
-**ChatGPT : What are the advantages of RESTful API to be stateless ?**
 
 On peut tester avec PostMan que l'envoi de l'auth_token seul marche
 
