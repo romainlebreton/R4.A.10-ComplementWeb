@@ -973,9 +973,33 @@ Maintenant que vous connaissez les **mocks**, vous allez pouvoir les utiliser po
 
 Bien sûr, notre contexte de test dans ce sujet reste assez simpliste, mais cela vous donne déjà une idée de comment réaliser des tests unitaires assez précis et indépendants du contexte de l'application. Vous l'aurez remarqué, avec cette nouvelle façon de fonctionner, la base de données n'est pas sollicitée et on ne dépend plus des utilisateurs réellement inscrits ou des publications réellement créées. Et on ne risque pas de réellement créer une nouvelle publication après chaque exécution des tests !
 
+### Traitement des requêtes
+
+Dans le cadre de tests futurs (notamment pour l'`API REST` que vous allez créer lors du **TD3**) nous allons modifier la méthode `RouteurURL::traiterRequete` afin que celle-ci prenne une requête en paramètre et renvoie la réponse plutôt que de tout traiter d'un seul bloc en "boîte noire". Par la suite, cela pourra permettre de simuler des requêtes et d'analyse la réponse renvoyée.
+
+<div class="exercise">
+
+1. Ajoutez un paramètre `Request $request` dans la fonction `RouteurURL::traiterRequete`.
+
+2. Déplacez l'instruction suivante depuis `RouteurURL::traiterRequete` vers le fichier `web/controleurFrontal.php` : 
+
+    ```php
+    $requete = Request::createFromGlobals()
+    ```
+
+    Et passez cette variable comme paramètre lors de l'appel de `RouteurURL::traiterRequete`.
+
+3. Faites en sorte de déclarer que la fonction `RouteurURL::traiterRequete` retourne un objet de type `Response` puis supprimez le code effectuant un `send` sur la réponse obtenue dans cette fonction. Renvoyez la réponse à la place.
+
+4. Enfin, dans `web/controleurFrontal.php`, récupérée la réponse retournée par `RouteurURL::traiterRequete` et envoyez-la (toujours avec `send`).
+
+5. Vérifiez que votre site fonctionne toujours comme il faut.
+
+</div>
+
 ## Concernant la *SAÉ*
 
-Pour en revenir à votre *SAÉ*, le but de cette séance est de vous permettre de réappliquer les concepts que vous venez de voir afin de **retravailler l'architecture** de l'application pour favoriser un système **d'injection de dépendances** via un **conteneur de services** et ainsi réaliser différents **tests unitaires** efficacement, en utilisant des **mocks**.
+Pour en revenir à votre *SAÉ*, le but de ce TD est de vous permettre de réappliquer les concepts que vous venez de voir afin de **retravailler l'architecture** de l'application pour favoriser un système **d'injection de dépendances** via un **conteneur de services** et ainsi réaliser différents **tests unitaires** efficacement, en utilisant des **mocks**.
 
 Un premier objectif à vous fixer serait d'obtenir une couverture de code (proche) de 100%, pour la partie "métier" de votre application.
 
