@@ -290,7 +290,7 @@ Voici quelques codes de réponse *HTTP* utiles :
       $donneesRoute = $associateurUrl->match($requete->getPathInfo());
       $requete->attributes->add($donneesRoute);
 
-      $resolveurDeControleur = new ContainerControllerResolver($conteneur);
+      $resolveurDeControleur = new ControllerResolver($conteneur);
       $controleur = $resolveurDeControleur->getController($requete);
 
       $resolveurDArguments = new ArgumentResolver();
