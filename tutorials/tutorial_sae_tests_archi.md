@@ -721,7 +721,7 @@ Notre prochain objectif est donc de remanier les classes des `controleurs`, des 
     }
     ```
 
-5. Faites une opération similaire au niveau des deux classes `PublicationService` et `UtilisateurService` en injectant les classes `repository` comme dépendances, via le constructeur. Il faudra éliminer toutes les instanciations de repository pour utiliser vos nouvelles dépendances. Là-aussi, mettez en place des interfaces pour ces deux services. Attention `UtilisateurService` utilise les deux repositories.
+5. Faites une opération similaire au niveau des deux classes `PublicationService` et `UtilisateurService` en injectant les classes `repository` comme dépendances, via le constructeur. Il faudra éliminer toutes les instanciations de repository pour utiliser vos nouvelles dépendances. Là-aussi, mettez en place des interfaces pour ces deux services. Attention `PublicationService` utilise les deux repositories.
 
 6. Au niveau de vos deux `controleurs`, réalisez l'injection des deux services (toujours via leur interface). Il faudra alors rendre toutes les fonctions non statiques. Dans chaque méthode, au lieu d'instancier un service pour réaliser une opération, vous utiliserez vos nouvelles dépendances.
 
@@ -830,7 +830,7 @@ Dans un premier temps, nous allons enregistrer les services que nous venons de c
 
     * Au niveau des routes remplacez `ControleurPublication::class` par le nom du service correspondant, c'est-à-dire, `publication_controleur`.
 
-    * Remplacez la ligne instanciant un `ControlerResolver` en instanciant un `ContainerControllerResolver` à la place. Il faut donner comme arguments du constructeur de cette nouvelle classe votre conteneur (`$conteneur`).
+    * Remplacez la ligne instanciant un `ControllerResolver` en instanciant un `ContainerControllerResolver` à la place. Il faut donner comme arguments du constructeur de cette nouvelle classe votre conteneur (`$conteneur`).
 
         *Explication* : La classe `ContainerControllerResolver` ira chercher le service indiqué dans la route dans le conteneur, puis appellera l'action indiquée dans la route.
 
