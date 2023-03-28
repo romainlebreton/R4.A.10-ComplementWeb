@@ -635,7 +635,7 @@ remplacer le contenu d'un bloc en le redéfinissant.
       </main>
    {% endblock %}
    ```
-1. Changer les action `ControleurPublication::feed()` et
+1. Changer les actions `ControleurPublication::feed()` et
    `ControleurUtilisateur::pagePerso` pour appeler cette vue.
 
 2. Codez avec la syntaxe *Twig* la boucle des publications, son cas particulier
