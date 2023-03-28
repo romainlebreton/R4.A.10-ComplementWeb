@@ -37,7 +37,7 @@ Reprenons ces aspects plus en détail :
 
 #### Noms des ressources
 
-Prenons un exemple de bonne URL : `/client/33245/commandes/8769/categories/1`.
+Prenons un exemple de bonne URL : `/clients/33245/commandes/8769/categories/1`.
 
 On voit que les ressources utilisent des noms, et pas des verbes, en minuscule.
 Les ressources sont regroupées en collection et sont nommées au pluriel. On
