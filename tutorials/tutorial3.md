@@ -37,7 +37,7 @@ Reprenons ces aspects plus en détail :
 
 #### Noms des ressources
 
-Prenons un exemple de bon URL : `/client/33245/commandes/8769/categories/1`.
+Prenons un exemple de bonne URL : `/client/33245/commandes/8769/categories/1`.
 
 On voit que les ressources utilisent des noms, et pas des verbes, en minuscule.
 Les ressources sont regroupées en collection et sont nommées au pluriel. On
@@ -58,7 +58,7 @@ Pour indiquer une action sur une ressource, on utilise des verbes HTTP :
 #### Les codes de statut *HTTP*
 
 Les codes de réponse *HTTP* servent à indiquer si une requête a pu être traitée
-avec succès. Complétons les codes déjà vus avec les 10 codes les plus utilisés : 
+avec succès. Complétons les codes déjà vus : 
   * Codes de succès `2xx` : 
     * `200 OK` (attribut `HTTP_OK` de l'objet *PHP* `Response`)  
       Code de succès générique. Code le plus utilisé.
@@ -135,16 +135,16 @@ regroupées sous l'URL `/web/api/`.
       if ($publication->getAuteur()->getIdUtilisateur() !== intval($idUtilisateurConnecte))
          throw new ServiceException("Seul l'auteur de la publication peut la supprimer", Response::XXX);
 
-      $suppressionReussie = $this->publicationRepository->remove($publication);
-
-      if (!$suppressionReussie)
-         throw new ServiceException("Publication non supprimée.", Response::XXX);
+      $this->publicationRepository->remove($publication);
    }
    ```
 
 2. Créez un nouveau contrôleur `ControleurPublicationAPI.php` et une nouvelle
    action `supprimer($idPublication)` avec le code suivant. Indiquez le bon code
    de réponse en cas de succès.
+
+   *Note :* Passez le niveau de langage *PHP* de *PhpStorm* à ⩾ 8.1 pour faire
+   marcher `readonly`.
 
    ```php
    namespace TheFeed\Controleur;
@@ -167,7 +167,7 @@ regroupées sous l'URL `/web/api/`.
       public function supprimer($idPublication): Response
       {
          try {
-               $idUtilisateurConnecte = ConnexionUtilisateur::getIdUtilisateurConnecte()
+               $idUtilisateurConnecte = ConnexionUtilisateur::getIdUtilisateurConnecte();
                $this->publicationService->supprimerPublication($idPublication, $idUtilisateurConnecte);
                return new JsonResponse('', Response::XXX);
          } catch (ServiceException $exception) {
@@ -177,18 +177,24 @@ regroupées sous l'URL `/web/api/`.
    }
    ```
 
-   *Note :* Si *PhpStorm* émet un avertissement à propos de `JsonResponse(["error" => ...])`, il faut passer le niveau de langage *PHP* à ⩾ 8.0.
+3. Pour pouvoir faire référence à la nouvelle action `supprimer()` dans les
+   routes, il faut d'abord enregistrer `ControleurPublicationAPI` dans le
+   conteneur de services.  
+   **Enregistrez** un service `controleur_publication_api` lié à la classe
+   `ControleurPublicationAPI`. Ce service donnera une référence
+   `publication_service` en argument du constructeur de
+   `ControleurPublicationAPI`.
 
-3. Créez une nouvelle route `api/feeds/{idPublication}` de méthode *HTTP*
-   `DELETE` pour appeler cette action. Pour cela, il faudra enregistrer
-   `ControleurPublicationAPI` dans le conteneur de services. Le nom du service
-   enregistré est en effet utilisé dans le champ `_controller` de la route.
+   *Aide :* Inspirez-vous de la déclaration du service lié à
+   `ControleurPublication`.
 
-
+4. Créez une nouvelle route `api/feeds/{idPublication}` de méthode *HTTP*
+   `DELETE` pour appeler cette action. Dans le champ `_controller`, il faut
+   indiquer en premier le nom du service `controleur_publication_api`.
    
     <!-- // Route removeFeedyAPI
     $route = new Route("api/feeds/{idPublication}", [
-        "_controller" => [ControleurPublicationAPI::class, "supprimer"],
+        "_controller" => ['controleur_publication_api', "supprimer"],
     ]);
     $route->setMethods(["DELETE"]);
     $routes->add("removeFeedyAPI", $route); -->
@@ -213,7 +219,7 @@ Le logiciel est installé sur les machines de l'IUT. Chez vous, vous pouvez le
     ![Postman config 1](/R4.A.10-ComplementWeb/assets/TD3/postman1.PNG){: .blockcenter}
 
     * Méthode `DELETE`
-    * Adresse : [http://webinfo.iutmontp.univ-montp2.fr/~mon_login_IUT/TD3/web/api/feeds](http://webinfo.iutmontp.univ-montp2.fr/~mon_login_IUT/TD3/web/api/feeds)
+    * Adresse : [http://webinfo.iutmontp.univ-montp2.fr/~mon_login_IUT/TD3/web/api/feeds/3](http://webinfo.iutmontp.univ-montp2.fr/~mon_login_IUT/TD3/web/api/feeds/3)
 
 3. Cliquez sur "**Send**" et observez la réponse. Si vous rechargez votre site
    Web, la publication correspondante doit avoir disparue.
