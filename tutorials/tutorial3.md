@@ -552,8 +552,8 @@ Nous allons maintenant tester notre route avec *Postman*.
                <img alt="profile picture" src="${imgBase}utilisateurs/${utilisateur.profilePictureName}" class="avatar">
          </a>
          <div class="feedy-info">
-               <span>${escapeHtml(utilisateur.login)}</span><span> - </span><span>${feedy.date}</span>
-               <p>${escapeHtml(feedy.message)}</p>
+               <span>${utilisateur.login}</span><span> - </span><span>${feedy.date}</span>
+               <p>${feedy.message}</p>
                <button class="delete-feedy" data-id-publication="${feedy.idPublication}">Supprimer</button>
          </div>
       </div>
@@ -635,14 +635,14 @@ pour faire les TDs.
 1. Testez que la publication d'un nouveau *feedy* rempli bien le *login* et
    l'image de profil de l'utilisateur.
 
-1. Publiez le message `<h1>Hack!</h1>' et observez le problème. Rechargez la
+1. Publiez le message `<h1>Hack!</h1>` et observez le problème. Rechargez la
    page pour que le *feedy* soit affiché par le serveur et observez la différence.
 
 1. Nettoyer les entrées utilisateurs non fiables à l'aide de la méthode JavaScript : 
    ```js
    function escapeHtml(text) {
       // https://stackoverflow.com/questions/1787322/what-is-the-htmlspecialchars-equivalent-in-javascript
-      return text;
+      return text
          .replace(/&/g, "&amp;")
          .replace(/</g, "&lt;")
          .replace(/>/g, "&gt;")
