@@ -42,16 +42,16 @@ INSERT INTO `publications` (`idPublication`, `message`, `date`, `idAuteur`) VALU
 CREATE TABLE `utilisateurs` (
 `idUtilisateur` int NOT NULL,
 `login` varchar(20) DEFAULT NULL,
-`password` text,
-`adresseMail` varchar(256) DEFAULT NULL,
-`profilePictureName` varchar(64) DEFAULT NULL
+`mdpHache` text,
+`email` varchar(256) DEFAULT NULL,
+`nomPhotoDeProfil` varchar(64) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
 --
 -- Déchargement des données de la table `utilisateurs`
 --
 
-INSERT INTO `utilisateurs` (`idUtilisateur`, `login`, `password`, `adresseMail`, `profilePictureName`) VALUES
+INSERT INTO `utilisateurs` (`idUtilisateur`, `login`, `mdpChiffre`, `email`, `nomPhotoDeProfil`) VALUES
 (1, 'lebreton', '$2y$10$RkCmlLZIeJn757hgpiH.2eYXFDc7DeBz6ZFowKmJPxR/IuuI5qO9i', 'lebreton@yopmail.com', 'anonyme.jpg'),
 (2, '<h1>Login</h1>', '$2y$10$RkCmlLZIeJn757hgpiH.2eYXFDc7DeBz6ZFowKmJPxR/IuuI5qO9i', 'login@yopmail.com', 'anonyme.jpg');
 
@@ -72,7 +72,7 @@ ADD KEY `publications_FK` (`idAuteur`);
 ALTER TABLE `utilisateurs`
 ADD PRIMARY KEY (`idUtilisateur`),
 ADD UNIQUE KEY `utilisateurs_UN` (`login`),
-ADD UNIQUE KEY `utilisateurs_UN2` (`adresseMail`);
+ADD UNIQUE KEY `utilisateurs_UN2` (`email`);
 
 --
 -- AUTO_INCREMENT pour les tables déchargées

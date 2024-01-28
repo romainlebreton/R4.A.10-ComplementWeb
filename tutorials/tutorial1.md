@@ -9,7 +9,7 @@ lang: fr
 
 TODO : 
 * code de base
-* setfacl -m u:www-data:rwx web/assets/img/utilisateurs
+* setfacl -m u:www-data:rwx ressources/img/utilisateurs
 
 * SQL avec login et message vérolés HTML
 * ? explication .htaccess réécriture d'URL ?
@@ -39,7 +39,7 @@ xDebug pour voir ce qui se passe dans le routeur en direct
 * sinon debuggeur du serveur Web interne à phpstorm
   (nécessite php-cgi ?!?)
 
-Route /connexion, assets cassés (regarder le code source, cliquer sur le lien vers le CSS)
+Route /connexion, ressources cassés (regarder le code source, cliquer sur le lien vers le CSS)
 
 Pour effacer une reidrection permanente qui reste en cache
 -> DevTools > Network > cliquer sur la requête > Clear Browser Cache
@@ -65,10 +65,10 @@ connexion d'utilisateur.
 
 L'intérêt de ce site est qu'il ne contient que 2 contrôleurs et un petit nombre d'actions : 
 * contrôleur `Publication` : 
-  * lire les publications : action `feed`
-  * écrire une publication : action `submitFeedy`
+  * lire les publications : action `afficherListe`
+  * écrire une publication : action `creerDepuisFormulaire`
 * contrôleur `Utilisateur` :
-  * afficher la page personnelle avec seulement ses publications : action `pagePerso`
+  * afficher la page personnelle avec seulement ses publications : action `afficherPublications`
   * s'inscrire : 
     * formulaire (action `afficherFormulaireCreation`), 
     * traitement (action `creerDepuisFormulaire`)
@@ -91,9 +91,9 @@ L'intérêt de ce site est qu'il ne contient que 2 contrôleurs et un petit nomb
    
    Comme le site enregistre une photo de profil pour chaque
    utilisateur, il faut donner les droits en écriture sur le dossier
-   `web/assets/img/utilisateurs/`.
+   `ressources/img/utilisateurs/`.
    ```bash
-   setfacl -R -m u:www-data:rwx ./web/assets/img/utilisateurs
+   setfacl -R -m u:www-data:rwx ./ressources/img/utilisateurs
    ```
 
 
@@ -129,9 +129,9 @@ pages de notre site n'utilisent plus le *query string*.
 
 Par exemple, la route
 ```
-web/controleurFrontal.php?controleur=publication&action=feed
+web/controleurFrontal.php?controleur=publication&action=afficherListe
 ```
-va devenir `web/`. Et la route
+va devenir `web/publications`. Et la route
 ```
 web/controleurFrontal.php?controleur=utilisateur&action=afficherFormulaireConnexion
 ```
@@ -188,17 +188,18 @@ Commençons donc par remplacer notre *autoloader* `Psr4AutoloaderClass.php` par 
 
 3. Modifiez le fichier `web/controleurFrontal.php` comme suit :
 
+
+
    ```diff
    -use TheFeed\Lib\Psr4AutoloaderClass;
    -
    -require_once __DIR__ . '/../src/Lib/Psr4AutoloaderClass.php';
    -
-   -// instantiate the loader
-   -$loader = new Psr4AutoloaderClass();
-   -// register the base directories for the namespace prefix
-   -$loader->addNamespace('TheFeed', __DIR__ . '/../src');
-   -// register the autoloader
-   -$loader->register();
+   -// initialisation en désactivant l'affichage de débogage
+   -$chargeurDeClasse = new Psr4AutoloaderClass(false);
+   -$chargeurDeClasse->register();
+   -// enregistrement d'une association "espace de nom" → "dossier"
+   -$chargeurDeClasse->addNamespace('TheFeed', __DIR__ . '/../src');
    +require_once __DIR__ . '/../vendor/autoload.php';
    ```
    **Aide :** Ce format montre une modification de fichier, similaire à la
@@ -209,7 +210,7 @@ Commençons donc par remplacer notre *autoloader* `Psr4AutoloaderClass.php` par 
 
 ### Archivage du routeur par *query string*
 
-Nous allons déplacer le code de routage actuel dans une classe séparée, dans le but de bientôt la remplacer.
+Nous allons déplacer le code de routage actuel dans une classe séparée, dans le but de bientôt le remplacer.
 
 <div class="exercise">
 
@@ -221,7 +222,7 @@ Nous allons déplacer le code de routage actuel dans une classe séparée, dans 
    ```diff
    -// Syntaxe alternative
    -// The null coalescing operator returns its first operand if it exists and is not null
-   -$action = $_REQUEST['action'] ?? 'feed';
+   -$action = $_REQUEST['action'] ?? 'afficherListe';
    -
    -
    -$controleur = "publication";
@@ -237,9 +238,9 @@ Nous allons déplacer le code de routage actuel dans une classe séparée, dans 
    -        $controleurClassName::afficherErreur("Erreur d'action");
    -    }
    -} else {
-   -    TheFeed\Controleur\ControleurGenerique::afficherErreur("Erreur de contrôleur");
+   -    \TheFeed\Controleur\ControleurGenerique::afficherErreur("Erreur de contrôleur");
    -}
-   +TheFeed\Controleur\RouteurQueryString::traiterRequete();
+   +\TheFeed\Controleur\RouteurQueryString::traiterRequete();
    ```
 
 2. Testez votre site qui doit marcher normalement.
@@ -298,8 +299,8 @@ n'utiliserons que des composants de `Symfony`.
 Dans notre cas, nous allons tout d'abord utiliser la classe `Request` de
 `HttpFoundation` pour représenter une requête HTTP. Notez que `HttpFoundation`
 possède des classes aussi pour les réponses HTTP, les en-têtes HTTP, les
-cookies, les sessions (et les messages flash 😉). Nous utiliserons plus tard les
-classes liées aux réponses HTTP : `Response`, `RedirectResponse` pour les redirections et `JsonResponse` pour les réponses au format *JSON*. 
+cookies, les sessions (et les messages flash 😉). Les classes liées aux réponses
+HTTP seront abordées dans le TD2.
 
 <div class="exercise">
 
@@ -319,12 +320,12 @@ classes liées aux réponses HTTP : `Response`, `RedirectResponse` pour les redi
 
 Dans un premier temps, notre site va utiliser des URL comme 
 ```
-web/controleurFrontal.php/
+web/controleurFrontal.php/publications
 web/controleurFrontal.php/connexion
-web/controleurFrontal.php/inscription
+web/controleurFrontal.php/utilisateurs/2/publications
 ```
-La classe `Request` sera intéressante notamment car elle permet de récupérer
-chemin qui nous intéresse (`/`, `/connexion` ou `/inscription`).  
+La classe `Request` sera intéressante notamment car elle permet de récupérer la
+partie du chemin qui nous intéresse : `/publications`, `/connexion` ou `/utilisateurs/2/publications`.  
 
 
 <div class="exercise">
@@ -342,10 +343,10 @@ chemin qui nous intéresse (`/`, `/connexion` ou `/inscription`).
    ```
 
 2. La méthode `$requete->getPathInfo()` permet d'accéder au bout d'URL qui nous
-   intéresse (`/`, `/connexion` ou `/inscription`).
+   intéresse (`/publications`, `/connexion` ou `/inscription`).
  
    **Affichez** cette variable dans `RouteurURL::traiterRequete()` et accédez
-   aux URL précédentes pour voir chemin s'afficher. 
+   aux URL précédentes pour voir le chemin s'afficher. 
 
 </div>
 
@@ -354,8 +355,8 @@ chemin qui nous intéresse (`/`, `/connexion` ou `/inscription`).
 Comme l'indique sa
 [documentation](https://symfony.com/doc/current/routing.html), le composant
 `Routing` de `Symfony` va permettre de faire l'association entre une URL (par
-ex. `/` ou `/connexion`) et une action, c'est-à-dire une fonction PHP comme
-`ControleurPublication::feed`.
+ex. `/publications` ou `/connexion`) et une action, c'est-à-dire une fonction PHP comme
+`ControleurPublication::afficherListe`.
 
 
 <div class="exercise">
@@ -375,14 +376,14 @@ ex. `/` ou `/connexion`) et une action, c'est-à-dire une fonction PHP comme
 
    $routes = new RouteCollection();
 
-   // Route feed
-   $route = new Route("/", [
-      "_controller" => "\TheFeed\Controleur\ControleurPublication::feed",
+   // Route afficherListe
+   $route = new Route("/publications", [
+      "_controller" => "\TheFeed\Controleur\ControleurPublication::afficherListe",
    ]);
-   $routes->add("feed", $route);
+   $routes->add("afficherListe", $route);
    ```
-   **Explication :** Une nouvelle `Route $route` associe au chemin `/` la
-   méthode `feed()` de `ControleurPublication`. Puis cette route est ajoutée
+   **Explication :** Une nouvelle `Route $route` associe au chemin `/publications` la
+   méthode `afficherListe()` de `ControleurPublication`. Puis cette route est ajoutée
    dans l'ensemble de toutes les routes `RouteCollection $routes`. 
 
 3. Les informations de la requête essentielles pour le routage (méthode `GET` ou
@@ -415,7 +416,8 @@ ex. `/` ou `/connexion`) et une action, c'est-à-dire une fonction PHP comme
    préférerons donc.
 
 6. Votre site doit désormais répondre correctement à une requête à l'URL
-   `web/controleurFrontal.php`.
+   `web/controleurFrontal.php/publications`, sauf les liens vers le CSS et les
+   photos qui deviennent invalides.
 
 </div>
 
@@ -443,17 +445,19 @@ Passons à notre deuxième route : `/connexion`.
    Notez les syntaxes équivalentes : 
    * l'attribut statique constant `NomDeClasse::class` d'une classe
    `NomDeClasse` est remplacé par le nom de classe qualifié, c.-à-d. le nom de
-   classe précédé du nom de package.
+   classe précédé du nom de package. Ici, `ControleurUtilisateur::class` a pour
+   valeur la chaîne de caractères `\TheFeed\Controleur\ControleurUtilisateur`.
    <!-- au moment de la compilation. -->
    * De manière générale, la valeur associée à `_controller` devra être au
      format
      [`callable`](https://www.php.net/manual/en/language.types.callable.php),
      car c'est ce qui est accepté par `call_user_func()`. Parmi les `callable`,
-     on trouve le format `["NomDeClasseQualifie", "NomMethodeStatique"]` pour
-     les méthodes statiques, ou encore `[$instanceDeLaClasse, "NomMethode"]`
-     pour les méthodes classiques.
+     on trouve le format `"NomDeClasseQualifie::NomMethodeStatique` ou
+     `["NomDeClasseQualifie", "NomMethodeStatique"]` pour les méthodes
+     statiques, ou encore `[$instanceDeLaClasse, "NomMethode"]` pour les
+     méthodes classiques.
 
-1. Testez la page `web/controleurFrontal.php/connexion` qui doit marcher, sauf
+2. Testez la page `web/controleurFrontal.php/connexion` qui doit marcher, sauf
    les liens vers le CSS et les photos qui deviennent invalides. Cherchez
    pourquoi ces liens se sont cassés.
 
@@ -489,11 +493,11 @@ requête `web/connexion` vers l'URL `web/controleurFrontal.php/connexion`.
 3. Changez les liens dans `vueGenerale.php` : 
 
    ```diff
-   -<a href="controleurFrontal.php?controleur=publication&action=feed"><span>The Feed</span></a>
-   +<a href="./"><span>The Feed</span></a>
+   -<a href="controleurFrontal.php?controleur=publication&action=afficherListe"><span>The Feed</span></a>
+   +<a href="./publications"><span>The Feed</span></a>
 
-   -<a href="controleurFrontal.php?controleur=publication&action=feed">Accueil</a>
-   +<a href="./">Accueil</a>
+   -<a href="controleurFrontal.php?controleur=publication&action=afficherListe">Accueil</a>
+   +<a href="./publications">Accueil</a>
 
    -<a href="controleurFrontal.php?action=afficherFormulaireConnexion&controleur=utilisateur">Connexion</a>
    +<a href="./connexion">Connexion</a>
@@ -533,7 +537,19 @@ $route->setMethods(["GET"]);
 2. Corrigez l'URL vers laquelle renvoie
    `src/vue/utilisateur/formulaireConnexion.php`.
 
-3. Vérifiez que la connexion au site marche bien.
+3. Essayez de vous connecter au site : vous devez avoir une erreur `Uncaught
+   Symfony\...\NoConfigurationException`. En effet, si la connexion réussit,
+   alors elle redirige vers l'ancienne adresse
+   `web/?action=afficherListe&controleur=publication`.
+   Comme cette adresse est désormais inconnue, Symfony nous renvoie `NoConfigurationException`. 
+   
+4. Pour régler temporairement le problème des redirections (qui sera traité
+   proprement à la fin du TD), rajoutons une route pour l'URL `web/`. Dupliquez
+   la route `afficherListe` en changeant le *path* (`/publications` → `/`) et en
+   donnant une autre nom à la route pour ne pas écraser la précédente.
+
+5. Essayez de vous connecter au site. Cela doit marche normalement.
+
 
 </div>
 
@@ -541,10 +557,10 @@ $route->setMethods(["GET"]);
 
 <div class="exercise">
 
-1. Ajoutez les routes manquantes (sauf celle vers `pagePerso`) : 
+1. Ajoutez les routes manquantes (sauf celle vers `afficherPublications`) : 
    * URL `/deconnexion`, méthode `GET` → action `deconnecter` du contrôleur
      utilisateur
-   * URL `/feedy`, méthode `POST` → action `submitFeedy` du contrôleur
+   * URL `/publications`, méthode `POST` → action `creerDepuisFormulaire` du contrôleur
      publication
    * URL `/inscription`, méthode `GET` → action `afficherFormulaireCreation` du
      contrôleur utilisateur
@@ -555,47 +571,52 @@ $route->setMethods(["GET"]);
    *  `src/vue/publication/liste.php`, 
    *  `src/vue/utilisateur/formulaireCreation.php` 
    *  `src/vue/vueGenerale.php`.
-   
+
 </div>
+
+Vous ne pouvez pas encore mettre à jour les liens vers
+`controleurFrontal.php?controleur=utilisateur&action=afficherPublications` car
+nous n'avons pas encore créé la route correspondante. C'est ce que nous allons
+faire dans la prochaine section.
 
 ### Routes variables
 
 Avec l'ancien routeur `RouteurQueryString`, nous pouvions envoyer des
 informations supplémentaires dans l'URL, par exemple l'identifiant d'un
-utilisateur avec `controleur=utilisateur&action=pagePerso&idUser=19`.
+utilisateur avec `controleur=utilisateur&action=afficherPublications&idUtilisateur=19`.
 
 Dans notre nouveau système d'URL, certaines parties de l'URL serviront à
 récupérer ces informations supplémentaires. Par exemple, nous allons configurer
-notre site pour que l'URL `web/utilisateur/19` renvoie vers la page personnelle
+notre site pour que l'URL `web/utilisateurs/19/publications` renvoie vers la liste des publications
 de l'utilisateur d'identifiant `19`. Le routeur fourni par `Symfony` permet des
-routes variables `/utilisateur/{idUser}` qui permettront d'extraire `$idUser` de
+routes variables `/utilisateurs/{idUtilisateur}/publications` qui permettront d'extraire `$idUtilisateur` de
 l'URL. 
 
 <div class="exercise">
 
 1. Créez une nouvelle route : 
-   * URL `/utilisateur/{idUser}`, méthode `GET` → action `pagePerso` du contrôleur utilisateur
+   * URL `/utilisateurs/{idUtilisateur}/publications`, méthode `GET` → action `afficherPublications` du contrôleur utilisateur
 
-1. Modifiez `pagePerso()` pour qu'il prenne `$idUser` en argument au lieu de le lire depuis le *query string* avec `$_REQUEST['idUser']`.
+1. Modifiez `afficherPublications()` pour qu'il prenne `$idUtilisateur` en argument au lieu de le lire depuis le *query string* avec `$_REQUEST['idUtilisateur']`.
    
    ```diff
-   -public static function pagePerso(): void
-   +public static function pagePerso($idUser): void
+   -public static function afficherPublications(): void
+   +public static function afficherPublications($idUtilisateur): void
 
-   -    if (isset($_REQUEST['idUser'])) {
-   -        $idUser = $_REQUEST['idUser'];
+   -    if (isset($_REQUEST['idUtilisateur'])) {
+   -        $idUtilisateur = $_REQUEST['idUtilisateur'];
 
    -    } else {
    -        MessageFlash::ajouter("error", "Login manquant.");
-   -        ControleurUtilisateur::rediriger("publication", "feed");
+   -        ControleurUtilisateur::rediriger("publication", "afficherListe");
    -    }
    ```
 
 2. Si vous testez la route, vous verrez qu'elle ne marche pas, car
-   `call_user_func` appelle `pagePerso` sans lui donner d'arguments (il
-   attend `$idUser`).
+   `call_user_func` appelle `afficherPublications` sans lui donner d'arguments (il
+   attend `$idUtilisateur`).
 
-3. Affichez `$donneesRoute` pour voir comment `UrlMatcher` a extrait `idUser` de
+3. Affichez `$donneesRoute` pour voir comment `UrlMatcher` a extrait `idUtilisateur` de
    l'URL.
 
 </div>
@@ -622,8 +643,8 @@ utile plus tard quand vous aurez des actions qui sont des méthodes non statique
  <!-- car ControllerResolver instancie un objet de la classe -->
 
 La classe `ArgumentResolver` va construire la liste des arguments de l'action du
-contrôleur. Par exemple, c'est cette classe qui va créer l'argument `$idUser`
-avec la valeur `19` pour la méthode `ControleurUtilisateur::pagePerso($idUser)`.
+contrôleur. Par exemple, c'est cette classe qui va créer l'argument `$idUtilisateur`
+avec la valeur `19` pour la méthode `ControleurUtilisateur::afficherPublications($idUtilisateur)`.
 
 
 <div class="exercise">
@@ -631,7 +652,7 @@ avec la valeur `19` pour la méthode `ControleurUtilisateur::pagePerso($idUser)`
 1. Importez le composant `HttpKernel`
 
    ```bash
-   composer require symfony/http-foundation symfony/routing symfony/http-kernel
+   composer require symfony/http-kernel
    ```
 
 1. Faites évoluer le code de `RouteurURL` en rajoutant à la fin (juste avec
@@ -657,7 +678,7 @@ avec la valeur `19` pour la méthode `ControleurUtilisateur::pagePerso($idUser)`
    +call_user_func_array($controleur, $arguments);
    ```
 
-1. Testez la route `web/utilisateur/19` en remplaçant `19` par un identifiant
+1. Testez la route `web/utilisateurs/19/publications` en remplaçant `19` par un identifiant
    d'utilisateur ayant quelques publications. La page doit remarcher, mais pas
    le CSS ni les images.
 
@@ -666,7 +687,7 @@ avec la valeur `19` pour la méthode `ControleurUtilisateur::pagePerso($idUser)`
 **Plus d'explications (optionnel) :** 
 Revenons sur la classe `ArgumentResolver` pour expliquer [son fonctionnement
 (simplifié)](https://symfony.com/doc/current/components/http_kernel.html#4-getting-the-controller-arguments)
-sur l'exemple `pagePerso()` : 
+sur l'exemple `afficherPublications()` : 
 * En utilisant [l'introspection de
   PHP](https://www.php.net/manual/en/book.reflection.php), le code accède à la
   liste des arguments (type et nom)
@@ -674,7 +695,7 @@ sur l'exemple `pagePerso()` :
   d'arguments](https://symfony.com/doc/current/controller/value_resolver.html)
   pour déterminer la valeur de l'argument.  
   Dans notre exemple, le premier résolveur (classe
-  `RequestAttributeValueResolver`) va regarder si le nom de l'argument `idUser`
+  `RequestAttributeValueResolver`) va regarder si le nom de l'argument `idUtilisateur`
   est présent dans `$requete->attributes` (équivalent à `$donneesRoute`). Comme
   c'est le cas alors on renvoie cette valeur.
 
@@ -696,17 +717,18 @@ Les liens vers le style CSS et les images de profil de notre site sont souvent
 cassés car elles utilisent des URL relatives. En effet, la base de l'URL varie
 selon le chemin demandé : 
 * pour le chemin `web/connexion`, les URL relatives utilisent la base `web/`. 
-* pour le chemin `web/utilisateur/19`, les URL relatives utilisent la base
-  `web/utilisateur`. Du coup, les liens relatifs sont cassés. 
+* pour le chemin `web/utilisateurs/19/publications`, les URL relatives utilisent la base
+  `web/utilisateurs/19`. Du coup, les liens relatifs sont cassés. 
 
 Nous allons utiliser des classes de `Symfony` pour générer automatiquement des
-URL absolues. D'un côté, nous allons utiliser `UrlHelper` pour générer des URL absolues : 
+URL absolues. D'un côté, nous allons utiliser `UrlHelper` pour générer des URL
+absolues à partir d'URL relatives : 
 ```php
 use Symfony\Component\HttpFoundation\RequestStack;
 
 $assistantUrl = new UrlHelper(new RequestStack(), $contexteRequete);
-$assistantUrl->getAbsoluteUrl("assets/css/styles.css");
-// Renvoie l'URL .../web/assets/css/styles.css, peu importe l'URL courante
+$assistantUrl->getAbsoluteUrl("ressources/css/styles.css");
+// Renvoie l'URL .../ressources/css/styles.css, peu importe l'URL courante
 ```
 
 D'un autre côté, la classe `UrlGenerator` génère des URL absolues à partir du
@@ -716,18 +738,18 @@ posteriori*.
 use Symfony\Component\Routing\Generator\UrlGenerator;
 
 $generateurUrl = new UrlGenerator($routes, $contexteRequete);
-$generateurUrl->generate("submitFeedy");
-// Renvoie ".../web/feedy"
-$generateurUrl->generate("pagePerso", ["idUser" => 19]);
-// Renvoie ".../web/utilisateur/19"
+$generateurUrl->generate("creerDepuisFormulaire");
+// Renvoie ".../web/publications"
+$generateurUrl->generate("afficherPublications", ["idUtilisateur" => 19]);
+// Renvoie ".../web/utilisateurs/19/publications"
 ```
 
 Comme nous allons avoir besoin de ces services de génération d'URL dans
 différentes vues, il faut pouvoir les initialiser au début de l'application, et
-de pouvoir y accéder globalement. Dans le cours de [développement Web du
-semestre 3](http://romainlebreton.github.io/R3.01-DeveloppementWeb/), nous
-avions fait le choix d'avoir des classes statiques utilisant le patron de
-conception *Singleton*. Ce choix a l'inconvénient de rendre difficile les tests.
+pouvoir y accéder globalement. Dans le cours de [développement Web du semestre
+3](http://romainlebreton.github.io/R3.01-DeveloppementWeb/), nous avions fait le
+choix d'avoir des classes statiques utilisant le patron de conception
+*Singleton*. Ce choix a l'inconvénient de rendre difficile les tests.
 
 En attendant la séance de SAÉ sur les tests avec *PhpUnit*, nous allons utiliser
 une classe `Conteneur` pour stocker globalement les services dont nous aurons
@@ -757,7 +779,7 @@ besoin.
    }
    ```
 
-1. Initialisez les deux services `$assistantUrl` et `$generateurUrl` dans
+2. Initialisez les deux services `$assistantUrl` et `$generateurUrl` dans
    `RouteurUrl` (*cf.* code plus haut). Puis stockez-les dans le conteneur.
 
    ```php
@@ -768,9 +790,13 @@ besoin.
    Conteneur::ajouterService("assistantUrl", $assistantUrl);
    ```
 
-2. Récupérez les deux services en haut de la vue `vueGenerale.php`. 
+3. Récupérez les deux services en haut de la vue `vueGenerale.php`. 
 
    ```php
+   use Symfony\Component\HttpFoundation\UrlHelper;
+   use Symfony\Component\Routing\Generator\UrlGenerator;
+   use TheFeed\Lib\Conteneur;
+
    /** @var UrlGenerator $generateurUrl */
    $generateurUrl = Conteneur::recupererService("generateurUrl");
    /** @var UrlHelper $assistantUrl */
