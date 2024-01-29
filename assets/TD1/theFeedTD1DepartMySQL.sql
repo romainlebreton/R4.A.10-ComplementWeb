@@ -25,14 +25,6 @@ CREATE TABLE `publications` (
 `idAuteur` int DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
---
--- Déchargement des données de la table `publications`
---
-
-INSERT INTO `publications` (`idPublication`, `message`, `date`, `idAuteur`) VALUES
-(1, 'Un exemple de publication', '2023-01-30 14:37:50', 1),
-(2, '<script>alert(\"message\")</script>', '2023-02-25 07:23:09', 2);
-
 -- --------------------------------------------------------
 
 --
@@ -46,14 +38,6 @@ CREATE TABLE `utilisateurs` (
 `email` varchar(256) DEFAULT NULL,
 `nomPhotoDeProfil` varchar(64) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
-
---
--- Déchargement des données de la table `utilisateurs`
---
-
-INSERT INTO `utilisateurs` (`idUtilisateur`, `login`, `mdpChiffre`, `email`, `nomPhotoDeProfil`) VALUES
-(1, 'lebreton', '$2y$10$RkCmlLZIeJn757hgpiH.2eYXFDc7DeBz6ZFowKmJPxR/IuuI5qO9i', 'lebreton@yopmail.com', 'anonyme.jpg'),
-(2, '<h1>Login</h1>', '$2y$10$RkCmlLZIeJn757hgpiH.2eYXFDc7DeBz6ZFowKmJPxR/IuuI5qO9i', 'login@yopmail.com', 'anonyme.jpg');
 
 --
 -- Index pour les tables déchargées
@@ -100,3 +84,19 @@ MODIFY `idUtilisateur` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 ALTER TABLE `publications`
 ADD CONSTRAINT `publications_FK` FOREIGN KEY (`idAuteur`) REFERENCES `utilisateurs` (`idUtilisateur`) ON DELETE CASCADE ON UPDATE CASCADE;
 COMMIT;
+
+--
+-- Déchargement des données de la table `utilisateurs`
+--
+
+INSERT INTO `utilisateurs` (`idUtilisateur`, `login`, `mdpHache`, `email`, `nomPhotoDeProfil`) VALUES
+(1, 'lebreton', '$2y$10$RkCmlLZIeJn757hgpiH.2eYXFDc7DeBz6ZFowKmJPxR/IuuI5qO9i', 'lebreton@yopmail.com', 'anonyme.jpg'),
+(2, '<h1>Login</h1>', '$2y$10$RkCmlLZIeJn757hgpiH.2eYXFDc7DeBz6ZFowKmJPxR/IuuI5qO9i', 'login@yopmail.com', 'anonyme.jpg');
+
+--
+-- Déchargement des données de la table `publications`
+--
+
+INSERT INTO `publications` (`idPublication`, `message`, `date`, `idAuteur`) VALUES
+(1, 'Un exemple de publication', '2023-01-30 14:37:50', 1),
+(2, '<script>alert(\"message\")</script>', '2023-02-25 07:23:09', 2);
