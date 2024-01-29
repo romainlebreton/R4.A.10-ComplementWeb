@@ -560,12 +560,15 @@ $route->setMethods(["GET"]);
 1. Ajoutez les routes manquantes (sauf celle vers `afficherPublications`) : 
    * URL `/deconnexion`, méthode `GET` → action `deconnecter` du contrôleur
      utilisateur
-   * URL `/publications`, méthode `POST` → action `creerDepuisFormulaire` du contrôleur
-     publication
    * URL `/inscription`, méthode `GET` → action `afficherFormulaireCreation` du
      contrôleur utilisateur
    * URL `/inscription`, méthode `POST` → action `creerDepuisFormulaire` du
      contrôleur utilisateur
+   * URL `/publications`, méthode `POST` → action `creerDepuisFormulaire` du contrôleur
+     publication.  
+     Attention : Il y a déjà une autre route associée à l'URL `/publications`
+     (action `afficherListe`). Il faudra donc spécifier que l'autre route est
+     limité à la méthode `GET`.
 
 2. Modifiez les liens correspondants dans
    *  `src/vue/publication/liste.php`, 
@@ -655,7 +658,7 @@ avec la valeur `19` pour la méthode `ControleurUtilisateur::afficherPublication
    composer require symfony/http-kernel
    ```
 
-1. Faites évoluer le code de `RouteurURL` en rajoutant à la fin (juste avec
+1. Faites évoluer le code de `RouteurURL` en rajoutant à la fin (juste avant
    `call_user_func`)
 
    ```php
