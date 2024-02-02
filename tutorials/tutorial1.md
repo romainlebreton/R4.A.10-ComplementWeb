@@ -730,7 +730,7 @@ absolues à partir d'URL relatives :
 use Symfony\Component\HttpFoundation\RequestStack;
 
 $assistantUrl = new UrlHelper(new RequestStack(), $contexteRequete);
-$assistantUrl->getAbsoluteUrl("ressources/css/styles.css");
+$assistantUrl->getAbsoluteUrl("../ressources/css/styles.css");
 // Renvoie l'URL .../ressources/css/styles.css, peu importe l'URL courante
 ```
 
