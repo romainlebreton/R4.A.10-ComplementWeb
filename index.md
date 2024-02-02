@@ -14,13 +14,13 @@ Cours *R4.A.10 -- Complément Web* en
 
 ## TDs
 1. Lundi 29 janvier 2024 -- [TD 1](tutorials/tutorial1) -- Routage par URL, Composer
+2. Lundi 13 mars 2024 -- [TD 2](tutorials/tutorial2) -- Réponses HTTP, Moteur de template *Twig* 
 
 <!--    
-2. Lundi 13 mars 2024 -- [TD 2](tutorials/tutorial2) -- Réponses HTTP, Moteur de template *Twig* 
-3. Lundi 20 mars 2024 -- [TD 3](tutorials/tutorial3) -- API REST, authentification par JWT
-4. Lundi 27 mars 2024 -- finir les TDs précédents
-5. Lundi 27 mars 2024 -- début [TD 4](https://gitlabinfo.iutmontp.univ-montp2.fr/r4.a.10-complementweb/TD4) -- Programmation réactive en JS
-6. Lundi 03 avril 2024 -- fin [TD 4](https://gitlabinfo.iutmontp.univ-montp2.fr/r4.a.10-complementweb/TD4) -- Programmation réactive en JS 
+1. Lundi 20 mars 2024 -- [TD 3](tutorials/tutorial3) -- API REST, authentification par JWT
+2. Lundi 27 mars 2024 -- finir les TDs précédents
+3. Lundi 27 mars 2024 -- début [TD 4](https://gitlabinfo.iutmontp.univ-montp2.fr/r4.a.10-complementweb/TD4) -- Programmation réactive en JS
+4. Lundi 03 avril 2024 -- fin [TD 4](https://gitlabinfo.iutmontp.univ-montp2.fr/r4.a.10-complementweb/TD4) -- Programmation réactive en JS 
 -->
 
 <!-- 

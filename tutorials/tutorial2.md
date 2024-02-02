@@ -66,7 +66,7 @@ un objet `Response` contient toute l'information qui doit être renvoyée au cli
 use Symfony\Component\HttpFoundation\Response;
 
 $response = new Response(
-    'Content',
+    'Corps de la réponse : page Web ou JSON',
     Response::HTTP_OK, // Code 200 OK
     ['content-type' => 'text/html'] // En-tête pour indiquer une réponse HTML
 );
@@ -101,8 +101,8 @@ ob_start();
 ```
 
 Tant qu'elle est enclenchée, aucune donnée, hormis les en-têtes, n'est envoyée
-au navigateur. Quand l'exécution des vues est fini, nous récupérons le contenu
-de ce fichier tampon puis l'effaçons avec 
+au navigateur du client HTTP. Quand l'exécution des vues est fini, nous
+récupérons le contenu de ce fichier tampon puis l'effaçons avec 
 
 ```php
 $corpsReponse = ob_get_clean();
@@ -127,14 +127,14 @@ Il ne reste plus qu'à créer un objet `Response` à partir de ce corps de répo
       }
    ```
 
-2. Modifier la première action `ControleurPublication::feed()` pour qu'elle
-   renvoie la réponse de `afficherVue()`.
+2. Modifier la première action `ControleurPublication::afficherListe()` pour que
+   le fonction renvoie la réponse fournie par `afficherVue()`.
 
 3. Dans `RouteurURL`, récupérer la réponse renvoyée par
    `call_user_func_array()`, puis appelez une méthode vue plus haut pour
    l'envoyer au client *HTTP*.
 
-4. Testez l'URL `web/` qui renvoie vers l'action `feed()`. Cela doit marcher.
+4. Testez l'URL `web/` qui renvoie vers l'action `afficherListe()`. Cela doit marcher.
    
 5. Dans toutes les actions, mettez à jour le code pour que l'action renvoie la
    réponse fournie par `ControleurGenerique::afficherVue()`.
@@ -197,7 +197,14 @@ faisant particulièrement attention au code de réponse.
 <div class="exercise">
 
 1. Pour découvrir quelle méthode lance quelle exception, il faut lire la
-   *PHPDoc* : 
+   *PHPDoc*. Pour exemple, pour la méthode `UrlMatcher::match()` : 
+   * Avec `PhpStorm`, on accède à la documentation survolant
+     `$associateurUrl->match()` avec la souris.  
+     Comme la liste des exceptions est documenté dans l'interface
+     `UrlMatcherInterface`, il faut cliquer sur `UrlMatcherInterface::match`. On
+     trouve alors les 3 exceptions levées par cette méthode.
+
+   <!-- 
    * Avec `PhpStorm`, si vous lisez la documentation de
        `$associateurUrl->match()` dans `RouteurURL`, elle ne mentionne
        malheureusement pas les exceptions. Ceci est dû à un bug de `PhpStorm`
@@ -205,8 +212,10 @@ faisant particulièrement attention au code de réponse.
      *  faire `Ctrl+Clic` sur `match()` pour afficher son code source ;
      *  Malheureusement, ce code source ne contient pas de PHPDoc qui pourrait nous renseigner ;
      *  il faut remonter à la déclaration de la classe et faire `Ctrl+Clic` sur
-        l'interface `UrlMatcherInterface` pour enfin voir la *PhpDoc* qui indique la liste des exceptions.
-   * `vscode` ou `vscodium`, vous devriez voir la liste des exceptions en
+        l'interface `UrlMatcherInterface` pour enfin voir la *PhpDoc* qui indique la liste des exceptions. 
+   -->
+
+   * Avec `vscode` ou `vscodium`, vous devriez voir la liste des exceptions en
      survolant simplement `$associateurUrl->match()` dans `RouteurURL`.
 
 2. Listez en commentaire du code toutes les exceptions levées par les 3 méthodes
@@ -225,7 +234,8 @@ faisant particulièrement attention au code de réponse.
 $donneesRoute = $associateurUrl->match($requete->getPathInfo());
 
 /**
- * @throws \LogicException If a controller was found based on the request but it is not callable
+ * @throws LogicException If a controller was found based on the request but it is not callable
+ * @throws BadRequestException when the request has attribute "_check_controller_is_allowed" set to true and the controller is not allowed
  */
 $controleur = $resolveurDeControleur->getController($requete);
 
@@ -238,7 +248,7 @@ $arguments = $resolveurDArguments->getArguments($requete, $controleur);
 Nous allons maintenant traiter ces exceptions avec une réponse *HTTP* adaptée.
 Les codes de réponse qui signalent une erreur de l'utilisateur sont en `4xx`.
 Voici quelques codes de réponse *HTTP* utiles : 
-* `400 Bad Request` (attribut `HTTP_BAD_REQUEST` de la classe `Response`)
+* `400 Bad Request` (attribut `HTTP_BAD_REQUEST` de la classe `Response`)  
    Cette réponse indique que le serveur n'a pas pu comprendre la requête à cause d'une syntaxe invalide.
 
 * `401 Unauthorized` (attribut `HTTP_UNAUTHORIZED`)  
@@ -265,12 +275,12 @@ Voici quelques codes de réponse *HTTP* utiles :
 
 1. Changer la méthode `ControleurGenerique::afficherErreur()` pour le code suivant qui permet d'ajouter un code de réponse : 
    ```php
-   public static function afficherErreur($errorMessage = "", $statusCode = 400): Response
+   public static function afficherErreur($messageErreur = "", $statusCode = 400): Response
    {
        $reponse = ControleurGenerique::afficherVue('vueGenerale.php', [
            "pagetitle" => "Problème",
            "cheminVueBody" => "erreur.php",
-           "errorMessage" => $errorMessage
+           "messageErreur" => $messageErreur
        ]);
 
        $reponse->setStatusCode($statusCode);
@@ -278,9 +288,9 @@ Voici quelques codes de réponse *HTTP* utiles :
    }
    ```
 
-2. Parmi les 5 exceptions levées, 2 correspondent à des codes de réponses *HTTP*
+2. Parmi les 6 exceptions levées, 2 correspondent à des codes de réponses *HTTP*
    spécifiques. Pour les autres exceptions, nous renverrons le code de réponse
-   d'erreur utilisateur générique `400`.  
+   d'erreur générique `400`.  
    Dans `RouteurURL`, gérez l'exception avec des `catch` successifs qui
    permettent de gérer de l'exception la plus spécifique à l'exception la plus
    générique : 
@@ -317,7 +327,7 @@ Voici quelques codes de réponse *HTTP* utiles :
    message d'erreur, ainsi que le code de retour avec les outils de
    développement.
 
-5. Modifiez, le temps de cette question, votre code pour que l'action `feed()`
+5. Modifiez, le temps de cette question, votre code pour que l'action `afficherListe()`
    prenne un argument quelconque. Appelez l'URL `web/`. Observez le message
    d'erreur et le code de retour avec les outils de développement.
 
@@ -349,9 +359,9 @@ Voyons les contraintes d'un bon langage de gabarits :
   L'héritage de gabarit permet de reprendre une mise en page existante (comme `vueGenerale.php`) en spécifiant des parties (le titre, le corps de la page, ...)
 
 * **Sécurité** : La sécurité est activée par défaut, en particulier
-  l'échappement des caractères spéciaux du *HTML*. Ceci viser à protéger les
-   non-développeurs des menaces web courantes telles que XSS ou CSRF dont ils ne
-   sont pas nécessairement conscients.
+  l'échappement des caractères spéciaux du *HTML*. Ceci vise à protéger les
+  non-développeurs des menaces web courantes telles que XSS ou CSRF dont ils ne
+  sont pas nécessairement conscients.
 
 * **Rapide** : 
   *Twig* compile les gabarits en code PHP simple, ce qui permet leur évaluation à un surcoût minimum.
@@ -514,7 +524,7 @@ la page dans une nouvelle vue `src/vue/utilisateur/connexion.html.twig` :
                 </div>
                 <div class="access-container">
                     <label for="password">Mot de passe</label>
-                    <input id="password" type="password" name="password" required/>
+                    <input id="password" type="password" name="mot-de-passe" required/>
                 </div>
                 <input id="access-submit" type="submit" value="Se connecter">
             </fieldset>
@@ -615,7 +625,7 @@ remplacer le contenu d'un bloc en le redéfinissant.
                {# boucle sur les publications #}
                   <div class="feedy">
                      <div class="feedy-header">
-                           <a href="{# lien vers pagePerso #}">
+                           <a href="{# lien vers afficherPublications #}">
                               <img class="avatar"
                                     src="{# lien vers l'image de profil de l'auteur de la publication #}"
                                     alt="avatar de l'utilisateur">
@@ -635,11 +645,13 @@ remplacer le contenu d'un bloc en le redéfinissant.
       </main>
    {% endblock %}
    ```
-1. Changer les actions `ControleurPublication::feed()` et
-   `ControleurUtilisateur::pagePerso` pour appeler cette vue.
+1. Changer les actions `ControleurPublication::afficherListe()` et
+   `ControleurUtilisateur::afficherPublications()` pour appeler cette vue, en
+   fournissant en paramètre le tableau des publications.
 
 2. Codez avec la syntaxe *Twig* la boucle des publications, son cas particulier
-   quand il n'y a pas de publication, et les affichages liés aux publications.
+   quand il n'y a pas de publication, et les affichages liés aux publications
+   (sauf la date qui sera affichée dans le prochain exercice).
    
    *Note :* les liens et la gestion de l'utilisateur connecté seront fait plus
    tard. 
@@ -675,7 +687,8 @@ La documentation liste [les filtres de
 
 <div class="exercise">
 
-1. Ajoutez un filtre à la date de la publication pour que la date soit affichée comme suit : `09 March 2023`.
+1. Affichez la date des publications en utilisant un filtre pour qu'elle soit
+   affichée comme suit : `09 March 2023`.
 
    *Aide :* Allez voir les liens précédents sur la documentation pour trouver le bon format.
 
@@ -716,7 +729,7 @@ $callable = $objet->nomMethode(...); // Les ... font parti de la syntaxe
 
 La fonction est alors disponible dans *Twig*, par exemple comme ceci : 
 ```twig
-{{ route("feed") }}
+{{ route("afficherListe") }}
 ```
 
 <div class="exercise">
@@ -726,11 +739,13 @@ La fonction est alors disponible dans *Twig*, par exemple comme ceci :
    * une fonction `asset` pour la méthode `$assistantUrl->getAbsoluteUrl()` ;
 
 1. Utilisez ces fonctions dans toutes vos vues *Twig* pour réparer tous les
-   liens (CSS, menu, action du formulaire).
+   liens (CSS, menu, action du formulaire), sauf le lien "Ma Page" du menu de
+   navigation vers la route paramétrée de l'utilisateur connecté.
 
    *Aide* : 
-   * pour la route vers l'action `pagePerso`, la méthode
-   `$generateurUrl->generate()` attend un tableau associatif comme deuxième
+   * pour le lien vers la page personnelle de l'auteur d'une publication, vous
+   devrez générer la route vers l'action `afficherPublications` en la méthode
+   `$generateurUrl->generate()` qui attend un tableau associatif comme deuxième
    argument. Les tableaux associatifs se créent avec la syntaxe JSON
    ```twig
    {'nomCle' : 'valeur'}
@@ -784,7 +799,7 @@ nous proposons de stocker une instance de `MessageFlash` :
 ```php
 $twig->addGlobal('messagesFlash', new MessageFlash());
 ```
-et d'appeler la méthode `lireMessage()` dans la vue *Twig* avec `messagesFlash.lireMessage()`.
+et d'appeler la méthode `lireMessages()` dans la vue *Twig* avec `messagesFlash.lireMessages()`.
 
 <div class="exercise">
 
@@ -798,7 +813,7 @@ et d'appeler la méthode `lireMessage()` dans la vue *Twig* avec `messagesFlash.
 
 4. Il ne reste plus qu'à gérer la vue d'erreur, qui est appelée en cas d'exception : 
    * créez une vue d'erreur `src/vue/erreur.html.twig` qui étend
-     `base.html.twig` et affiche une variable `errorMessage` qui lui sera donné
+     `base.html.twig` et affiche une variable `messageErreur` qui lui sera donné
      en paramètre.
    * Modifiez la méthode `ControleurGenerique::afficherErreur()` pour appeler
      cette vue.
@@ -845,7 +860,7 @@ https://code.tutsplus.com/tutorials/set-up-routing-in-php-applications-using-the
 
 <!-- 
 TODO : formulaire d'inscription sans auto-complétion  (car affichage et traitement séparés 
-TODO : pagePerso renvoie sur feed.html.twig
+TODO : afficherPublications renvoie sur feed.html.twig
 * if login sur le titre
 -->
 
