@@ -441,7 +441,8 @@ SRP de RouteurURL loupé :
     {
         /** @var Environment $twig */
         $twig = Conteneur::recupererService("twig");
-        return new Response($twig->render($cheminVue, $parametres));
+        $corpsReponse = $twig->render($cheminVue, $parametres);
+        return new Response($corpsReponse);
     }
     ```
 
@@ -560,6 +561,15 @@ remplacer le contenu d'un bloc en le redéfinissant.
   `$donnes->getAttribut()`, `$donnes->isAttribut()` et `$donnes->hasAttribut()`
   (*cf.* [documentation de Twig](https://twig.symfony.com/doc/3.x/templates.html#variables)).
 
+* Les variables accessibles dans Twig sont celles qui ont été données en
+  paramètres de `$twig->render()` dans la méthode
+  `ControleurGenerique::afficherTwig()`. Par exemple, si le fichier
+  `exemple.html.twig` contient `{{ variableTwig }}`, alors
+  ```php
+  $twig->render("exemple.html.twig", ["variableTwig" => "Web4Ever🕸"]);
+  ```
+  affichera  `Web4Ever🕸`.
+
 * La structure conditionnelle `if` permet de ne générer une partie du document que si une condition est remplie :
 
    ```twig
@@ -645,11 +655,11 @@ remplacer le contenu d'un bloc en le redéfinissant.
       </main>
    {% endblock %}
    ```
-1. Changer les actions `ControleurPublication::afficherListe()` et
+2. Changer les actions `ControleurPublication::afficherListe()` et
    `ControleurUtilisateur::afficherPublications()` pour appeler cette vue, en
    fournissant en paramètre le tableau des publications.
 
-2. Codez avec la syntaxe *Twig* la boucle des publications, son cas particulier
+3. Codez avec la syntaxe *Twig* la boucle des publications, son cas particulier
    quand il n'y a pas de publication, et les affichages liés aux publications
    (sauf la date qui sera affichée dans le prochain exercice).
    
