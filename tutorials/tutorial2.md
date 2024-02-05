@@ -89,7 +89,9 @@ Response
 ### Des actions qui retournent des `Response`
 
 Nous souhaitons modifier nos actions pour qu'elles retournent toutes une
-instance de la classe `Response`. Ceci nous permettra par la suite d'utiliser toutes les possibilités des réponses *HTTP*.
+instance de la classe `Response`. Ceci nous permettra par la suite d'utiliser
+toutes les possibilités des réponses *HTTP*, notamment une meilleure redirection
+dans l'exercice 2, ou des codes de réponse HTTP personnalisés dans l'exercice 4.
 
 Pour que `ControleurGenerique::afficherVue()` renvoie une `Response`, il faut
 que les vues renvoient une chaîne de caractères plutôt que d'écrire directement
@@ -553,7 +555,8 @@ remplacer le contenu d'un bloc en le redéfinissant.
 ### Syntaxe de base de *Twig*
 
 * L'instruction `{{ donnee }}` permet d'afficher une donnée. Elle sera
-  automatiquement échappée pour le *HTML*.
+  automatiquement échappée pour le *HTML*, c-à-d qu'il appelle automatiquement
+  `htmlspecialchars` pour vous.
 
   On peut accéder à une méthode d'un objet avec `{{ donnee.methode() }}`, et à
   un attribut avec `{{ donnee.attribut }}`. *Twig* essayera d'abord de trouver

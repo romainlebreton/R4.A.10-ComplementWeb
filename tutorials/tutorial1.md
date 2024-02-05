@@ -7,6 +7,18 @@ lang: fr
 
 <!-- 
 
+Voir notes pour l'an prochain : 
+* donner les méthodes GET/POST directement dans le new Route
+* rajouter les routes directement à $routes
+* utiliser la syntaxe 1st class callable
+  ["_controller" => ControleurPublication::afficherListe(...)]
+* remplacer call_user_func_array par le spread operator
+  _controlleur(...arguments) 
+
+-->
+
+<!-- 
+
 TODO : 
 * code de base
 * setfacl -m u:www-data:rwx ressources/img/utilisateurs
