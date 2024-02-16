@@ -13,7 +13,7 @@ l’utilisation de requêtes et de réponses. Elles donnent un moyen d’accès 
 données de façon réutilisable et standardisée.
 
 Un standard d'API très présent sur le Web est *REST*. Les contraintes imposées
-par *REST* sont un peu abstraites ; dans ce TD, nous nous intéresserons qu'à ses
+par *REST* sont un peu abstraites ; dans ce TD, nous nous intéresserons à ses
 implications concrètes pour un service Web. La motivation est que tous les
 services Web *RESTful*, *c.-à-d.* qui satisfont les contraintes *REST*, soient
 interopérables. Ils doivent donc tous utiliser le même protocole de transfert
@@ -51,7 +51,7 @@ Pour indiquer une action sur une ressource, on utilise des verbes HTTP :
   * `POST` : créer une nouvelle ressource,
   * `PUT` : mettre à jour une ressource complètement en la remplaçant,
   * `PATCH` : mettre à jour une ressource partiellement en la modifiant 
-  * `DELETE` : supprimer une ressource,
+  * `DELETE` : supprimer une ressource.
 
 <!-- https://stackoverflow.com/questions/28459418/use-of-put-vs-patch-methods-in-rest-api-real-life-scenarios -->
 
@@ -67,13 +67,13 @@ avec succès. Complétons les codes déjà vus :
       Il est courant de fournir un lien vers la ressource créée dans l'en-tête
       `Location :`. Le corps de réponse peut être vide.
     * `204 NO CONTENT` (attribut `HTTP_NO_CONTENT`)  
-      Code de succès qui signale un corps de requête vide, généralement à la suite d'une requête `DELETE` ou `PUT`.
+      Code de succès qui signale un corps de réponse vide, généralement à la suite d'une requête `DELETE` ou `PUT`.
   * Codes de redirection `3xx` déjà présentés dans 
-    [le TD2]({{site.baseurl}}/R4.A.10-ComplementWeb/tutorials/tutorial2#des-redirections-plus-propres) :
+    [le TD2]({{site.baseurl}}/tutorials/tutorial2#des-redirections-plus-propres) :
     * `301 MOVED PERMANENTLY` : redirection permanente 
     * `302 FOUND` : redirection temporaire   
   * Codes d'erreur côté client `4xx` déjà présentés dans 
-    [le TD2]({{site.baseurl}}/R4.A.10-ComplementWeb/tutorials/tutorial2#utilisation-des-codes-de-réponses-pour-les-erreurs) : 
+    [le TD2]({{site.baseurl}}/tutorials/tutorial2#utilisation-des-codes-de-réponses-pour-les-erreurs) : 
     * `400 BAD REQUEST` : erreur générique
     * `401 UNAUTHORIZED` : le client doit s'authentifier,
     * `403 FORBIDDEN` : le client authentifié n'a pas les droits
@@ -237,11 +237,11 @@ Pour que le gestionnaire d'évènement sache quelle publication il doit supprime
 nous allons rajouter l'identifiant de publication dans un attribut de la balise.
 Les [attributs `data-*`](https://developer.mozilla.org/fr/docs/Learn/HTML/Howto/Use_data_attributes) ont été conçus à cet effet. Par exemple, si on rajoute les attributs suivants à une balise *HTML*
 ```html
-<article>
+<article
   id="voitureelectrique"
   data-columns="3"
   data-index-number="12314"
-</article>
+>
 ```
 on peut les récupérer en *JavaScript* avec 
 ```js
@@ -630,7 +630,7 @@ pour faire les TDs.
 
 1. Modifiez la fonction `submitFeedy()` pour récupérer l'utilisateur dont
    l'identifiant est `feedy.auteur.idUtilisateur` par une requête à l'URL
-   `web/api/utilisateur/{idUtilisateur}`.
+   `web/api/utilisateurs/{idUtilisateur}`.
 
 1. Testez que la publication d'un nouveau *feedy* rempli bien le *login* et
    l'image de profil de l'utilisateur.
