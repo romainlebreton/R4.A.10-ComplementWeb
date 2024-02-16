@@ -5,6 +5,11 @@ layout: tutorial
 lang: fr
 ---
 
+<!-- 
+An prochain : 
+* Publication::create → Publication::construire
+-->
+
 L'objectif de cette séance est de vous former à la mise en place de tests unitaires sur une application web PHP.
 
 Nous allons voir que pour qu'une application soit testable efficacement il faut que celle-ci présente une architecture réfléchie permettant de véritablement tester une partie du code (une classe) de manière indépendante. Pour cela,
@@ -73,7 +78,7 @@ Parmi les méthodes d'assertion, on peut citer :
 * `assertNull(resultat, message)` : permet de vérifier qu'un résultat est bien **null**. Il existe aussi
 `assertNotNull(resultat, message)`.
  
-Cette liste est bien sûr non exhaustive et vous pourrez explorer plus en détail toutes les assertions disponibles.
+Cette liste est bien sûr non exhaustive et vous pourrez explorer plus en détail toutes les assertions disponibles sur la [documentation officielle](https://docs.phpunit.de/en/10.5/assertions.html).
 
 Une autre méthode bien pratique est aussi `expectException(exceptionClass)`. Cette méthode est à utiliser avant 
 d'exécuter un bout de code et permet de vérifier que l'exception précisée à bien été levée. On peut aussi utiliser `expectExceptionMessage(message)` pour vérifier le message de l'exception levée.
@@ -188,11 +193,11 @@ class EnsembleTest extends TestCase {
 
 **Attention** ! Le nom de toutes vos classes de tests doit se terminer par `Test` ! (Sinon la classe ne sera pas prise en compte lors de l'exécution de tests). Aussi, chaque nom de méthode de test doit débuter par `test`.
 
-Afin de prendre en main l'outil, vous allez créer une classe simple puis une classe de test permettant de la tester.
+<!-- Afin de prendre en main l'outil, vous allez créer une classe simple puis une classe de test permettant de la tester.
 
 <div class="exercise">
 
-1. Créez une classe `Calculatrice` dans le dossier `Test`. Cette classe doit gérer un attribut `$resultat` initialisé à 0 (qui représente le résultat courant). Les différentes méthodes de cette classe devront permettre de modifier ce résultat.
+1. Créez une classe `Calculatrice` dans le dossier `Test`. Cette classe doit gérer un attribut `$resultat` initialisé à `0` (qui représente le résultat courant). Les différentes méthodes de cette classe devront permettre de modifier ce résultat.
 
 2. Ajoutez les méthodes suivantes :
 
@@ -210,7 +215,7 @@ Afin de prendre en main l'outil, vous allez créer une classe simple puis une cl
 </div>
 
 Veillez à bien comprendre cette étape. L'exemple choisi est volontairement simpliste pour vous permettre de vous
-focaliser sur l'écriture de tests. Si vous avez des difficultés, n'hésitez pas à demander des précisions à votre enseignant. 
+focaliser sur l'écriture de tests. Si vous avez des difficultés, n'hésitez pas à demander des précisions à votre enseignant.  -->
 
 ## La couche Service
 
@@ -227,7 +232,7 @@ Dans un logiciel, on retrouve généralement **5 couches principales** :
 
 * La couche **métier** qui contient le cœur de l'application, à savoir les différentes **entités** manipulées (essentiellement, les classes dans `DataObject`) ainsi que des classes de **services** qui permettent de manipuler ces entités et d'implémenter la **partie logique** de votre application.
 
-* La couche **application** qui permet de faire le lien entre la couche **ihm** et la couche **métier**. Elle contient les différents **contrôleurs** dont le rôle est de gérer les **évènements** qui surviennent sur l'interface et d'envoyer des **requêtes** auprès de la couche **métier** et de transmettre les résultats obtenus à **l'ihm**. Dans une application web, les événements sont les requêtes reçues par l'application web (et ses paramètres, via l'URL). Une requête est décomposée puis la bonne méthode du contrôleur est exécutée avec les paramètres correspondants.
+* La couche **application** qui permet de faire le lien entre la couche **ihm** et la couche **métier**. Elle contient les différents **contrôleurs** dont le rôle est de gérer les **évènements** de l'interface, d'interagir avec la couche **métier** et de transmettre les résultats obtenus à **l'ihm**. Dans une application web, les événements sont les requêtes reçues par l'application web (et ses paramètres, via l'URL). Une requête est décomposée puis la bonne méthode du contrôleur est exécutée avec les paramètres correspondants.
 
 * La couche **stockage** qui permet de gérer la **persistance des données** à travers une forme de stockage configurée (base de données, fichier...). Son rôle va donc être de sauvegarder et charger les données des différentes entités de la couche **métier**. C'est cette couche qui va contenir les différents **repositories**. Cette couche est généralement utilisée par les différents classes de **services**. Globalement, les interactions se déroulent dans ce sens : IHM ↔ Application ↔ Services ↔ Stockage.
 
@@ -251,7 +256,11 @@ Nous allons commencer à extraire la logique métier de notre application en cr�
 
 2. Dans ce nouveau dossier, créez une classe `PublicationService`.
 
-3. Créez une méthode `recupererPublications` qui permet de récupérer toutes les publications depuis le repository correspondant **et de les renvoyer**. Vous pouvez directement copier le code correspondant depuis la méthode `afficherListe` de `ControleurPublication`.
+3. Créez une méthode 
+   ```php
+   public function recupererPublications(): array
+   ```
+   qui permet de récupérer toutes les publications depuis le repository correspondant **et de les renvoyer**. Vous pouvez directement copier le code correspondant depuis la méthode `afficherListe` de `ControleurPublication`.
 
 4. Modifiez le code de la méthode `afficherListe` de `ControleurPublication` pour utiliser votre nouveau **service** au lieu de faire appel au repository.
 
@@ -308,6 +317,9 @@ Nous allons nous intéresser à la création des publications. Actuellement, dè
         (new PublicationRepository())->ajouter($publication);
     }
     ```
+
+    **Note :** Si vous avez une erreur de l'IDE *`rediriger` has protected
+    visibility*, ce n'est pas grave, elle sera dans quelques exercices.
 
 3. Dans la nouvelle méthode `creerPublication`, remplacez toutes les lignes qui ajoutent un message flash et redirigent l'utilisateur par le déclenchement d'une **ServiceException** contenant le message flash initialement prévu comme message flash. La syntaxe est la suivante :
 
@@ -408,10 +420,10 @@ La méthode `afficherPublications` effectue deux actions : récupération de l'u
 
 <div class="exercise">
 
-1. Dans la classe `UtilisateurService`, créez une méthode `recupererUtilisateur` qui prend en paramètre un identifiant d'utilisateur **et un booléen** `autoriserNull`. Ce booléen a pour but de préciser si une exception doit être levée ou non si l'utilisateur sélectionné n'existe pas (dans certains cas, on veut simplement récupérer la valeur `null` sans lever d'exceptions). La méthode doit donc renvoyer, à l'issu, l'utilisateur ciblé par l'identifiant (en se servant du repository). Si `autoriserNull` vaut `false` et que l'utilisateur récupéré est `null`, il faut lever une `ServiceException` (l'utilisateur n'existe pas !).
+1. Dans la classe `UtilisateurService`, créez une méthode `recupererUtilisateurParId` qui prend en paramètre un identifiant d'utilisateur **et un booléen** `autoriserNull`. Ce booléen a pour but de préciser si une exception doit être levée ou non si l'utilisateur sélectionné n'existe pas (dans certains cas, on veut simplement récupérer la valeur `null` sans lever d'exceptions). La méthode doit donc renvoyer, à l'issu, l'utilisateur ciblé par l'identifiant (en se servant du repository). Si `autoriserNull` vaut `false` et que l'utilisateur récupéré est `null`, il faut lever une `ServiceException` (l'utilisateur n'existe pas !).
 
     ```php
-    public function recupererUtilisateur($idUtilisateur, $autoriserNull = true) {
+    public function recupererUtilisateurParId($idUtilisateur, $autoriserNull = true) {
         $utilisateur = ...
         if(!$autoriserNull && ...) {
             ...
@@ -422,9 +434,13 @@ La méthode `afficherPublications` effectue deux actions : récupération de l'u
 
 2. La partie qui a pour but de récupérer des publications doit plutôt être codée au niveau de la classe `PublicationService`. Ajoutez donc une méthode `recupererPublicationsUtilisateur($idUtilisateur)` à ce service en reprenant la partie du code de `afficherPublications` qui récupère les publications.
 
-3. Remplacez le code de `afficherPublications` afin d'utiliser les deux méthodes (`recupererUtilisateur` et `recupererPublicationsUtilisateur` de `UtilisateurService` et `PublicationService`). Il ne faudra pas autoriser le fait de récupérer un utilisateur `null`. Veillez à bien traiter une éventuelle `ServiceException`.
+3. Remplacez le code de `afficherPublications` afin d'utiliser les deux méthodes (`recupererUtilisateurParId` et `recupererPublicationsUtilisateur` de `UtilisateurService` et `PublicationService`). Il ne faudra pas autoriser le fait de récupérer un utilisateur `null`. Veillez à bien traiter une éventuelle `ServiceException`.
 
-4. Vérifiez que tout fonctionne bien.
+4. {% raw %}
+   Modifiez aussi `afficherPublications` et `feed.html.twig` pour que le titre de la page `{% block page_title %}` soit `Page perso de login_de_l_utilisateur`.
+   {% endraw %}
+
+5. Vérifiez que tout fonctionne bien.
 
 </div>
 
