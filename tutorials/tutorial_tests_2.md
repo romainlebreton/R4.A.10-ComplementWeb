@@ -24,7 +24,7 @@ Un **test unitaire** doit seulement porter sur une portion de code très précis
 
 Pour régler ces problèmes, nous pouvons utiliser deux outils :
 
-* L'application des principes **SOLID** notamment **l'inversion de contrôle** afin de réaliser de l'injection de dépendances pour faire en sorte que les dépendances des différentes classes soient interchangeables.
+* L'application des principes **SOLID** notamment **l'inversion des dépendances** (principe `D`) afin de réaliser de l'injection de dépendances pour faire en sorte que les dépendances des différentes classes soient interchangeables.
 
 * L'utilisation de **mocks** afin de simuler et configurer à souhait les dépendances d'une classe lors des tests unitaires afin de construire un scénario précis. L'idée est de contrôler ce que les différentes dépendances d'une classe vont fournir comme réponse lorsqu'elles sont utilisées lors d'un test unitaire.
 
@@ -32,7 +32,7 @@ Pour régler ces problèmes, nous pouvons utiliser deux outils :
 
 Lorsqu'une classe est amenée à utiliser des instances d'autres classes lors de l'exécution de ses différentes méthodes on dit qu'il existe une dépendance entre ces deux classes (de la classe utilisatrice vers la classe utilisée). En **UML**, cette dépendance se traduit notamment par une flèche pointillée.
 
-Dans un tel contexte, il peut alors être judicieux d'appliquer le concept **d'inversion de contrôle** en favorisant l'injection des dépendances de la classe plutôt que de laisser la classe instancier un objet de la classe cible ou bien utiliser un singleton.
+Dans un tel contexte, il peut alors être judicieux d'appliquer le concept **d'inversion de contrôle** en favorisant le découplage entre les objets en injectant les dépendances de la classe plutôt que de laisser la classe instancier un objet de la classe cible ou bien utiliser un singleton.
 
 Par exemple, imaginons les classes suivantes :
 

@@ -217,7 +217,7 @@ class EnsembleTest extends TestCase {
 Veillez à bien comprendre cette étape. L'exemple choisi est volontairement simpliste pour vous permettre de vous
 focaliser sur l'écriture de tests. Si vous avez des difficultés, n'hésitez pas à demander des précisions à votre enseignant.  -->
 
-## La couche Services
+## La couche Service
 
 Nous avons réalisé des premiers tests simples afin de comprendre le fonctionnement de **PHPUnit**. Maintenant, nous allons mettre en œuvre cet outil de manière plus concrète en testant notre application web. Néanmoins, vous allez constater un problème majeur : l'application n'est pas testable en l'état.
 
@@ -244,11 +244,12 @@ La connaissance de ces couches ne donne pas encore la structure de l'application
 
 Cette architecture permet de séparer les entités, les vues et les contrôleurs de l'application et de les faire communiquer :
 
-* La partie **modèle** stocke les différentes **entités** (nos `DataObject`) que l'on retrouve dans la couche **métier** ainsi que des classes liées à la couche **stockage** (les classes type `Repository`). 
+* La partie **modèle** (M) stocke les différentes **entités** (nos `DataObject`) que l'on retrouve dans la couche **métier** ainsi que des classes liées à la couche **stockage** (les classes type `Repository`). 
 
-* Les différents **contrôleurs** gèrent la couche **application** et une partie de la couche (logique) **métier** (ils reçoivent les requêtes, vérifient les données, effectuent les opérations, etc.)
+* Les différentes **vues** (V) correspondent à la couche **présentation**.
 
-* Les différentes **vues** correspondent à la couche **présentation**.
+* Les différents **contrôleurs** (C) gèrent la couche **application** et une partie de la couche (logique) **métier** (ils reçoivent les requêtes, vérifient les données, effectuent les opérations, etc.)
+
 
 Néanmoins, il n'est pas explicitement fait mention des **services** dans cette architecture. En fait, dans une architecture `MVC` classique, le **contrôleur** a le rôle des **services** et effectue une grande partie (voir la totalité) partie de la logique métier. Néanmoins, cela peut vite créer des contrôleurs énormes ayant beaucoup trop de responsabilités. C'est pourquoi il est possible de venir placer une couche **service** entre les **contrôleurs**, les **entités** et la couche **stockage**. Ainsi, le contrôleur n'effectue pas de logique métier et on a une séparation plus forte.
 
@@ -364,7 +365,7 @@ Nous allons nous intéresser à la création des publications. Actuellement, dè
 5. Comme d'habitude, vérifiez votre application pour vous assurer que rien n'a été cassé.
 </div>
 
-Ici, la séparation entre la couche **service** et **application** est bien visible ! Le contrôleur récupère les éléments nécessaires depuis la requête et le service, lui n'interagit pas directement avec les données de la requête (pas d'accès à `$_POST`) et ne s'intéresse pas aux notions liées à la couche **ihm** (pas de redirection, pas de sélection de vue, pas de messages flash...). Il agit comme un module quasi indépendant des autres couches.
+Ici, la séparation entre la couche **service** et **application** est bien visible ! Le contrôleur récupère les éléments nécessaires depuis la requête et le service, lui n'interagit pas directement avec les données de la requête (pas d'accès à `$_POST`) et ne s'intéresse pas aux notions liées à la couche **présentation** (pas de redirection, pas de sélection de vue, pas de messages flash...). Il agit comme un module quasi indépendant des autres couches.
 
 ### Un service pour gérer les utilisateurs
 
@@ -502,7 +503,7 @@ Il est temps pour vous de découvrir un outil fort utile pour pouvoir mesurer (e
 
 Il est difficile de savoir jusqu'où tester une application. Le but des tests n'est en réalité pas de vérifier que tout fonctionne mais plutôt de trouver des dysfonctionnements. Le nombre et la variété des tests à produire dépendent donc fortement du contexte. Néanmoins, une couverture de code de **100%** (donc, des tests qui passent au moins une fois par chaque ligne de code du programme) est un premier indicateur de la qualité des tests. Dans ce cas, on peut alors considérer qu'il y a un nombre assez important de tests et qu'ils sont assez variés. Néanmoins, cela ne signifie pas nécessairement qu'il faut s'arrêter de tester à partir de là. Il faut prévoir le plus de scénarios possibles (deux scénarios différents peuvent déclencher les mêmes lignes de code).
 
-Il faut également se poser la question de **la portée** des tests. Doit-on (peut-on ?) tout tester ? Par exemple, est-il pertinent d'écrire des tests unitaires pour les contrôleurs dans leur état actuel vu que leur rôle se limite à la réalisation d'un pont entre la couche IHM (les vues, la requête HTTP) et la couche service. Cela relève plutôt de tests réalisés directement sur l'interface (ce que vous faisiez jusqu'ici). Il est possible de mettre en place des tests unitaires sur à peu près tous les éléments du programme, mais généralement, on va plutôt se concentrer sur la partie métier avec les **services** puis la partie **modele**. Obtenir une couverture proche de 100% sur ces parties constitue un premier critère de qualité.
+Il faut également se poser la question de **la portée** des tests. Doit-on (peut-on ?) tout tester ? Par exemple, est-il pertinent d'écrire des tests unitaires pour les contrôleurs dans leur état actuel vu que leur rôle se limite à la réalisation d'un pont entre la couche présentation (les vues, la requête HTTP) et la couche service. Cela relève plutôt de tests réalisés directement sur l'interface (ce que vous faisiez jusqu'ici). Il est possible de mettre en place des tests unitaires sur à peu près tous les éléments du programme, mais généralement, on va plutôt se concentrer sur la partie métier avec les **services** puis la partie **modele**. Obtenir une couverture proche de 100% sur ces parties constitue un premier critère de qualité.
 
 <div class="exercise">
 
