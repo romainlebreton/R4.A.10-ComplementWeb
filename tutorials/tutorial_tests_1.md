@@ -217,34 +217,46 @@ class EnsembleTest extends TestCase {
 Veillez à bien comprendre cette étape. L'exemple choisi est volontairement simpliste pour vous permettre de vous
 focaliser sur l'écriture de tests. Si vous avez des difficultés, n'hésitez pas à demander des précisions à votre enseignant.  -->
 
-## La couche Service
+## La couche Services
 
 Nous avons réalisé des premiers tests simples afin de comprendre le fonctionnement de **PHPUnit**. Maintenant, nous allons mettre en œuvre cet outil de manière plus concrète en testant notre application web. Néanmoins, vous allez constater un problème majeur : l'application n'est pas testable en l'état.
 
 En effet, pour tester, nous avons besoin de faire des **assertions** sur des résultats (ou des comportements) spécifiques obtenus lors de l'exécution d'une fonctionnalité. Actuellement, les fonctionnalités sont réalisées par les **contrôleurs**.
 Or, les différentes fonctions des contrôleurs renvoient un objet `Response` qui n'est pas bien exploitable. Cet objet contient le code complet de la page `HTML` renvoyée au client, ce qui n'est donc pas (ou difficilement) testable en l'état. Ce problème est lié au fait que les **contrôleurs** ont beaucoup trop de responsabilités et ne répartissent pas le travail. De l'extérieur, ils agissent comme une boîte noire et il est alors difficile de récupérer des données intéressantes pour les tests. Il semble aussi difficile de fournir des données aux contrôleurs car ceux-ci se servent directement des données de la requête HTTP.
 
-Une **application web** comme tout **logiciel** peut être organisé selon une architecture qui sépare de manière optimisée les classes et programmes selon leur **rôle**.
+Une **application web** comme tout **logiciel** peut être organisé selon une architecture qui sépare de manière optimisée les classes du programme en **couches** selon leur **rôle**.
 
-Dans un logiciel, on retrouve généralement **5 couches principales** :
+Dans un logiciel, on peut trouver différents types de **couche**. Par exemple (sans être exhaustif) :
 
-* La couche **IHM** qui permet de gérer les différentes parties graphiques et surtout l'interaction avec l'utilisateur. Pour une application web, cela va correspondre à la partie contenant les **vues**, c'est-à-dire les fichiers responsables de générer le code HTML (et également les ressources JavaScript, CSS, etc.)
+* La couche **présentation** qui permet de gérer les différentes parties graphiques et surtout l'interaction avec l'utilisateur. Pour une application web, cela va correspondre à la partie contenant les **vues**, c'est-à-dire les fichiers responsables de générer le code HTML (et également les ressources JavaScript, CSS, etc.)
 
 * La couche **métier** qui contient le cœur de l'application, à savoir les différentes **entités** manipulées (essentiellement, les classes dans `DataObject`) ainsi que des classes de **services** qui permettent de manipuler ces entités et d'implémenter la **partie logique** de votre application.
 
-* La couche **application** qui permet de faire le lien entre la couche **ihm** et la couche **métier**. Elle contient les différents **contrôleurs** dont le rôle est de gérer les **évènements** de l'interface, d'interagir avec la couche **métier** et de transmettre les résultats obtenus à **l'ihm**. Dans une application web, les événements sont les requêtes reçues par l'application web (et ses paramètres, via l'URL). Une requête est décomposée puis la bonne méthode du contrôleur est exécutée avec les paramètres correspondants.
+* La couche **application** qui permet de faire le lien entre la couche **présentation** et la couche **métier**. Elle contient les différents **contrôleurs** dont le rôle est de gérer les **évènements** de l'interface, d'interagir avec la couche **métier** et de transmettre les résultats obtenus à l'IHM. Dans une application web, les événements sont les requêtes reçues par l'application web (et ses paramètres, via l'URL). Une requête est décomposée puis la bonne méthode du contrôleur est exécutée avec les paramètres correspondants.
 
-* La couche **stockage** qui permet de gérer la **persistance des données** à travers une forme de stockage configurée (base de données, fichier...). Son rôle va donc être de sauvegarder et charger les données des différentes entités de la couche **métier**. C'est cette couche qui va contenir les différents **repositories**. Cette couche est généralement utilisée par les différents classes de **services**. Globalement, les interactions se déroulent dans ce sens : IHM ↔ Application ↔ Services ↔ Stockage.
+* La couche **de persistance** (stockage) qui permet de gérer la **persistance des données** à travers une forme de stockage configurée (base de données, fichier...). Son rôle va donc être de sauvegarder et charger les données des différentes entités de la couche **métier**. C'est cette couche qui va contenir les différents **repositories**.
 
-* Éventuellement, la couche **réseau** dans le cadre d'une application **client/serveur**. Cette couche va gérer la transmission des données entre deux programmes (avec des sockets, etc.). Dans une application web, il n'y a pas besoin de gérer explicitement cette couche qui est prise en charge par le protocole **HTTP** ou **HTTPS**.
+* Parfois, une couche **réseau** dans le cadre d'une application **client/serveur**. Cette couche va gérer la transmission des données entre deux programmes (avec des sockets, etc.). Dans une application web, il n'y a pas besoin de gérer explicitement cette couche qui est prise en charge par le protocole **HTTP** ou **HTTPS**.
 
-Comme vous le savez, l'architecture actuelle de l'application est une architecture `MVC`. Cette architecture permet de séparer les entités, les vues et les contrôleurs de l'application et de les faire communiquer.
+Bref, ces différentes couches permettent de définir et de séparer les zones d'activités du logiciel. Tout l'intérêt est de faire communiquer ces couches entre elles.
 
-Néanmoins, il n'est pas explicitement fait mention des **services** dans cette architecture. En fait, dans une architecture `MVC` classique, le **contrôleur** a le rôle des services et effectue une partie de la logique métier. Néanmoins, cela peut vite créer des contrôleurs ayant beaucoup trop de responsabilités. C'est pourquoi il est possible de venir placer la couche **service** entre les **contrôleurs**, les **entités** et la couche **stockage**. Ainsi, le contrôleur n'effectue pas de logique métier et on a une séparation plus forte.
+La connaissance de ces couches ne donne pas encore la structure de l'application : il faut choisir une architecture qui permet de les structurer, de les exploiter et de définir comment elles communiquent concrètement. Il en existe plusieurs, et pour une application web (comme celle manipulée dans ce TP) on peut choisir l'architecture `MVC` que vous connaissez déjà.
 
-Ici, la couche **métier** crée donc une séparation entre la partie "model" (**entités**) et les **services** qui manipulent ces entités. Ainsi, les différents **contrôleurs** n'interagissent pas directement avec les entités, mais plutôt avec des **services**. On pourrait qualifier les services de **couche de validation**.
+Cette architecture permet de séparer les entités, les vues et les contrôleurs de l'application et de les faire communiquer :
 
-Dans ce cas, on sort un peu de l'architecture classique `MVC` et on pourrait presque parler de `MVCS` où le `S` désignerait les **services**. Il n'y a pas de règles précise quant à l'utilisation de telle ou telle architecture, mais dans le cas de notre application, nous allons plutôt tendre vers une architecture utilisant les services. Créer une telle séparation permettra alors de pouvoir tester la logique métier indépendamment au travers des tests unitaires sur les **services** plutôt que sur les **contrôleurs**. D'une part, il sera alors possible de passer des données à ces services autrement que par une requête HTTP, et d'autre part, on pourra également obtenir un résultat exploitable et pas une page web complète.
+* La partie **modèle** stocke les différentes **entités** (nos `DataObject`) que l'on retrouve dans la couche **métier** ainsi que des classes liées à la couche **stockage** (les classes type `Repository`). 
+
+* Les différents **contrôleurs** gèrent la couche **application** et une partie de la couche (logique) **métier** (ils reçoivent les requêtes, vérifient les données, effectuent les opérations, etc.)
+
+* Les différentes **vues** correspondent à la couche **présentation**.
+
+Néanmoins, il n'est pas explicitement fait mention des **services** dans cette architecture. En fait, dans une architecture `MVC` classique, le **contrôleur** a le rôle des **services** et effectue une grande partie (voir la totalité) partie de la logique métier. Néanmoins, cela peut vite créer des contrôleurs énormes ayant beaucoup trop de responsabilités. C'est pourquoi il est possible de venir placer une couche **service** entre les **contrôleurs**, les **entités** et la couche **stockage**. Ainsi, le contrôleur n'effectue pas de logique métier et on a une séparation plus forte.
+
+Ici, la couche **métier** est séparée entre la partie **model** (nos **entités**) et les **services** qui manipulent ces entités. Ainsi, les différents **contrôleurs** n'interagissent pas directement avec les entités, mais plutôt avec des **services**. On pourrait alors qualifier les services de **couche de validation** voir de **couche logique** (car elle effectue d'autres opérations en plus de la validation des données).
+
+Les interactions se dérouleraient alors dans ce sens : Vue ↔ Contrôleur ↔ Services ↔ Model (entités, repositories) au lieu du traditionnel Vue ↔ Contrôleur ↔ Model.
+
+Dans ce cas, on étend l'architecture classique `MVC` et on pourrait alors parler de `MVCS` où le `S` désignerait les **services**. Il n'y a pas de règles précise quant à l'utilisation de telle ou telle architecture, mais dans le cas de notre application, nous allons plutôt tendre vers une architecture utilisant les services. Créer une telle séparation permettra alors de pouvoir tester la logique métier indépendamment au travers des tests unitaires sur les **services** plutôt que sur les **contrôleurs**. D'une part, il sera alors possible de passer des données à ces services autrement que par une requête HTTP, et d'autre part, on pourra également obtenir un résultat exploitable et pas une page web complète.
 
 ### Un service pour gérer les publications
 
