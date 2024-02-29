@@ -53,10 +53,12 @@ Symfony.
 3. Les routes se créent maintenant avec la syntaxe simplifiée suivante : 
 
     ```php
+    use use Symfony\Component\Routing\Attribute\Route;
+
     class ControleurPublication extends ControleurGenerique
     {
 
-        #[Route('/publications', name:'afficherListe', methods:["GET"])]
+        #[Route(path: '/publications', name:'afficherListe', methods:["GET"])]
         public static function afficherListe(): Response {
             // ...
         }
