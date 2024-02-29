@@ -412,6 +412,11 @@ Nous allons utiliser ces notions lors de la création d'une requête qui renvoie
 2. Testez la route avec un identifiant de publication connu et un inconnu.
 </div>
 
+L'exercice précédent a montré un autre avantage de la couche service. Le code de
+`UtilisateurService::recupererUtilisateurParId()` est utilisé à la fois par
+`ControleurPublicationAPI` et par `ControleurPublication`. Seule l'interface
+change entre l'API et la page Web classique, tandis que le code *métier* reste
+le même.
 
 <div class="exercise">
 
