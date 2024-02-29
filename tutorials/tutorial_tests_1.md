@@ -334,6 +334,8 @@ Nous allons nous intéresser à la création des publications. Actuellement, dè
     **Note :** Si vous avez une erreur de l'IDE *`rediriger` has protected
     visibility*, ce n'est pas grave, elle sera réglée avec la prochaine question.
 
+    Vous aurez aussi des erreurs liées au type de retour de la méthode, mais n'y prêtez pas attention pour l'instant.
+
 3. Dans la nouvelle méthode `creerPublication`, remplacez toutes les lignes qui ajoutent un message flash et redirigent l'utilisateur par le déclenchement d'une **ServiceException** contenant le message flash initialement prévu comme message flash. La syntaxe est la suivante :
 
     ```php
