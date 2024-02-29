@@ -1,6 +1,6 @@
 ---
-title: Tests unitaires, Architecture
-subtitle: PHPUnit, Couche service
+title: TD3 &ndash; Tests unitaires, Couche Service
+subtitle: PHPUnit, Architecture
 layout: tutorial
 lang: fr
 ---
@@ -309,7 +309,7 @@ Nous allons nous intéresser à la création des publications. Actuellement, dè
 2. Dans `PublicationService`, créez une méthode `creerPublication` qui prend en paramètre un **idUtilisateur** et un **message**. La méthode doit déplacer en grande partie le code de la méthode `creerDepuisFormulaire` de `ControleurPublication` :
 
     ```php
-    public function creerPublication($idUtilisateur, $message) {
+    public function creerPublication($idUtilisateur, $message) : void {
         $utilisateur = (new UtilisateurRepository())->recupererParClePrimaire($idUtilisateur);
 
         if ($utilisateur == null) {
@@ -332,7 +332,7 @@ Nous allons nous intéresser à la création des publications. Actuellement, dè
     ```
 
     **Note :** Si vous avez une erreur de l'IDE *`rediriger` has protected
-    visibility*, ce n'est pas grave, elle sera dans quelques exercices.
+    visibility*, ce n'est pas grave, elle sera réglée avec la prochaine question.
 
 3. Dans la nouvelle méthode `creerPublication`, remplacez toutes les lignes qui ajoutent un message flash et redirigent l'utilisateur par le déclenchement d'une **ServiceException** contenant le message flash initialement prévu comme message flash. La syntaxe est la suivante :
 
@@ -384,7 +384,7 @@ Débutons avec la création d'un nouvel utilisateur.
     Comme d'habitude, il ne faudra pas faire appels aux variables liées à la requête dans cette méthode (`$_POST`, `$_FILES`, etc.). Ces données vous sont fournies par le contrôleur et peuvent être `null`. Il faudra d'ailleurs penser à vérifier si ces valeurs sont nulles ou non. La méthode ne doit rien retourner (simplement créer l'utilisateur) et lever des `ServiceException` si différentes contraintes sont violées (taille du login, mot de passe, format de l'adresse mail, etc.). Le paramètre `$donneesPhotoDeProfil` correspond au tableau obtenu par lecture de `$_FILES["..."]` 
 
     ```php
-    public function creerUtilisateur($login, $motDePasse, $email, $donneesPhotoDeProfil) {
+    public function creerUtilisateur($login, $motDePasse, $email, $donneesPhotoDeProfil) : void {
         //TO-DO
         //Verifier que les attributs ne sont pas null
         //Verifier la taille du login
@@ -436,7 +436,7 @@ La méthode `afficherPublications` effectue deux actions : récupération de l'u
 1. Dans la classe `UtilisateurService`, créez une méthode `recupererUtilisateurParId` qui prend en paramètre un identifiant d'utilisateur **et un booléen** `autoriserNull`. Ce booléen a pour but de préciser si une exception doit être levée ou non si l'utilisateur sélectionné n'existe pas (dans certains cas, on veut simplement récupérer la valeur `null` sans lever d'exceptions). La méthode doit donc renvoyer, à l'issu, l'utilisateur ciblé par l'identifiant (en se servant du repository). Si `autoriserNull` vaut `false` et que l'utilisateur récupéré est `null`, il faut lever une `ServiceException` (l'utilisateur n'existe pas !).
 
     ```php
-    public function recupererUtilisateurParId($idUtilisateur, $autoriserNull = true) {
+    public function recupererUtilisateurParId($idUtilisateur, $autoriserNull = true) : ?Utilisateur {
         $utilisateur = ...
         if(!$autoriserNull && ...) {
             ...
@@ -450,7 +450,7 @@ La méthode `afficherPublications` effectue deux actions : récupération de l'u
 3. Remplacez le code de `afficherPublications` afin d'utiliser les deux méthodes (`recupererUtilisateurParId` et `recupererPublicationsUtilisateur` de `UtilisateurService` et `PublicationService`). Il ne faudra pas autoriser le fait de récupérer un utilisateur `null`. Veillez à bien traiter une éventuelle `ServiceException`.
 
 4. {% raw %}
-   Modifiez aussi `afficherPublications` et `feed.html.twig` pour que le titre de la page `{% block page_title %}` soit `Page perso de login_de_l_utilisateur`.
+   Ajoutez une vue `publication/page_perso.html.twig` qui étend le template `publication/feed.html.twig` et modifie simplement `{% block page_title %}` pour que le titre de la page devienne soit `Page perso de login_de_l_utilisateur`. Modifiez `afficherPublications` pour utiliser cette nouvelle vue (et lui passer les bonnes informations).
    {% endraw %}
 
 5. Vérifiez que tout fonctionne bien.
@@ -503,17 +503,19 @@ Il est temps pour vous de découvrir un outil fort utile pour pouvoir mesurer (e
 
 Il est difficile de savoir jusqu'où tester une application. Le but des tests n'est en réalité pas de vérifier que tout fonctionne mais plutôt de trouver des dysfonctionnements. Le nombre et la variété des tests à produire dépendent donc fortement du contexte. Néanmoins, une couverture de code de **100%** (donc, des tests qui passent au moins une fois par chaque ligne de code du programme) est un premier indicateur de la qualité des tests. Dans ce cas, on peut alors considérer qu'il y a un nombre assez important de tests et qu'ils sont assez variés. Néanmoins, cela ne signifie pas nécessairement qu'il faut s'arrêter de tester à partir de là. Il faut prévoir le plus de scénarios possibles (deux scénarios différents peuvent déclencher les mêmes lignes de code).
 
-Il faut également se poser la question de **la portée** des tests. Doit-on (peut-on ?) tout tester ? Par exemple, est-il pertinent d'écrire des tests unitaires pour les contrôleurs dans leur état actuel vu que leur rôle se limite à la réalisation d'un pont entre la couche présentation (les vues, la requête HTTP) et la couche service. Cela relève plutôt de tests réalisés directement sur l'interface (ce que vous faisiez jusqu'ici). Il est possible de mettre en place des tests unitaires sur à peu près tous les éléments du programme, mais généralement, on va plutôt se concentrer sur la partie métier avec les **services** puis la partie **modèle**. Obtenir une couverture proche de 100% sur ces parties constitue un premier critère de qualité.
+Il faut également se poser la question de **la portée** des tests. Doit-on (peut-on ?) tout tester ? Par exemple, est-il pertinent d'écrire des tests unitaires pour les contrôleurs dans leur état actuel vu que leur rôle se limite à la réalisation d'un pont entre la couche présentation (les vues, la requête HTTP) et la couche service ? Cela relève plutôt de tests réalisés directement sur l'interface (ce que vous faisiez jusqu'ici). Il est possible de mettre en place des tests unitaires sur à peu près tous les éléments du programme, mais généralement, on va plutôt se concentrer sur la partie métier avec les **services** puis la partie **modèle**. Obtenir une couverture proche de 100% sur ces parties constitue un premier critère de qualité.
 
 <div class="exercise">
 
-1. Lancez vos tests unitaires **avec couverture de code**. Pour cela, rendez-vous dans le menu `Run` puis `Run ... with  Coverage`.
+1. Si vous travaillez sur votre machine, vérifiez que l'extension `xdebug` est installée. Pour cela, cliquez sur `Run` puis `Edit Configurations`. Au niveau de la configuration de `Tests Unitaires`, vérifiez que la case `Prefered Covered Engine` est bien réglée sur `XDdebug`. Si un message d'erreur "XDebug extension is not installed" est présent, il va donc falloir installer cette extension. Pour obtenir les détails d'installation pour votre machine, vous pouvez notamment utiliser [cette page](https://xdebug.org/wizard).
+
+2. Lancez vos tests unitaires **avec couverture de code**. Pour cela, rendez-vous dans le menu `Run` puis `Run ... with  Coverage`.
 
    *Aide :* Si `Run ... with  Coverage` tourne longtemps puis s'arrête avec une erreur `Memory exhausted`, il faut dans *PHPStorm* faire clic droit sur le dossier `src/` → `Mark Directory As` → `Sources Root`.
 
-2. Un panneau d'analyse s'ouvre à droite. Explorez son contenu.
+3. Un panneau d'analyse s'ouvre à droite. Explorez son contenu. Si rien n'est affiché sur ce panneau, cliquez sur "show uncommited files".
 
-3. Parcourez les différents fichiers de l'application (notamment `PublicationService`) et observez les lignes de code. Au niveau des numéros de lignes, une section verte indique que la ligne a été parcourue (et bien sûr, une section rouge indique l'inverse).
+4. Parcourez les différents fichiers de l'application (notamment `PublicationService`) et observez les lignes de code. Au niveau des numéros de lignes, une section verte indique que la ligne a été parcourue (et bien sûr, une section rouge indique l'inverse).
 
 </div>
 
