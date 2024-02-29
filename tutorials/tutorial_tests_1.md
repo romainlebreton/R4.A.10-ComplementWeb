@@ -507,7 +507,7 @@ Il faut également se poser la question de **la portée** des tests. Doit-on (pe
 
 <div class="exercise">
 
-1. Vérifiez que l'extension `xdebug` est installée. Pour cela, cliquez sur `Run` puis `Edit Configurations`. Au niveau de la configuration de `Tests Unitaires`, vérifiez que la case `Prefered Covered Engine` est bien réglée sur `XDdebug`. Si un message d'erreur "XDebug extension is not installed" est présent, il va donc falloir installer cette extension. Pour obtenir les détails d'installation pour votre machine, vous pouvez notamment utiliser [cette page](https://xdebug.org/wizard).
+1. Si vous travaillez sur votre machine, vérifiez que l'extension `xdebug` est installée. Pour cela, cliquez sur `Run` puis `Edit Configurations`. Au niveau de la configuration de `Tests Unitaires`, vérifiez que la case `Prefered Covered Engine` est bien réglée sur `XDdebug`. Si un message d'erreur "XDebug extension is not installed" est présent, il va donc falloir installer cette extension. Pour obtenir les détails d'installation pour votre machine, vous pouvez notamment utiliser [cette page](https://xdebug.org/wizard).
 
 2. Lancez vos tests unitaires **avec couverture de code**. Pour cela, rendez-vous dans le menu `Run` puis `Run ... with  Coverage`.
 
