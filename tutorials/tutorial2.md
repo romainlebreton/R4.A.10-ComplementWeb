@@ -819,7 +819,19 @@ et d'appeler la méthode `lireMessages()` dans la vue *Twig* avec `messagesFlash
 1. Dans `RouteurURL`, rajoutez une variable globale `messagesFlash`.
 
 2. Dans `base.html.twig`, affichez les messages *Flash*.
+
+   *Note :* Il faut donc boucler sur les types de messages Flash, puis sur les
+   messages de ce type. Attention, une erreur vicieuse consiste à lire les
+   messages d'un type avec la commande 
+
+   ```twig
+   {{ messagesFlash.lireTousMessages()[type] }}
+   ``` 
   
+   Cette manière ne marche pas car un message Flash se détruit après lecture. Du
+   coup, le code précédent détruit tous les messages Flash, même ceux qui ne
+   sont du type `type`. 
+
 3. Créez la dernière vue manquante
    `src/vue/utilisateur/inscription.html.twig`. Changez l'action
    `ControleurUtilisateur::afficherFormulaireCreation()` pour appeler cette vue.
