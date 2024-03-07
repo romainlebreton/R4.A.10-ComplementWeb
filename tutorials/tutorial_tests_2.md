@@ -436,9 +436,9 @@ Nous utiliserons cette fonctionnalité pour quelques cas spécifiques, mais, en 
 
     Attention, cela dépend bien sûr de votre convention de nommage pour vos services ! Ici, nous avons choisi le `snake_case`. Il faudra donc nous y tenir, et, nommer tous nos contrôleurs : `controleur_xxx`
 
-5. Chargez la page principale de votre application. Elle devrait fonctionner !
+5. Complétez le code afin d'enregistrer le service puis le contrôleur liés aux utilisateurs dans le conteneur.
 
-6. Complétez le code afin d'enregistrer le service puis le contrôleur liés aux utilisateurs dans le conteneur. Enfin, mettez à jour les routes correspondantes.
+6. Chargez la page principale de votre application. Elle devrait fonctionner !
 
 7. Naviguez à travers l'application et vérifiez que tout fonctionne comme avant.
 
