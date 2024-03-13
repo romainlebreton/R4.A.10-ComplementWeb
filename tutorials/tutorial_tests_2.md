@@ -601,7 +601,7 @@ Actuellement, nous utilisons toujours l'ancien `Conteneur` (celui de `Lib`) dans
     Conteneur::ajouterService("twig", $twig);
     ```
 
-6. Poursuivez ce travail de nettoyage en remplaçant le contenu des variables `$contexteRequete`, `$generateurUrl` et `$assistantUrl` par un accès au service correspondant dans le conteneur. Vous supprimerez les derniers appels à `Conteneur::ajouterService` dans cette méthode.
+6. Poursuivez ce travail de nettoyage en remplaçant le contenu des variables `$generateurUrl` et `$assistantUrl` par un accès au service correspondant dans le conteneur. Vous supprimerez les derniers appels à `Conteneur::ajouterService` dans cette méthode.
 
 </div>
 
