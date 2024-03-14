@@ -771,7 +771,7 @@ Maintenant que vous connaissez les **mocks**, vous allez pouvoir les utiliser po
 
 1. Reprenez votre classe `PublicationServiceTest` et adaptez-la pour faire fonctionner vos anciens tests en utilisant des **mocks** pour les dépendances du service. Vous pouvez repartir de l'exemple `testNombrePublications` donné dans la section précédente. Dans certains tests, pour la partie concernant les **utilisateurs**, il faudra bien configurer votre mock afin qu'il renvoie un faux utilisateur (parfois **null** et parfois non... Tout dépend du contexte du test !).
 
-2. Créez un test `testCreerPublicationValide`. Le but de ce test est de vérifier que tout fonctionne bien lorsque les spécifications de création d'une publication sont respectées. En utilisant votre **mock** du repository des publications, vous devrez intercepter l'appel à **create** afin de vérifier que les données transmisses sont bien conformes.
+2. Créez un test `testCreerPublicationValide`. Le but de ce test est de vérifier que tout fonctionne bien lorsque les spécifications de création d'une publication sont respectées. En utilisant votre **mock** du repository des publications, vous devrez intercepter l'appel à **ajouter** afin de vérifier que les données transmises sont bien conformes.
 
 3. Ajoutez des tests qui vous semblent pertinents !
 
