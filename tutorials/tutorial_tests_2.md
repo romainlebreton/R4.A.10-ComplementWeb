@@ -540,50 +540,52 @@ Actuellement, nous utilisons toujours l'ancien `Conteneur` (celui de `Lib`) dans
 
 2. Importez maintenant dans `conteneur.yml` tout ce qui est relatif à `twig` :
 
-    ```yaml
-    services:
-        #Twig
-        twig_loader:
-            class: Twig\Loader\FilesystemLoader
-            arguments: ['%project_root%/src/vue/']
-        twig:
-            class: Twig\Environment
-            arguments:
-                $loader: '@twig_loader'
-                $options:
-                    autoescape: 'html'
-    ```
-    Il y a beaucoup de paramètres nécessaires à l'instanciation de ce service, donc, encore une fois, prenez le temps de comprendre ces lignes de code et appeler votre enseignant si besoin. Par exemple, comprenez-vous bien le paramètre `%project_root%/src/vue/` ?
+   ```yaml
+   services:
+     #Twig
+     twig_loader:
+       class: Twig\Loader\FilesystemLoader
+       arguments: ['%project_root%/src/vue/']
+     twig:
+       class: Twig\Environment
+       arguments:
+         $loader: '@twig_loader'
+         $options:
+           autoescape: 'html'
+           strict_variables: true
+   ```
+   Il y a beaucoup de paramètres nécessaires à l'instanciation de ce service, donc, encore une fois, prenez le temps de comprendre ces lignes de code et appeler votre enseignant si besoin. Par exemple, comprenez-vous bien le paramètre `%project_root%/src/vue/` ?   
 
-    Concernant les `arguments` du service `twig`, il s'agit d'une autre manière de les déclarer en utilisant leur `nom` plutôt que l'ordre des paramètres. Cette forme de déclaration est obligatoire dans le cas présent car `options` est un tableau associatif dans le constructeur de `Environment`.
+   Concernant les `arguments` du service `twig`, il s'agit d'une autre manière de les déclarer en utilisant leur `nom` plutôt que l'ordre des paramètres. Cette forme de déclaration est obligatoire dans le cas présent car `options` est un tableau associatif dans le constructeur de `Environment`.
 
 3. Pour pouvoir enregistrer les services `url_generator` (correspondant à `UrlGenerator`) et `url_helper` (correspondant à `UrlHelper`) via notre fichier de configuration, nous avons besoin de trois services :
 
-    * `request_stack`, correspondant à un objet `RequestStack` que nous pouvons simplement déclarer dans `conteneur.yaml`.
+   * `request_stack`, correspondant à un objet `RequestStack` que nous pouvons simplement déclarer dans `conteneur.yaml`.
 
-    * `request_context`, correspondant à un objet `RequestContext` que nous sommes obligés de déclarer directement dans `traiterRequete` car cet objet à besoin d'être configuré avec les données de la requête courante.
+   * `request_context`, correspondant à un objet `RequestContext` que nous sommes obligés de déclarer directement dans `traiterRequete` car cet objet à besoin d'être configuré avec les données de la requête courante.
 
-    * `routes` : correspondant à la collection contenant nos routes (renvoyée par `$loader->load(...)`). Ici aussi, nous sommes obligés de faire cette déclaration dans `traiterRequete` (car il faut exécuter le code pour récupérer toutes les routes...).
+   * `routes` : correspondant à la collection contenant nos routes (renvoyée par `$loader->load(...)`). Ici aussi, nous sommes obligés de faire cette déclaration dans `traiterRequete` (car il faut exécuter le code pour récupérer toutes les routes...).
 
-    Faites donc les ajouts nécessaires :
+   Faites donc les ajouts nécessaires :
 
-    ```yaml
-    #Configuration/conteneur.yml
-    services:
-        #Sevrices
-        request_stack:
-            class: Symfony\Component\HttpFoundation\RequestStack
-    ```
+   ```yaml
+   #Configuration/conteneur.yml
+   services:
+     #Services
+     request_stack:
+       class: Symfony\Component\HttpFoundation\RequestStack
+   ```
 
-    ```php
-    //Après l'instanciation de l'objet $request
-    $conteneur->set('request_context', (new RequestContext())->fromRequest($requete));
+   ```php
+   //Après l'instanciation de l'objet $contexteRequete
+   $conteneur->set('request_context', $contexteRequete);
+   //Après que les routes soient récupérées
+   $conteneur->set('routes', $routes);
+   ```
 
-    //Après que les routes soient récupérées
-    $conteneur->set('routes', $routes);
-    ```
-
-4. Dans votre fichier `conteneur.yaml`, déclarez deux nouveaux services : `url_generator` (correspondant à la classe `Symfony\Component\Routing\Generator\UrlGenerator`) et `url_helper` (correspondant à la classe `Symfony\Component\HttpFoundation\UrlHelper`). Concernant les `arguments` de ces deux services, utilisez les différents services que nous avons définis lors de la question précédente (normalement, vous pouvez toujours trouvez l'instanciation de ces objets dans `traiterRequete`, si vous souhaitez voir comment cela est fait).
+4. Dans votre fichier `conteneur.yaml`, déclarez deux nouveaux services : `url_generator` (correspondant à la classe `Symfony\Component\Routing\Generator\UrlGenerator`) et `url_helper` (correspondant à la classe `Symfony\Component\HttpFoundation\UrlHelper`). 
+   
+   Concernant les `arguments` de ces deux services, utilisez les différents services que nous avons définis lors de la question précédente (normalement, vous pouvez toujours trouvez l'instanciation de ces objets dans `traiterRequete`, si vous souhaitez voir comment cela est fait).
 
 5. Dans `traiterRequete`, supprimez l'instanciation des variables `twigLoader` et `twig`. À la place, récupérez le **service** correspondant à `twig`.
 
@@ -633,7 +635,7 @@ Plutôt que de lui injecter les services un par un, nous allons directement lui 
 
 3. Faites de même pour `ControleurUtilisateur`.
 
-4. Dans `ControleurGenerique`, modifiez tous les appels à `Conteneur::recupererService(...)` en utilisant le nouveau conteneur injecté dans la classe (attention, `generateurUrl` est devenu `url_generator`).
+4. Dans `ControleurGenerique`, modifiez tous les appels à `Conteneur::recupererService(...)` en utilisant le nouveau conteneur injecté dans la classe (attention, `generateurUrl` est devenu `url_generator`). Pour accéder à l'attribut `container`, passez toutes les méthodes de statique à dynamique.
 
 5. Dans `traiterRequete` de `RouteurURL`, il faut que le conteneur s'enregistre lui-même dans le conteneur ! On peut faire cela très simplement, comme pour n'importe quel service :
 
@@ -674,7 +676,7 @@ $mockedService = $this->createMock(ServiceAInterface::class);
 // On fait en sorte que la méthode traitementA retourne un tableau de deux éléments
 $mockedService->method("traitementA")->willReturn([7,8]);
 
-// Il est possible d'aller plus loin et de déclencher une réponse spécifique en fonction des valeurs des paramètres passés àa la méthode.
+// Il est possible d'aller plus loin et de déclencher une réponse spécifique en fonction des valeurs des paramètres passés à la méthode.
 // On peut traduire l'instruction ci-dessous par : quand la méthode 'traitementABis' est appellée avec la valeur 5, retourner 10.
 $mockedService->method("traitementABis")->with(5)->willReturn(10);
 
@@ -769,7 +771,7 @@ Maintenant que vous connaissez les **mocks**, vous allez pouvoir les utiliser po
 
 1. Reprenez votre classe `PublicationServiceTest` et adaptez-la pour faire fonctionner vos anciens tests en utilisant des **mocks** pour les dépendances du service. Vous pouvez repartir de l'exemple `testNombrePublications` donné dans la section précédente. Dans certains tests, pour la partie concernant les **utilisateurs**, il faudra bien configurer votre mock afin qu'il renvoie un faux utilisateur (parfois **null** et parfois non... Tout dépend du contexte du test !).
 
-2. Créez un test `testCreerPublicationValide`. Le but de ce test est de vérifier que tout fonctionne bien lorsque les spécifications de création d'une publication sont respectées. En utilisant votre **mock** du repository des publications, vous devrez intercepter l'appel à **create** afin de vérifier que les données transmisses sont bien conformes.
+2. Créez un test `testCreerPublicationValide`. Le but de ce test est de vérifier que tout fonctionne bien lorsque les spécifications de création d'une publication sont respectées. En utilisant votre **mock** du repository des publications, vous devrez intercepter l'appel à **ajouter** afin de vérifier que les données transmises sont bien conformes.
 
 3. Ajoutez des tests qui vous semblent pertinents !
 
