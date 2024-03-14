@@ -436,9 +436,9 @@ Nous utiliserons cette fonctionnalité pour quelques cas spécifiques, mais, en 
 
     Attention, cela dépend bien sûr de votre convention de nommage pour vos services ! Ici, nous avons choisi le `snake_case`. Il faudra donc nous y tenir, et, nommer tous nos contrôleurs : `controleur_xxx`
 
-5. Chargez la page principale de votre application. Elle devrait fonctionner !
+5. Complétez le code afin d'enregistrer le service puis le contrôleur liés aux utilisateurs dans le conteneur.
 
-6. Complétez le code afin d'enregistrer le service puis le contrôleur liés aux utilisateurs dans le conteneur. Enfin, mettez à jour les routes correspondantes.
+6. Chargez la page principale de votre application. Elle devrait fonctionner !
 
 7. Naviguez à travers l'application et vérifiez que tout fonctionne comme avant.
 
@@ -601,7 +601,7 @@ Actuellement, nous utilisons toujours l'ancien `Conteneur` (celui de `Lib`) dans
     Conteneur::ajouterService("twig", $twig);
     ```
 
-6. Poursuivez ce travail de nettoyage en remplaçant le contenu des variables `$contexteRequete`, `$generateurUrl` et `$assistantUrl` par un accès au service correspondant dans le conteneur. Vous supprimerez les derniers appels à `Conteneur::ajouterService` dans cette méthode.
+6. Poursuivez ce travail de nettoyage en remplaçant le contenu des variables `$generateurUrl` et `$assistantUrl` par un accès au service correspondant dans le conteneur. Vous supprimerez les derniers appels à `Conteneur::ajouterService` dans cette méthode.
 
 </div>
 
@@ -898,7 +898,7 @@ Nous allons réaliser une première classe de test pour le repository des **util
 
 1. **Si vous travaillez sur votre serveur local** veillez à activer l'extension `pdo_sqlite` au niveau de votre fichier `php.ini` (il faut décommenter la ligne `;extension=pdo_sqlite`).
 
-2. Téléchargez [ce fichier]({{site.baseurl}}/assets/TD_SAE_Test_Archi/database_test) qui contient la structure de la base de données de `The Feed` sous le format `SQLite`. Placez ce fichier dans le dossier `Test`.
+2. Téléchargez [ce fichier]({{site.baseurl}}/assets/TD_SAE_Test_Archi/db_test.db) qui contient la structure de la base de données de `The Feed` sous le format `SQLite`. Placez ce fichier dans le dossier `Test`.
 
 3. Toujours dans le dossier `Test`, créez un fichier `ConfigurationBDDTestUnitaire` avec le contenu suivant :
 
@@ -921,7 +921,7 @@ Nous allons réaliser une première classe de test pour le repository des **util
 
         public function getDSN(): string
         {
-            return "sqlite:".__DIR__."/database_test";
+            return "sqlite:".__DIR__."/db_test.db";
         }
 
         public function getOptions(): array
