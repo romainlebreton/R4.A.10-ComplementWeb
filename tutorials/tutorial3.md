@@ -214,7 +214,7 @@ Le logiciel est installé sur les machines de l'IUT. Chez vous, vous pouvez le
     ![Postman config 1](/R4.A.10-ComplementWeb/assets/TD5/postman1.PNG){: .blockcenter}
 
     * Méthode `DELETE`
-    * Adresse : [http://webinfo.iutmontp.univ-montp2.fr/~mon_login_IUT/TD5/web/api/publications/3](http://webinfo.iutmontp.univ-montp2.fr/~mon_login_IUT/TD5/web/api/publications/3)
+    * Adresse : [https://webinfo.iutmontp.univ-montp2.fr/~mon_login_IUT/TD5/web/api/publications/3](https://webinfo.iutmontp.univ-montp2.fr/~mon_login_IUT/TD5/web/api/publications/3)
 
 3. Cliquez sur "**Send**" et observez la réponse. Vous devriez obtenir le message d'erreur "Il faut être connecté pour supprimer une publication" car vous n'êtes en effet pas connecté !
 

@@ -1058,7 +1058,7 @@ Dans le contexte concret de l'application, ce service exécutera la fonction `mo
 
     class TestFileMovingService implements FileMovingServiceInterface
     {
-        private static string $ASSETS_FOLDER = __DIR__."/assets";
+        private static string $ASSETS_FOLDER = __DIR__."/assets/";
 
         public function moveFile($fileName, $pathDestination)
         {
@@ -1099,7 +1099,7 @@ Maintenant que nous avons réglé tous les problèmes liés aux effets de bord d
         private $utilisateurRepositoryMock;
 
         //Dossier où seront déplacés les fichiers pendant les tests
-        private  $dossierPhotoDeProfil = __DIR__."/tmp";
+        private  $dossierPhotoDeProfil = __DIR__."/tmp/";
 
         private FileMovingServiceInterface $fileMovingService;
 
