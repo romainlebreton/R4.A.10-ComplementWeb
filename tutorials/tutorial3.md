@@ -103,9 +103,9 @@ Dans l'optique de développer un API *REST*, nous devrons
 ### Utilisation dans la page Web avec *AJAX*
 
 Commençons en douceur en créant une nouvelle route sans échange de donnée. Cette
-route `/api/publications/{idPublication}` associée au verbe *HTTP* `DELETE`
+route `web/api/publications/{idPublication}` associée au verbe *HTTP* `DELETE`
 supprimera une publication. Notez que les routes liées à la future API sont
-regroupées sous l'URL `/web/api/`.
+regroupées sous l'URL `web/api/`.
 
 <div class="exercise">
 
@@ -151,6 +151,7 @@ regroupées sous l'URL `/web/api/`.
    namespace TheFeed\Controleur;
 
    use Symfony\Component\DependencyInjection\ContainerInterface;
+   use TheFeed\Lib\ConnexionUtilisateur;
    use TheFeed\Service\PublicationServiceInterface;
    use TheFeed\Service\Exception\ServiceException;
    use Symfony\Component\HttpFoundation\JsonResponse;
@@ -351,7 +352,7 @@ The JsonEncoder encodes to and decodes from JSON strings, based on the PHP json_
 Nous avons déjà vu la fonction 
 [`json_encode()`](https://www.php.net/manual/fr/function.json-encode.php) pour encoder une variable *PHP*
 en une chaîne de caractères au format *JSON*. Quand il encode un objet, le
-comportement par défaut de *PHP* est d'encoder uniquement que les attributs
+comportement par défaut de *PHP* est d'encoder uniquement les attributs
 publics. Pour pouvoir personnaliser l'encodage *JSON*, une classe doit implémenter l'interface 
 [`JsonSerializable`](https://www.php.net/manual/fr/class.jsonserializable.php), c'est-à-dire fournir une méthode 
 ```php
@@ -382,10 +383,10 @@ Nous allons utiliser ces notions lors de la création d'une requête qui renvoie
    }
    ```
 
-2. Créez un nouveau contrôleur `ControleurUtilisateurAPI` (étendant `ControleurGenerique`).
-   Il faudra injecter une instance de `ServiceUtilisateurInterface` (il faut donc configurer le contrôleur adéquatement).
+2. Créez un nouveau contrôleur `ControleurUtilisateurAPI` étendant
+   `ControleurGenerique`. Son constructeur devra donc aussi construire la partie "parent" `ControleurGenerique`, et donc injecter un objet `ContainerInterface` via le constructeur.
 
-   N'oubliez pas qu'il faut également construire la partie "parent" du contrôleur (`CotnroleurGenerique`) et donc aussi injecter un objet `ContainerInterface` via le constructeur.
+   Il faudra aussi injecter une instance de `UtilisateurServiceInterface`.
 
 3. Dans votre nouveau contrôleur, ajoutez une nouvelle action
    ```php
@@ -416,7 +417,7 @@ Nous allons utiliser ces notions lors de la création d'une requête qui renvoie
 
 <div class="exercise">
 
-1. Dans `PublicationService`, ajotuez la méthode suivante :
+1. Dans `PublicationService`, ajoutez la méthode suivante :
 
    ```php
    /**
@@ -447,9 +448,9 @@ Nous allons utiliser ces notions lors de la création d'une requête qui renvoie
          "idUtilisateur": 1
       }
    }
+   ```
 
    N'oubliez pas de nommer votre nouvelle route. 
-   ```
 
    **Rappel :** Vous avez déjà formaté des dates dans la vue Twig
    `feed.html.twig`. En PHP, vous pourrez faire en même avec
@@ -461,7 +462,7 @@ Nous allons utiliser ces notions lors de la création d'une requête qui renvoie
 </div>
 
 L'exercice précédent a montré un autre avantage de la couche service. Le code de
-`recupererUtilisateurParId()` (dans `UtilisateurService`) est utilisé à la fois par
+`PublicationService::recupererPublicationParId` est utilisé à la fois par
 `ControleurPublicationAPI` et par `ControleurPublication`. Seule l'interface
 change entre l'API et la page Web classique, tandis que le code *métier* reste
 le même.
@@ -581,6 +582,9 @@ Indiquer le corps de requête suivant dans `Body` → `raw` :
    Si vous avez une erreur, vérifiez que votre **cookie** de session est toujours 
    bien configuré sur *Postman* et que vous êtes bien toujours connecté sur le site.
 
+3. Testez aussi les cas d'erreur où le corps de requête est mal formé, ou
+   le message est vide.
+
 </div>
 
 ### Bouton JavaScript pour publier
@@ -665,8 +669,8 @@ Indiquer le corps de requête suivant dans `Body` → `raw` :
    appeler la fonction `soumettrePublication`.
 
 5. Testez dans votre navigateur. La nouvelle publication doit s'afficher sans rechargement de la page.
-   Pour le moment, le login et la photo de profil ne s'affichent pas, c'est normal.
-   On a ajouté un attribut `onclick` sur le bouton du template afin de faire en sorte qu'une nouvelle publication puisse être supprimée. C'est un patch nécessaire, car le `addEeventListener` que vous avez codé n'a pu enregistrer la gestion de cet événement car la publication n'existait pas encore lors du chargement de la page !
+   Pour le moment, le login et la photo de profil ne s'affichent pas, c'est normal.  
+   On a ajouté un attribut `onclick` sur le `<button class="delete-feedy">` du template afin de faire en sorte qu'une nouvelle publication puisse être supprimée. C'est un patch nécessaire, car le `addEventListener` que vous avez codé n'a pu enregistrer la gestion de cet événement car la publication n'existait pas encore lors du chargement de la page !
 
    Plutôt que la méthode `templatePublication`, il serait préférable (dans une implémentation optimale) d'utiliser [la balise template](https://developer.mozilla.org/fr/docs/Web/HTML/Element/template). Avec cette méthode, on pourrait aussi attacher l'événement de clic sur le bouton de suppression plus proprement (pour les nouvelles publications ajoutées dynamiquement).
 
@@ -681,24 +685,26 @@ pour faire les TDs.
    l'identifiant est `publication.auteur.idUtilisateur` par une requête à l'URL
    `/api/utilisateurs/{idUtilisateur}`.
 
-2. Testez que la soumission d'une nouvelle publication remplie bien le *login* et
+2. Testez que la soumission d'une nouvelle publication remplit bien le *login* et
    l'image de profil de l'utilisateur.
 
 3. Publiez le message `<h1>Hack!</h1>` et observez le problème. Rechargez la
    page pour que la publication soit affichée par le serveur et observez la différence.
 
 4. Nettoyer les entrées utilisateurs non fiables à l'aide de la méthode JavaScript : 
-   ```js
-   function escapeHtml(text) {
-      // https://stackoverflow.com/questions/1787322/what-is-the-htmlspecialchars-equivalent-in-javascript
-      return text
-         .replace(/&/g, "&amp;")
-         .replace(/</g, "&lt;")
-         .replace(/>/g, "&gt;")
-         .replace(/"/g, "&quot;")
-         .replace(/'/g, "&#039;");
-   }
-   ```   
+   * le texte de la page HTML et les attributs des balises HTML doivent être échappés avec
+     ```js
+     function escapeHtml(text) {
+        // https://stackoverflow.com/questions/1787322/what-is-the-htmlspecialchars-equivalent-in-javascript
+        return text
+           .replace(/&/g, "&amp;")
+           .replace(/</g, "&lt;")
+           .replace(/>/g, "&gt;")
+           .replace(/"/g, "&quot;")
+           .replace(/'/g, "&#039;");
+     }
+     ```
+   * Dans une URL, la partie dangereuse provenant de l'utilisateur doit être encodée avec [encodeURIComponent](https://developer.mozilla.org/fr/docs/Web/JavaScript/Reference/Global_Objects/encodeURIComponent) comme vu lors du Cours 2 de JavaScript.
 
 </div>
 
@@ -754,7 +760,7 @@ maintenir un **état** côté serveur.
 
 Attention néanmoins, contrairement aux sessions, il ne faut pas stocker de
 donner sensibles dans le `JWT` car tout le monde peut facilement le lire ; sa
-sécurité réside dans le fait qu'il ne peut pas être falsifié seulement.
+sécurité réside seulement dans le fait qu'il ne peut pas être falsifié.
 
 ### Présentation du format `JWT`
 
@@ -897,7 +903,7 @@ Qui dit deux codes pour le même problème, dit héritage et en particulier inte
 <div class="exercise">
 
 1. Modifiez la classe `ConnexionUtilisateur` pour passer tous ses attributs et
-   méthodes en dynamique (pas statique). Corrigez les appels internes à ces
+   méthodes en dynamique (pas statique). Corrigez les appels *internes* à ces
    attributs et méthodes.  
    Renommez le fichier en `ConnexionUtilisateurSession.php`, ce qui aura pour
    effet de renommer la classe (sous *PhpStorm*, clic droit sur le fichier →
@@ -979,7 +985,7 @@ Qui dit deux codes pour le même problème, dit héritage et en particulier inte
 6. Il reste un dernier endroit où `ConnexionUtilisateurSession` appelle une
    méthode statique : dans l'ajout d'une variable globale
    `idUtilisateurConnecte` à *Twig*. Puisque nous ne voulons pas appeler
-   systématique `ConnexionUtilisateurSession`, qui a pour effet de lancer la
+   systématiquement `ConnexionUtilisateurSession`, qui a pour effet de lancer la
    session, changez le code suivant dans `RouteurURL` : 
 
    ```diff
@@ -991,7 +997,7 @@ Qui dit deux codes pour le même problème, dit héritage et en particulier inte
    `feed.html.twig`.
 
 7. Testez votre site Web. Vérifiez que la connexion utilisateur sur le site marche
-   toujours. Vérifiez aussi que les fonctionnalités dynmaiques *AJAX* marchent toujours.
+   toujours. Vérifiez aussi que les fonctionnalités dynamiques *AJAX* marchent toujours.
 
 </div>
 
@@ -1071,7 +1077,7 @@ Dans ce TD, nous n'avons pas eu le temps d'évoquer quelques aspects importants 
 * Nous avons construit une sorte d'hybride entre site web et API. Cependant, une API s'implémente généralement de façon indépendante (comme nous le verrons l'année prochaine). Dans ce cas, lors de la connexion, l'API renvoie le JWT qu'il faudra envoyer à chaque requête dans un en-tête particulier (`Authorization`) tant qu'il n'a pas expiré. Il existe aussi un mécanisme de rafraichissement des `JWT` dont nous parlerons aussi l'an prochain lors de l'utilisation du framework `Symfony` et de l'outil `API Platform`.
 
 Sources du TD :
-[OpenClassrooms](https://openclassrooms.com/fr/courses/6573181-adoptez-les-api-rest-pour-vos-projets-web/), [Wikipedia](https://fr.wikipedia.org/wiki/Representational_state_transfer), [RestAPITutorial.com](https://www.restapitutorial.com/lessons/restquicktips.html) et [ChatGPT](https://chat.openai.com/chat)
+[OpenClassrooms](https://openclassrooms.com/fr/courses/6573181-adoptez-les-api-rest-pour-vos-projets-web/), [Wikipédia](https://fr.wikipedia.org/wiki/Representational_state_transfer), [RestAPITutorial.com](https://www.restapitutorial.com/lessons/restquicktips.html) et [ChatGPT](https://chat.openai.com/chat)
 
 ## Pour finir (bonus)
 
@@ -1079,6 +1085,6 @@ Il y a quelques petites choses que nous pouvons encore améliorer :
 
 * Migrer les différentes classes restantes dans `Lib` vers le **conteneur**, en tant que **services**.
 
-* Réfactorer pour introduire un `ControleurGeneriqueSession` et un `ControleurGeneriqueAPI`...
+* Refactoriser pour introduire un `ControleurGeneriqueSession` et un `ControleurGeneriqueAPI`...
 
 Si le temps vous le permet, vous pouvez donc essayer d'encore plus optimiser l'application avec ces pistes !

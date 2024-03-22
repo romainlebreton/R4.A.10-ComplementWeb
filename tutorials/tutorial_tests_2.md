@@ -560,7 +560,7 @@ Actuellement, nous utilisons toujours l'ancien `Conteneur` (celui de `Lib`) dans
 
 3. Pour pouvoir enregistrer les services `url_generator` (correspondant à `UrlGenerator`) et `url_helper` (correspondant à `UrlHelper`) via notre fichier de configuration, nous avons besoin de trois services :
 
-   * `request_stack`, correspondant à un objet `RequestStack` que nous pouvons simplement déclarer dans `conteneur.yaml`.
+   * `request_stack`, correspondant à un objet `RequestStack` que nous pouvons simplement déclarer dans `conteneur.yml`.
 
    * `request_context`, correspondant à un objet `RequestContext` que nous sommes obligés de déclarer directement dans `traiterRequete` car cet objet à besoin d'être configuré avec les données de la requête courante.
 
@@ -583,7 +583,7 @@ Actuellement, nous utilisons toujours l'ancien `Conteneur` (celui de `Lib`) dans
    $conteneur->set('routes', $routes);
    ```
 
-4. Dans votre fichier `conteneur.yaml`, déclarez deux nouveaux services : `url_generator` (correspondant à la classe `Symfony\Component\Routing\Generator\UrlGenerator`) et `url_helper` (correspondant à la classe `Symfony\Component\HttpFoundation\UrlHelper`). 
+4. Dans votre fichier `conteneur.yml`, déclarez deux nouveaux services : `url_generator` (correspondant à la classe `Symfony\Component\Routing\Generator\UrlGenerator`) et `url_helper` (correspondant à la classe `Symfony\Component\HttpFoundation\UrlHelper`). 
    
    Concernant les `arguments` de ces deux services, utilisez les différents services que nous avons définis lors de la question précédente (normalement, vous pouvez toujours trouvez l'instanciation de ces objets dans `traiterRequete`, si vous souhaitez voir comment cela est fait).
 
@@ -1001,7 +1001,7 @@ Mais pas de panique, nous pouvons utiliser notre `conteneur de services` pour co
 
 2. Dans la méthode `creerUtilisateur`, lors de la construction du chemin du fichier contenant la photo de profil , utilisez votre nouvel attribut.
 
-3. Dans `conteneur.yml`, enregistrer un `paramètre` correspondant au chemin du dossier contenant les photos de profil en utilisant le paramètre `project_root`. Comme pour les services, il est possible d'utiliser un paramètre lors de la définition d'un autre paramètre, ainsi : `%project_root%/chemin/vers/dossier`.
+3. Dans `conteneur.yml`, enregistrez un `paramètre` correspondant au chemin du dossier contenant les photos de profil en utilisant le paramètre `project_root`. Comme pour les services, il est possible d'utiliser un paramètre lors de la définition d'un autre paramètre, ainsi : `%project_root%/chemin/vers/dossier`.
 
 4. Injectez ce nouveau paramètre comme `argument` du `utilisateur_service` en utilisant sa **référence**. Pour rappel, on peut faire référence à un attribut du conteneur avec la syntaxe : `%nom_attribut%`.
 
