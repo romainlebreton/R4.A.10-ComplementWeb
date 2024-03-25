@@ -985,8 +985,9 @@ Qui dit deux codes pour le même problème, dit héritage et en particulier inte
 6. Il reste un dernier endroit où `ConnexionUtilisateurSession` appelle une
    méthode statique : dans l'ajout d'une variable globale
    `idUtilisateurConnecte` à *Twig*. Puisque nous ne voulons pas appeler
-   systématiquement `ConnexionUtilisateurSession`, qui a pour effet de lancer la
-   session, changez le code suivant dans `RouteurURL` : 
+   systématiquement `ConnexionUtilisateurSession::getIdUtilisateurConnecte()`,
+   qui a pour effet de lancer la session (via `Session::getInstance()`), changez le code suivant dans
+   `RouteurURL` : 
 
    ```diff
    - $twig->addGlobal('idUtilisateurConnecte', ConnexionUtilisateurSession::getIdUtilisateurConnecte());
@@ -1029,7 +1030,7 @@ Qui dit deux codes pour le même problème, dit héritage et en particulier inte
    }
     ```
 
-2. Modifiez la méthode `verifierIdentifiantUtilisateur` de `UtilisateurService` afin de rajouter les codes d'erreurs HTTP adéquats lors de la levée de `SerrviceException`.
+2. Modifiez la méthode `verifierIdentifiantUtilisateur` de `UtilisateurService` afin de rajouter les codes d'erreurs HTTP adéquats lors de la levée de `ServiceException`.
 
 3. Testez l'authentification en appelant dans *Postman* la route précédente avec
    le corps de requête

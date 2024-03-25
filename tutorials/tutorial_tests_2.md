@@ -783,7 +783,7 @@ Bien sûr, notre contexte de test dans ce sujet reste assez simpliste, mais cela
 
 ### Traitement des requêtes
 
-Dans le cadre de tests futurs (notamment pour l'`API REST` que vous allez créer lors du **TD5**) nous allons modifier la méthode `RouteurURL::traiterRequete` afin que celle-ci prenne une requête en paramètre et renvoie la réponse plutôt que de tout traiter d'un seul bloc en "boîte noire". Par la suite, cela pourra permettre de simuler des requêtes et d'analyse la réponse renvoyée.
+Dans le cadre de tests futurs (notamment pour l'`API REST` que vous allez créer lors du **TD5**) nous allons modifier la méthode `RouteurURL::traiterRequete` afin que celle-ci prenne une requête en paramètre et renvoie la réponse plutôt que de tout traiter d'un seul bloc en "boîte noire". Par la suite, cela pourra permettre de simuler des requêtes et d'analyser la réponse renvoyée.
 
 <div class="exercise">
 
