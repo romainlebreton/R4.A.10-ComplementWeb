@@ -4,8 +4,8 @@ layout: tutorial
 lang: fr
 ---
 
-Ce tutoriel vous montrer comment simplifier la création de routes. Vous allez
-ainsi utiliser le même système que les professionels du Web qui utilisent
+Ce tutoriel vous montre comment simplifier la création de routes. Vous allez
+ainsi utiliser le même système que les professionnels du Web qui utilisent
 Symfony. 
 
 1. On commence par rajouter un paquet
