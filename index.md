@@ -42,7 +42,7 @@ Cours *R4.A.10 -- Complément Web* en
 
 ## Notes Complémentaires
 
-1. [Écriture de routes simplifiée (comme dans Symfony)](tutorials/complement_route_attribut)
+1. [Écriture de routes simplifiées (comme dans Symfony)](tutorials/complement_route_attribut)
 
 <!--
 
