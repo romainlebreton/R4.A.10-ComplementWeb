@@ -89,13 +89,51 @@ L'intérêt de ce site est qu'il ne contient que 2 contrôleurs et un petit nomb
     * traitement (action `connecter`)
   * se déconnecter : action `deconnecter`
 
+## Mise en place du site de base
+
+Ce TD nécessite de faire tourner un serveur Web PHP sous Docker. Si votre
+machine a gardé sa configuration du semestre 3, suivez les instructions de
+l'exercice 2 suivant (sautez l'exercice 1). Si vous devez installer Docker,
+suivez les instructions des exercices 1 et 2 suivants.
+
+
+<div class="exercise">
+**Installer Docker**
+
+Allez sur la page du [dépôt Serveur Web
+Docker](https://gitlabinfo.iutmontp.univ-montp2.fr/Enseignants-Web/docker/-/blob/main/README.md),
+et faites le tutoriel d’installation et de configuration qui se trouve dans la
+partie *Tutoriel > Premier contact*. Vous ne devez normalement pas y passer plus
+de 30 minutes.
+
+</div>
+
+
+<div class="exercise">
+**Lancer votre serveur Web Docker**
+
+Démarrer *Docker Desktop*. Dans l'onglet Gauche *Containers*, relancez votre
+conteneur à l'aide du bouton Play ![Play](https://gitlabinfo.iutmontp.univ-montp2.fr/Enseignants-Web/docker/-/raw/main/img/BoutonPlay.png).
+
+Pour rappel, ce conteneur exécute un serveur Web PHP. Le port 80 du conteneur est relié par défaut au port 80 de la machine hôte. Le dossier `/var/www/html` du conteneur est relié par défaut au dossier `public_html` de la machine hôte. 
+
+En pratique, une fois le conteneur lancé, vous accédez aux pages Web situées
+dans le dossier `public_html` de la machine hôte en naviguant à partir de l'URL
+`http://localhost` via votre navigateur Web.
+
+</div>
 
 <div class="exercise">
 
-1. Récupérer le code de base en forkant vous-même [ce dépôt
-   GitLab](https://gitlabinfo.iutmontp.univ-montp2.fr/r4.a.10-complementweb/TD1).
+1. Dupliquez (*fork*) vous-même [ce dépôt
+   GitLab](https://gitlabinfo.iutmontp.univ-montp2.fr/r4.a.10-complementweb/TD1)
+   dans votre espace de nom (= votre login IUT). Cette opération est nécessaire pour que vous
+   puissiez pousser vos modifications sur *GitLab*.
 
-2. Il faut donner les droits en lecture / exécution à Apache (utilisateur
+2. Clonez votre dépôt *Git* dupliqué dans un répertoire
+   `public-html/ComplementWeb/TD1` pour pouvoir y accéder via votre conteneur *Docker*.
+
+3. Il faut donner les droits en lecture / exécution à Apache (utilisateur
    `www-data`).
    ```bash
    setfacl -R -m u:www-data:r-x .
