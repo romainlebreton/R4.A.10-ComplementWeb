@@ -16,13 +16,17 @@ Cours *R4.A.10 -- Complément Web* en
 
 <!-- ### Mise en place d'une API REST -->
 
-1. Lundi 29 janvier 2024 -- [TD 1](tutorials/tutorial1) -- Routage par URL, Composer
-2. Lundi 05 février 2024 -- [TD 2](tutorials/tutorial2) -- Réponses HTTP, Moteur de template *Twig* 
-1. Lundi 26 février 2024 -- [TD 3](tutorials/tutorial_tests_1) -- Tests unitaires, Couche Service
-2. Lundi 04 mars 2024 -- [TD 4](tutorials/tutorial_tests_2) -- Conteneur de services, Mock
-2. Lundi 11 mars 2024 -- fin [TD 4](tutorials/tutorial_tests_2) puis [TD 5](tutorials/tutorial3) -- API REST, authentification par JWT
-3. Lundi 18 mars 2024 -- fin [TD 5](tutorials/tutorial3) -- API REST, authentification par JWT
+1. Lundi 07 avril 2025 -- [TD 1](tutorials/tutorial1) -- Routage par URL, Composer
 
+<!--
+
+2. Lundi 05 février 2024 -- [TD 2](tutorials/tutorial2) -- Réponses HTTP, Moteur de template *Twig* 
+3. Lundi 26 février 2024 -- [TD 3](tutorials/tutorial_tests_1) -- Tests unitaires, Couche Service
+4. Lundi 04 mars 2024 -- [TD 4](tutorials/tutorial_tests_2) -- Conteneur de services, Mock
+5. Lundi 11 mars 2024 -- fin [TD 4](tutorials/tutorial_tests_2) puis [TD 5](tutorials/tutorial3) -- API REST, authentification par JWT
+6. Lundi 18 mars 2024 -- fin [TD 5](tutorials/tutorial3) -- API REST, authentification par JWT
+
+-->
 
 <!-- 
 ## SAÉ du Parcours A
@@ -39,4 +43,9 @@ Cours *R4.A.10 -- Complément Web* en
 ## Notes Complémentaires
 
 1. [Écriture de routes simplifiée (comme dans Symfony)](tutorials/complement_route_attribut)
-1. [Configuration automatique des services (comme dans Symfony)](tutorials/complement_autowiring)
+
+<!--
+
+2. [Configuration automatique des services (comme dans Symfony)](tutorials/complement_autowiring)
+
+-->
