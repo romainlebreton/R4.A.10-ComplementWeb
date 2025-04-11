@@ -133,7 +133,9 @@ dans le dossier `public_html` de la machine hôte en naviguant à partir de l'UR
 2. Clonez votre dépôt *Git* dupliqué dans un répertoire
    `public-html/ComplementWeb/TD1` pour pouvoir y accéder via votre conteneur *Docker*.
 
-3. Il faut donner les droits en lecture / exécution à Apache (utilisateur
+3. Dans votre conteneur, déplacez-vous à la racine de ce nouveau répertoire.
+
+4. Il faut donner les droits en lecture / exécution à Apache (utilisateur
    `www-data`).
    ```bash
    setfacl -R -m u:www-data:r-x .
@@ -146,8 +148,14 @@ dans le dossier `public_html` de la machine hôte en naviguant à partir de l'UR
    setfacl -R -m u:www-data:rwx ./ressources/img/utilisateurs
    ```
 
+   Dans votre conteneur **Docker**, exécutez aussi les instructions suivantes :
+   ```bash
+   chown -R root:www-data .
+   chown -R root:www-data ./ressources/img/utilisateurs
+   chmod g+w ./ressources/img/utilisateurs/
+   ```
 
-4. Importez les tables `utilisateurs` et `publications` dans votre base de
+5. Importez les tables `utilisateurs` et `publications` dans votre base de
    données SQL préférée : 
    * Pour *MySQL*, vous devez : 
      * exécuter le [script d'import MySQL]({{site.baseurl}}/assets/TD1/theFeedTD1DepartMySQL.sql),
@@ -166,11 +174,15 @@ dans le dossier `public_html` de la machine hôte en naviguant à partir de l'UR
        identifiants (sauf s'ils sont entourés de guillemets doubles `"`, auquel
        car il faudra toujours y faire référence avec des guillemets doubles).
 
-5. Créez un nouvel utilisateur et une nouvelle publication.  
+6. Pour plus de confort, vous pouvez éventuellement augmenter la durée de session 
+d'un utilisateur en augmentant la valeur retournée dans la méthode `getDureeExpirationSession` 
+de la classe `src/Configuration/Configuration.php` (actuellement réglée sur 120 secondes).
+
+7. Créez un nouvel utilisateur et une nouvelle publication.  
    *Souvenez-vous* bien de votre identifiant et mot de passe car nous nous en
    resservirons. 
 
-6. Faites marcher le site. Explorez toutes les pages.
+8. Faites marcher le site. Explorez toutes les pages.
  
 </div>
 
@@ -427,14 +439,29 @@ ex. `/publications` ou `/connexion`) et une action, c'est-à-dire une fonction P
    $routes = new RouteCollection();
 
    // Route afficherListe
-   $route = new Route("/publications", [
-      "_controller" => "\TheFeed\Controleur\ControleurPublication::afficherListe",
-   ]);
+   $route = new Route(
+      path: "/publications", 
+      defaults:[
+         "_controller" => "\TheFeed\Controleur\ControleurPublication::afficherListe",
+      ]
+   );
    $routes->add("afficherListe", $route);
    ```
-   **Explication :** Une nouvelle `Route $route` associe au chemin `/publications` la
-   méthode `afficherListe()` de `ControleurPublication`. Puis cette route est ajoutée
-   dans l'ensemble de toutes les routes `RouteCollection $routes`. 
+   **Explication :** Une nouvelle `Route $route` associe au chemin (paramètre `path`) `/publications` la
+   méthode `afficherListe()` de `ControleurPublication` (paramètre `defaults`). Puis cette route est ajoutée
+   dans l'ensemble de toutes les routes `RouteCollection $routes`.
+
+   On peut éventuellement simplifier en créant directement une instance de `Route` dans l'appel à `$routes->add` :
+
+   ```php
+   $routes->add("afficherListe", new Route(
+      path: "/publications", 
+      defaults:[
+         "_controller" => "\TheFeed\Controleur\ControleurPublication::afficherListe",
+      ]
+   )); 
+   ```
+
 
 3. Les informations de la requête essentielles pour le routage (méthode `GET` ou
    `POST`, *query string*, paramètres *POST*, ...) sont extraites dans un objet
@@ -483,12 +510,15 @@ Passons à notre deuxième route : `/connexion`.
    use TheFeed\Controleur\ControleurUtilisateur;
 
    // Route afficherFormulaireConnexion
-   $route = new Route("/connexion", [
-      "_controller" => "\TheFeed\Controleur\ControleurUtilisateur::afficherFormulaireConnexion",
-      // Syntaxes équivalentes 
-      // "_controller" => ControleurUtilisateur::class . "::afficherFormulaireConnexion",
-      // "_controller" => [ControleurUtilisateur::class, "afficherFormulaireConnexion"],
-   ]);
+   $route = new Route(
+      path: "/connexion", 
+      defaults:[
+         "_controller" => "\TheFeed\Controleur\ControleurUtilisateur::afficherFormulaireConnexion",
+         // Syntaxes équivalentes 
+         // "_controller" => ControleurUtilisateur::class . "::afficherFormulaireConnexion",
+         // "_controller" => [ControleurUtilisateur::class, "afficherFormulaireConnexion"],
+      ]
+   );
    $routes->add("afficherFormulaireConnexion", $route);
    ```
 
@@ -571,10 +601,24 @@ L'un des avantages de notre routage est qu'il peut rediriger différemment selon
 * URL `/connexion`, méthode `GET` → action `afficherFormulaireConnexion` du contrôleur utilisateur
 * URL `/connexion`, méthode `POST` → action `connecter` du contrôleur utilisateur
 
-Pour limiter une route à certaines méthodes *HTTP*, on utilise par exemple
+Pour limiter une route à certaines méthodes *HTTP*, on peut définir un paramètre `methods` lors de 
+la création de l'instance de `Route` :
 ```php
-$route->setMethods(["GET"]);
-``` 
+$route = new Route(
+   path: "/chemin", 
+   defaults:[
+      "_controller" => "...",
+   ],
+   methods: [Request::METHOD_GET]
+);
+```
+
+Comme vous pouvez le constater, comme `methods` est un tableau, il est éventuellement possible d'autoriser
+plusieurs méthodes pour une même route.
+
+`Request::METHOD_GET` est une **constante** (qui donne la chaîne de caractères `GET`). Il est bien sûr aussi
+possible de spécifier directement le nom de la méthode sans passer par la constante, mais cela permet d'éviter
+des éventuelles erreurs de saisie. Il existe des constantes pour chaque méthode HTTP.
 
 <div class="exercise">
 
@@ -618,7 +662,7 @@ $route->setMethods(["GET"]);
      publication.  
      Attention : Il y a déjà une autre route associée à l'URL `/publications`
      (action `afficherListe`). Il faudra donc spécifier que l'autre route est
-     limité à la méthode `GET`.
+     limité à la méthode `GET`. Pensez-bien à donner des **noms uniques** à vos routes!
 
 2. Modifiez les liens correspondants dans
    *  `src/vue/publication/liste.php`, 
@@ -650,7 +694,8 @@ l'URL.
 1. Créez une nouvelle route : 
    * URL `/utilisateurs/{idUtilisateur}/publications`, méthode `GET` → action `afficherPublications` du contrôleur utilisateur
 
-1. Modifiez `afficherPublications()` pour qu'il prenne `$idUtilisateur` en argument au lieu de le lire depuis le *query string* avec `$_REQUEST['idUtilisateur']`.
+1. Modifiez `afficherPublications()` (de la classe `ControleurUtilisateur`) pour qu'il prenne `$idUtilisateur` en argument 
+au lieu de le lire depuis le *query string* avec `$_REQUEST['idUtilisateur']`.
    
    ```diff
    -public static function afficherPublications(): void
@@ -664,6 +709,10 @@ l'URL.
    -        ControleurUtilisateur::rediriger("publication", "afficherListe");
    -    }
    ```
+
+   Attention à ne pas supprimer le reste ! La fonction doit toujours faire les autres instructions
+   (récupérer l'utilisateur via le repository, charger la vue, etc.). On supprime seulement la partie
+   qui récupère l'identifiant de l'utilisateur dans `$_REQUEST` en introduisant un paramètre.
 
 2. Si vous testez la route, vous verrez qu'elle ne marche pas, car
    `call_user_func` appelle `afficherPublications` sans lui donner d'arguments (il
@@ -708,7 +757,7 @@ avec la valeur `19` pour la méthode `ControleurUtilisateur::afficherPublication
    composer require symfony/http-kernel
    ```
 
-1. Faites évoluer le code de `RouteurURL` en rajoutant à la fin (juste avant
+1. Faites évoluer le code de `RouteurURL` en rajoutant à la fin (juste **avant**
    `call_user_func`)
 
    ```php
@@ -833,7 +882,8 @@ besoin.
    ```
 
 2. Initialisez les deux services `$assistantUrl` et `$generateurUrl` dans
-   `RouteurUrl` (*cf.* code plus haut). Puis stockez-les dans le conteneur.
+   `RouteurUrl` (avant l'appel à `call_user_func_array`). 
+   Puis stockez-les dans le conteneur.
 
    ```php
    $generateurUrl = new UrlGenerator($routes, $contexteRequete);
@@ -899,4 +949,9 @@ cours *Complément Web*, le passage à ces URL est une étape nécessaire dans n
 chemin pour développer une *API REST*.
 
 Enfin, maintenant que vous connaissez les bases de *Composer*, vous pouvez facilement
-rajouter des bibliothèques à votre site web *PHP*. 
+rajouter des bibliothèques à votre site web *PHP*.
+
+Si vous souhaitez améliorer le système de création des **routes** pour utiliser des
+**attributs** au-dessus de chaque action liée à une route (dans les contrôleurs) au 
+lieu de tout définir dans `traiterRequete`, vous pouvez lire cette 
+[note complémentaire]({{site.baseurl}}/tutorials/complement_route_attribut).
