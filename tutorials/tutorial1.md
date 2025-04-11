@@ -441,7 +441,7 @@ ex. `/publications` ou `/connexion`) et une action, c'est-à-dire une fonction P
    // Route afficherListe
    $route = new Route(
       path: "/publications", 
-      defaults:[
+      defaults: [
          "_controller" => "\TheFeed\Controleur\ControleurPublication::afficherListe",
       ]
    );
@@ -456,7 +456,7 @@ ex. `/publications` ou `/connexion`) et une action, c'est-à-dire une fonction P
    ```php
    $routes->add("afficherListe", new Route(
       path: "/publications", 
-      defaults:[
+      defaults: [
          "_controller" => "\TheFeed\Controleur\ControleurPublication::afficherListe",
       ]
    )); 
@@ -512,7 +512,7 @@ Passons à notre deuxième route : `/connexion`.
    // Route afficherFormulaireConnexion
    $route = new Route(
       path: "/connexion", 
-      defaults:[
+      defaults: [
          "_controller" => "\TheFeed\Controleur\ControleurUtilisateur::afficherFormulaireConnexion",
          // Syntaxes équivalentes 
          // "_controller" => ControleurUtilisateur::class . "::afficherFormulaireConnexion",
@@ -606,7 +606,7 @@ la création de l'instance de `Route` :
 ```php
 $route = new Route(
    path: "/chemin", 
-   defaults:[
+   defaults: [
       "_controller" => "...",
    ],
    methods: [Request::METHOD_GET]
