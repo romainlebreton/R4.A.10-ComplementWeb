@@ -151,7 +151,6 @@ dans le dossier `public_html` de la machine hôte en naviguant à partir de l'UR
    Dans votre conteneur **Docker**, exécutez aussi les instructions suivantes :
    ```bash
    chown -R root:www-data .
-   chown -R root:www-data ./ressources/img/utilisateurs
    chmod g+w ./ressources/img/utilisateurs/
    ```
 
