@@ -1009,7 +1009,7 @@ Il est d'ailleurs tout à fait possible que ce template "étende" un autre templ
 
 On pourrait aller plus loin et avoir un template `liste_publications.html.twig` si l'affichage d'une liste de publications était plus complexe qu'une simple boucle et se répétait sur plusieurs pages. Ce template utiliserait alors notre nouveau template `publication.html.twig`.
 
-<div class="exercice">
+<div class="exercise">
 
 1. Si le temps le permet, définissez un nouveau template `liste_publications.html.twig` dans `src/vue/vues/publications/composants` utilisant le template `publication.html.twig`. Ce template gérera l'affichage de chaque publication et le cas où il n'y en a aucune.
 
