@@ -934,7 +934,7 @@ Actuellement, nous utilisons la même vue `feed.html.twig` pour gérer les deux 
 * N'a pas de titre contenant le login de l'utilisateur.
 * Possède le formulaire d'ajout de publication.
 
-Dans un premier temps, on pourrait tenter d'étendre la page `feed.html.twig` pour créer une vue spécialisée pour la page personnelle et en redéfinir le titre avec le bloc associé. Mais ce n'est pas vraiment une bonne approche, car la vue `feed.html.twig` contient "en plus" le formulaire d'ajout. On pourrait définir un bloc autour de se formulaire et faire en sorte qu'il soit vide dans le vue spécialisée, mais cela semble une mauvaise conception, notamment si la page `feed.html.twig` est encore amenée à évoluer.
+Dans un premier temps, on pourrait tenter d'étendre la page `feed.html.twig` pour créer une vue spécialisée pour la page personnelle et en redéfinir le titre avec le bloc associé. Mais ce n'est pas vraiment une bonne approche, car la vue `feed.html.twig` contient "en plus" le formulaire d'ajout. On pourrait définir un bloc autour de ce formulaire et faire en sorte qu'il soit vide dans la vue spécialisée, mais cela semble une mauvaise conception, notamment si la page `feed.html.twig` est encore amenée à évoluer.
 
 Il ne parait pas non plus très adéquat de créer une vue plus générale dont hériterait les deux (même si cela serait déjà un peu mieux).
 
@@ -945,9 +945,7 @@ Avec Twig, il est possible d'inclure le code d'un template dans un autre templat
 L'instruction pour inclure un template est la suivante :
 
 ```twig
-{% raw %}
 {{ include(cheminTemplate, {'param1' : ..., 'param2' : ... }) }}
-{% endraw %}
 ```
 
 * `cheminTemplate` : correspond au chemin du template à partir de la racine : le dossier `templates` (comme on étend un template, ou qu'on l'utilise dans un contrôleur...)
@@ -957,17 +955,14 @@ L'instruction pour inclure un template est la suivante :
 Imaginons par exemple qu'on définisse le template `livres/livres.html.twig` suivant, permettant de générer le code HTML pour présenter les détails d'un livre :
 
 ```twig
-{% raw %}
 <h2>Livre : {{ livre.tire }}</h2>
 <p>Année : {{ livre.anneePublication }}<p>
 <p>Auteur : {{ livre.auteur }}<p>
-{% endraw %}
 ```
 
 On peut alors inclure ce template dans un autre template à tout moment, en passant le livre en paramètre. Par exemple, imaginons qu'on définisse un template `best_seller.html.twig` qui liste les trois livres les plus vendus cette année. On possède un objet "top" contenant quatre propriétés : annee, livre1, livre2 et livre3.
 
 ```twig
-{% raw %}
 <h1>Best-sellers de {{ top.annee }} :<h1>
 <p>Top 1 :</p>
 {{ include('livres/livres.html.twig', {'livre' : top.livre1}) }}
@@ -975,7 +970,6 @@ On peut alors inclure ce template dans un autre template à tout moment, en pass
 {{ include('livres/livres.html.twig', {'livre' : top.livre2}) }}
 <p>Top 3 :</p>
 {{ include('livres/livres.html.twig', {'livre' : top.livre3}) }}
-{% endraw %}
 ```
 
 Bien sûr, la modélisation pour ce problème n'est pas la meilleure, et même dans le template, nous aurions pu utiliser une boucle, mais cela permet d'illustrer efficacement la fonctionnalité d'inclusion.
