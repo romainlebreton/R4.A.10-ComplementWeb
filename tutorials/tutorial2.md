@@ -575,39 +575,39 @@ remplacer le contenu d'un bloc en le redéfinissant.
 
 * La structure conditionnelle `if` permet de ne générer une partie du document que si une condition est remplie :
 
-   ```twig
-   {% if test %}
-      Code HTML....
-   {% endif %}
-   ```
+  ```twig
+  {% if test %}
+     Code HTML....
+  {% endif %}
+  ```
 
-   Il est bien sûr possible de construire des conditions complexes avec les
-   opérateurs : `not`, `and`, `or`, `==`, `<`, `>`, `<=`, `>=`, etc... par
-   exemple :
+  Il est bien sûr possible de construire des conditions complexes avec les
+  opérateurs : `not`, `and`, `or`, `==`, `<`, `>`, `<=`, `>=`, etc... par
+  exemple :
 
-   ```twig
-   {% if test and (not (user.getName() == 'Smith') or user.getAge() <= 20) %}
-      Code HTML....
-   {% endif %}
-   ```
+  ```twig
+  {% if test and (not (user.getName() == 'Smith') or user.getAge() <= 20) %}
+     Code HTML....
+  {% endif %}
+  ```
 
 * La structure conditionnelle `for` permet de parcourir une structure itérative (par exemple, un tableau) :
 
-   ```twig
-   {% for data in tab %}
-      <p>{{ data }}</p>
-   {% endfor %}
-   ```
+  ```twig
+  {% for data in tab %}
+     <p>{{ data }}</p>
+  {% endfor %}
+  ```
 
-   Comme indiqué dans la présentation de *Twig*, une syntaxe `{% else %}` permet de traiter le cas particulier d'un tableau vide :  
+  Comme indiqué dans la présentation de *Twig*, une syntaxe `{% else %}` permet de traiter le cas particulier d'un tableau vide :  
 
-   ```twig
-   {% for data in tab %}
-      <p>{{ data }}</p>
-   {% else %}
-   No data has been found.
-   {% endfor %}
-   ```
+  ```twig
+  {% for data in tab %}
+     <p>{{ data }}</p>
+  {% else %}
+  No data has been found.
+  {% endfor %}
+  ```
 
 <div class="exercise">
 
