@@ -117,6 +117,7 @@ Il ne reste plus qu'à créer un objet `Response` à partir de ce corps de répo
 1. Modifiez `ControleurGenerique::afficherVue()` pour renvoyer une `Response` : 
 
    ```diff
+   + use Symfony\Component\HttpFoundation\Response;
    -    protected static function afficherVue(string $cheminVue, array $parametres = []): void
    +    protected static function afficherVue(string $cheminVue, array $parametres = []): Response
       {
@@ -137,16 +138,12 @@ Il ne reste plus qu'à créer un objet `Response` à partir de ce corps de répo
    l'envoyer au client *HTTP*.
 
 4. Testez l'URL `web/` qui renvoie vers l'action `afficherListe()`. Cela doit marcher.
-   
-5. Dans toutes les actions, mettez à jour le code pour que l'action renvoie la
-   réponse fournie par `ControleurGenerique::afficherVue()`.
 
-   **Remarque :** Vous devrez peut-être modifier le type de retour des actions
-   pour que le site continue de marcher. Notez que les redirections risquent
-   d'être cassées temporairement.
+   Une fois que nous aurons mis à jour notre système de **redirection** (prochaine étape), 
+   nous pourrons mettre à jour toutes les **actions** afin qu'elles renvoient un objet 
+   de type `Response`.
 
 </div>
-
 
 ### Des redirections plus propres
 
@@ -173,17 +170,28 @@ la réécriture d'URL indiquée dans le fichier de configuration `.htaccess` de
 Ceci était utilisé par exemple pour rediriger la requête
 `web/controleurFrontal.php/connexion` vers `web/connexion`. Une redirection
 permanente permet au navigateur d'optimiser la requête : le navigateur garde en
-cache la redirection et l'effectue lui-même sans envoyer de requête au serveur.  
+cache la redirection et l'effectue lui-même sans envoyer de requête au serveur.
+
+Un objet de type `RedirectResponse` peut être instancié ainsi :
+
+```php
+use Symfony\Component\HttpFoundation\RedirectResponse;
+
+//$url correspondant à l'URL vers laquelle on souhaite rediriger l'utilisateur
+$response = new RedirectResponse($url);
+```
 
 <div class="exercise">
 
 1. Modifier le code de `ControleurGenerique::rediriger()` pour renvoyer une
    nouvelle `RedirectResponse` vers l'URL absolue qui vient d'être générée. 
 
-1. Dans toutes les actions, mettez à jour le code pour que l'action renvoie la
-   réponse fournie par `ControleurGenerique::rediriger()`.
+2. Dans toutes les **actions**, mettez à jour le code pour que l'action :
+   * Définisse `Response` comme le type de retour de sa méthode.
+   * Renvoie la réponse fournie par `ControleurGenerique::rediriger()`.
+   * Renvoie la réponse fournie par `ControleurGenerique::afficherVue()` (cela fonctionne, car `RedirectResponse` étend `Response`).
 
-1. Testez votre site qui doit remarcher complètement.
+3. Testez votre site qui doit remarcher complètement.
 
 </div>
 
@@ -321,13 +329,22 @@ Voici quelques codes de réponse *HTTP* utiles :
    $reponse->send();
    ```
 
+   **Attention** : en remplaçant votre code par celui ci-dessus, assurez-vous de ne
+   pas accidentellement supprimer les deux services ajoutés dans notre **conteneur**
+   maison (`generateurUrl` et `assistantUrl`).
+
 3. Testez votre code en appelant une route qui n'existe pas. Observez le message
    d'erreur, ainsi que le code de retour avec les outils de développement,
    onglet *Réseau*.
 
 4. Testez votre code en appelant une méthode non prise en charge. Observez le
    message d'erreur, ainsi que le code de retour avec les outils de
-   développement.
+   développement. Vous pouvez par exemple changer **temporairement** la méthode
+   liée à l'action `afficherFormulaireConnexion` en `POST` et essayer d'accéder
+   normalement à la page par l'interface (donc avec la méthode `GET`) pour provoquer 
+   une erreur. Attention, cette erreur ne contient pas de message, il faudra donc
+   bien regarder que le code `405` apparaît bien dans l'onglet `Réseau` 
+   des outils de développement.
 
 5. Modifiez, le temps de cette question, votre code pour que l'action `afficherListe()`
    prenne un argument quelconque. Appelez l'URL `web/`. Observez le message
@@ -405,7 +422,7 @@ SRP de RouteurURL loupé :
 
 <div class="exercise">
 
-1. Installez le paquet *Twig* avec la commande
+1. Installez le paquet *Twig* (dans le dossier du projet, dans votre conteneur docker) avec la commande
    ```bash
    composer require twig/twig
    ```
@@ -573,6 +590,19 @@ remplacer le contenu d'un bloc en le redéfinissant.
   ```
   affichera  `Web4Ever🕸`.
 
+* On peut définir des variables locales : 
+
+    ```twig
+    {% set exemple = "coucou" %}
+    <p>{{ exemple }}</p>
+    ```
+
+* Il est possible de concaténer des chaînes de caractères avec le symbole `~` :
+
+    ```twig
+    <p>{{donnee~'coucou'}}</p>
+    ```
+
 * La structure conditionnelle `if` permet de ne générer une partie du document que si une condition est remplie :
 
   ```twig
@@ -581,17 +611,15 @@ remplacer le contenu d'un bloc en le redéfinissant.
   {% endif %}
   ```
 
-  Il est bien sûr possible de construire des conditions complexes avec les
-  opérateurs : `not`, `and`, `or`, `==`, `<`, `>`, `<=`, `>=`, etc... par
-  exemple :
+* Il est bien sûr possible de construire des conditions complexes avec les opérateurs : `not`, `and`, `or`, `==`, `<`, `>`, `<=`, `>=`, etc... par exemple :
 
   ```twig
-  {% if test and (not (user.getName() == 'Smith') or user.getAge() <= 20) %}
-     Code HTML....
+  {% if test and (not (user.name == 'Smith') or user.age <= 20) %}
+  Code HTML....
   {% endif %}
   ```
 
-* La structure conditionnelle `for` permet de parcourir une structure itérative (par exemple, un tableau) :
+* La structure répétitive `for` permet de parcourir une structure itérative (par exemple, un tableau) :
 
   ```twig
   {% for data in tab %}
@@ -599,15 +627,32 @@ remplacer le contenu d'un bloc en le redéfinissant.
   {% endfor %}
   ```
 
-  Comme indiqué dans la présentation de *Twig*, une syntaxe `{% else %}` permet de traiter le cas particulier d'un tableau vide :  
+* Si c'est un tableau associatif et qu'on veut accéder aux clés et aux valeurs en même temps :
 
   ```twig
-  {% for data in tab %}
-     <p>{{ data }}</p>
-  {% else %}
-  No data has been found.
+  <ul>
+    {% for key, value in tab %}
+    <li>{{ key }} = {{ value }}</li>
+    {% endfor %}
+  </ul>
+  ```
+
+* On peut aussi faire une boucle variant entre deux bornes : 
+
+  ```twig
+  {% for i in 0..10 %}
+    <p>{{ i }}ème valeur</p>
   {% endfor %}
   ```
+
+* Une syntaxe `{% else %}` permet de traiter le cas particulier d'un tableau vide :  
+
+   ```twig
+   {% for data in tab %}
+      <p>{{ data }}</p>
+   {% else %}
+   Pas de données dans le tableau
+   {% endfor %}
 
 <div class="exercise">
 
@@ -638,7 +683,7 @@ remplacer le contenu d'un bloc en le redéfinissant.
                {# boucle sur les publications #}
                   <div class="feedy">
                      <div class="feedy-header">
-                           <a href="{# lien vers afficherPublications #}">
+                           <a href="{# lien vers la route liée à l'action afficherPublications #}">
                               <img class="avatar"
                                     src="{# lien vers l'image de profil de l'auteur de la publication #}"
                                     alt="avatar de l'utilisateur">
@@ -662,12 +707,21 @@ remplacer le contenu d'un bloc en le redéfinissant.
    `ControleurUtilisateur::afficherPublications()` pour appeler cette vue, en
    fournissant en paramètre le tableau des publications.
 
-3. Codez avec la syntaxe *Twig* la boucle des publications, son cas particulier
-   quand il n'y a pas de publication, et les affichages liés aux publications
-   (sauf la date qui sera affichée dans le prochain exercice).
+   **Remarques** : nous n'avons plus besoin des paramètres `cheminVueBody` et `pagetitle`.
+   En effet, le chemin de la vue est donné comme premier paramètre de `afficherTwig` et
+   le titre de la page est définie dans le template. Concernant l'action
+   `afficherPublications`, pour le moment, nous n'afficherons plus un titre de page
+   contenant le login de l'utilisateur (vous ne devez donc pas passer le login 
+   en paramètre de la vue). Pour l'instant, nous allons utiliser la même vue pour la liste 
+   des publications générale et celles spécifiques à un utilisateur. Vous pourrez 
+   éventuellement rétablir le rendu d'origine dans un **exercice bonus** à la fin du TD.
+
+3. Codez avec la syntaxe *Twig* la **boucle des publications** :
+   * Vous afficherez, pour chaque publication, le login de l'auteur et le contenu (message) de la publication.
+   * Vous gèrerez le cas particulier quand il n'y a pas de publication.
    
-   *Note :* les liens et la gestion de l'utilisateur connecté seront fait plus
-   tard. 
+   *Note :* la gestion de la date sera faite lors du prochain exercice, les liens et la gestion de l'utilisateur 
+   connecté seront fait plus tard. 
 
 </div>
 
@@ -752,14 +806,20 @@ La fonction est alors disponible dans *Twig*, par exemple comme ceci :
    * une fonction `asset` pour la méthode `$assistantUrl->getAbsoluteUrl()` ;
 
 1. Utilisez ces fonctions dans toutes vos vues *Twig* pour réparer tous les
-   liens (CSS, menu, action du formulaire), sauf le lien "Ma Page" du menu de
-   navigation vers la route paramétrée de l'utilisateur connecté.
+   liens (CSS, menu, action du formulaire, images de profil), sauf le lien 
+   "Ma Page" du menu de navigation vers la route paramétrée de l'utilisateur connecté.
 
-   *Aide* : 
-   * pour le lien vers la page personnelle de l'auteur d'une publication, vous
-   devrez générer la route vers l'action `afficherPublications` en la méthode
+   *Aide* :
+   * On rappelle que le chemin donné dans `getAbsoluteUrl` est relatif au dossier
+   `web` du projet. Donc, si on veut accéder à un élément dans le dossier 
+   ressources, on doit utiliser `$assistantUrl->getAbsoluteUrl('../ressources/chemin')`
+   et donc `asset('../ressources/chemin')`.
+   * On rappelle que `$generateurUrl->generate()` et donc `route` prennent en premier
+   paramètre le **nom de la route** et pas son chemin.
+   * Pour le lien vers la page personnelle de l'auteur d'une publication, vous
+   devrez générer la route vers l'action `afficherPublications` avec la méthode
    `$generateurUrl->generate()` qui attend un tableau associatif comme deuxième
-   argument. Les tableaux associatifs se créent avec la syntaxe JSON
+   argument. Avec *Twig*, les tableaux associatifs se créent avec la syntaxe JSON
    ```twig
    {'nomCle' : 'valeur'}
    ```
@@ -776,7 +836,6 @@ Flash. Pour ceci, nous allons rajouter des variables globales à *Twig* :
 ```php
 $twig->addGlobal('nomVariableTwig', $variablePHP);
 ```
-
 
 <div class="exercise">
 
@@ -830,40 +889,142 @@ et d'appeler la méthode `lireMessages()` dans la vue *Twig* avec `messagesFlash
   
    Cette manière ne marche pas car un message Flash se détruit après lecture. Du
    coup, le code précédent détruit tous les messages Flash, même ceux qui ne
-   sont du type `type`. 
+   sont du type `type`.
 
-3. Créez la dernière vue manquante
-   `src/vue/utilisateur/inscription.html.twig`. Changez l'action
-   `ControleurUtilisateur::afficherFormulaireCreation()` pour appeler cette vue.
+   Vous devez donc plutôt adopter la logique suivante :
+
+   ```twig
+   <div id="flashes-container">
+    {% for type in ['success', 'error'] %}
+        {# boucle sur les messages flash de ce type #}
+            <span class="flashes flashes-{# type du message #}">{# message flash #}</span>
+        {# fin boucle #}
+    {% endfor %}
+    </div>
+   ```
+
+3. Créez la vue manquante `src/vue/utilisateur/inscription.html.twig` :
+   * Cette vue étend `base.html.twig`.
+   * Le titre de la page doit être "Inscription".
+   * Son contenu reprend le contenu de l'ancienne vue `formulaireCreation.php`. Cependant, ne
+   conservez pas les attributs `value` des champs qui correspondent au login et à l'adresse email
+   (qui permettaient de garder en mémoire la dernière valeur saisie en cas d'erreur).
+   * Changez l'action `ControleurUtilisateur::afficherFormulaireCreation()` pour appeler cette vue.
 
 4. Il ne reste plus qu'à gérer la vue d'erreur, qui est appelée en cas d'exception : 
-   * créez une vue d'erreur `src/vue/erreur.html.twig` qui étend
-     `base.html.twig` et affiche une variable `messageErreur` qui lui sera donné
-     en paramètre.
+   * Créez une vue d'erreur `src/vue/erreur.html.twig` qui étend `base.html.twig` 
+   et affiche une variable `messageErreur` qui lui sera donné en paramètre.
    * Modifiez la méthode `ControleurGenerique::afficherErreur()` pour appeler
      cette vue.
    * Testez si la vue d'erreur fonctionne en demandant par exemple une route inconnue.
-
 </div>
 
 ## Bonus : pour le projet ?
 
+### Approche par composants
 
+Il est facile d'adopter une approche par composant dans les vues, c'est-à-dire de définir des bouts de vues facilement réutilisables.
 
-2. Il est facile d'adopter une approche par composant dans les vues,
-   c'est-à-dire de définir des bouts de vues facilement réutilisables.
+Nous aimerions rétablir le fonctionnement du TP précédent où on disposait :
 
-   Allez voir la documentation des 
-   [macros](https://twig.symfony.com/doc/3.x/tags/macro.html), 
-   de la [fonction `include`](https://twig.symfony.com/doc/3.x/functions/include.html) ou de la 
-   [balise `embed`](https://twig.symfony.com/doc/3.x/tags/embed.html). 
+* D'une vue pour afficher l'ensemble des publications et en ajouter (la page d'accueil).
+* D'une vue pour afficher la page personnelle d'un utilisateur, dont le titre de la page correspondait au login de l'utilisateur et sur lequel n'apparaissait pas le formulaire d'ajout de publications.
 
-3. La compilation des vues *Twig* peut être précalculée et [stockée dans un
+Actuellement, nous utilisons la même vue `feed.html.twig` pour gérer les deux cas, ce qui fait que la page personnelle d'un utilisateur :
+* N'a pas de titre contenant le login de l'utilisateur.
+* Possède le formulaire d'ajout de publication.
+
+Dans un premier temps, on pourrait tenter d'étendre la page `feed.html.twig` pour créer une vue spécialisée pour la page personnelle et en redéfinir le titre avec le bloc associé. Mais ce n'est pas vraiment une bonne approche, car la vue `feed.html.twig` contient "en plus" le formulaire d'ajout. On pourrait définir un bloc autour de ce formulaire et faire en sorte qu'il soit vide dans la vue spécialisée, mais cela semble une mauvaise conception, notamment si la page `feed.html.twig` est encore amenée à évoluer.
+
+Il ne parait pas non plus très adéquat de créer une vue plus générale dont hériterait les deux (même si cela serait déjà un peu mieux).
+
+Cependant, il est hors de question de **dupliquer le code** correspondant à l'affichage de la liste de publications dans les deux vues. En fait, les seules choses qu'ont réellement en commun les deux vues, c'est ce bout de code. Twig va nous permettre de résoudre efficacement cette situation, grâce à **l'inclusion de template**.
+
+Avec Twig, il est possible d'inclure le code d'un template dans un autre template. Ce mécanisme est différent de l'extension de template que nous utilisions jusqu'ici et qui consistait à "hériter" du code d'un template et redéfinir certaines parties. L'inclusion de template se rapproche plus d'une fonction qu'on peut réutiliser dans plusieurs autres templates. De plus, un peu comme une fonction, on peut passer des paramètres aux templates inclus.
+
+L'instruction pour inclure un template est la suivante :
+
+```twig
+{{ include(cheminTemplate, {'param1' : ..., 'param2' : ... }) }}
+```
+
+* `cheminTemplate` : correspond au chemin du template à partir de la racine : le dossier `templates` (comme on étend un template, ou qu'on l'utilise dans un contrôleur...)
+
+* Le second paramètre est optionnel et permet de passer des paramètres utilisables par le template inclus.
+
+Imaginons par exemple qu'on définisse le template `livres/livres.html.twig` suivant, permettant de générer le code HTML pour présenter les détails d'un livre :
+
+```twig
+<h2>Livre : {{ livre.tire }}</h2>
+<p>Année : {{ livre.anneePublication }}<p>
+<p>Auteur : {{ livre.auteur }}<p>
+```
+
+On peut alors inclure ce template dans un autre template à tout moment, en passant le livre en paramètre. Par exemple, imaginons qu'on définisse un template `best_seller.html.twig` qui liste les trois livres les plus vendus cette année. On possède un objet "top" contenant quatre propriétés : annee, livre1, livre2 et livre3.
+
+```twig
+<h1>Best-sellers de {{ top.annee }} :<h1>
+<p>Top 1 :</p>
+{{ include('livres/livres.html.twig', {'livre' : top.livre1}) }}
+<p>Top 2 :</p>
+{{ include('livres/livres.html.twig', {'livre' : top.livre2}) }}
+<p>Top 3 :</p>
+{{ include('livres/livres.html.twig', {'livre' : top.livre3}) }}
+```
+
+Bien sûr, la modélisation pour ce problème n'est pas la meilleure, et même dans le template, nous aurions pu utiliser une boucle, mais cela permet d'illustrer efficacement la fonctionnalité d'inclusion.
+
+Tout cela va trouver son intérêt si le template est réutilisé dans plusieurs pages différentes. Par exemple, on pourrait réutiliser dans la page illustrant les détails d'un livre. Ou alors, si on utilise un formulaire à plusieurs endroits du site, on peut le placer dans un template et l'inclure là où il y a besoin.
+
+Il est intéressant de noter que le template inclus ait accès à toutes les variables déjà accessibles (ou définies) par le template qui l'appelle. 
+
+Il est d'ailleurs tout à fait possible que ce template "étende" un autre template, comme nous l'avons fait pour la plupart des templates que nous avons créé jusqu'à présent. Finalement, on peut voir l'extension de templates comme de l'héritage (et la redéfinition de `blocks` comme de la réécriture de méthodes) et l'utilisation d'un template à l'intérieur d'un autre template comme un appel de fonction, par exemple.
+
+<div class="exercise">
+
+1. Créez un template `publication.html.twig` dans un nouveau dossier `src/vue/vues/publications/composants` contenant le code affichant une publication (vous pouvez rependre la code concerné depuis `feed.html.twig`, par exemple).
+
+2. Dans `src/vue/publication/feed.html.twig` remplacez le code contenu dans votre boucle affichant chaque publication en incluant votre nouveau template à la place. Il faudra passer chaque publication traitée en paramètre.
+
+3. Vérifiez que tout s'affiche toujours normalement sur la page principale.
+
+4. Créez et complétez la vue `page_perso.html` dans `src/vues/utilisateur` :
+
+   ```twig
+   {% extends "base.html.twig" %}
+
+   {% block page_title %}Page de {{ loginUtilisateur }}{% endblock %}
+
+   {% block page_content %}
+      <main id="the-feed-main">
+         {# Boucle et affichage de chaque publication avec le template ici #}
+      </main>
+   {% endblock %}
+   ```
+5. Adaptez l'action `afficherPublications` en indiquant la nouvelle vue et en passant le login de l'utilisateur correspondant en paramètre du template.
+
+6. Vérifiez que tout fonctionne encore.
+
+</div>
+
+On pourrait aller plus loin et avoir un template `liste_publications.html.twig` si l'affichage d'une liste de publications était plus complexe qu'une simple boucle et se répétait sur plusieurs pages. Ce template utiliserait alors notre nouveau template `publication.html.twig`.
+
+<div class="exercise">
+
+1. Si le temps le permet, définissez un nouveau template `liste_publications.html.twig` dans `src/vue/vues/publications/composants` utilisant le template `publication.html.twig`. Ce template gérera l'affichage de chaque publication et le cas où il n'y en a aucune.
+
+2. Mettez à jour le code des vues `feed.html.twig` et `page_perso.html` afin d'utiliser ce nouveau template et vérifiez que tout marche toujours comme attendu.
+
+</div>
+
+### Ressources supplémentaires
+
+1. La compilation des vues *Twig* peut être précalculée et [stockée dans un
    cache](https://twig.symfony.com/doc/2.x/api.html#basics). Utilisez la
    [configuration `auto_reload`](https://twig.symfony.com/doc/3.x/api.html#environment-options)
    lors du développement pour mettre à jour le cache
    à chaque changement de code source des vues.
-4. La [fonction `dump`](https://twig.symfony.com/doc/3.x/functions/dump.html)
+2. La [fonction `dump`](https://twig.symfony.com/doc/3.x/functions/dump.html)
    facilite le débogage en affichant un résultat similaire à `var_dump()`.
 
 <!-- 
