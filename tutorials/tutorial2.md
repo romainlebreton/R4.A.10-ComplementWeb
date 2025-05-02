@@ -229,7 +229,7 @@ faisant particulièrement attention au code de réponse.
      survolant simplement `$associateurUrl->match()` dans `RouteurURL`.
 
 2. Listez en commentaire du code toutes les exceptions levées par les 3 méthodes
-   (5 types d'exception en tout).
+   (6 types d'exception en tout).
 
 </div>
 
