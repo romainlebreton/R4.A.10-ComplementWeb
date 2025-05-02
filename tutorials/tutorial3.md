@@ -498,7 +498,7 @@ utiliser : *JSON* bien sûr !
 
       $auteur = new Utilisateur();
       $auteur->setIdUtilisateur($idUtilisateur);
-      $publication = Publication::create($message, $auteur);
+      $publication = Publication::construire($message, $auteur);
       $idPublication = $this->publicationRepository->ajouter($publication);
       $publication->setIdPublication($idPublication);
       return $publication;

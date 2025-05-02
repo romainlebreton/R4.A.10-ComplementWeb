@@ -5,11 +5,6 @@ layout: tutorial
 lang: fr
 ---
 
-<!-- 
-An prochain : 
-* Publication::create → Publication::construire
--->
-
 ## Les problèmes de dépendances
 
 Comme vous l'avez sûrement déjà remarqué, il y a de gros problèmes avec les tests que nous avons écrits pour tester le service publication. En vrac :

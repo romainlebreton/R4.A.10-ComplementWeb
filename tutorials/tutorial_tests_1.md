@@ -5,11 +5,6 @@ layout: tutorial
 lang: fr
 ---
 
-<!-- 
-An prochain : 
-* Publication::create → Publication::construire
--->
-
 L'objectif de cette séance est de vous former à la mise en place de tests unitaires sur une application web PHP.
 
 Nous allons voir que pour qu'une application soit testable efficacement il faut que celle-ci présente une architecture réfléchie permettant de véritablement tester une partie du code (une classe) de manière indépendante. Pour cela,
@@ -326,7 +321,7 @@ Nous allons nous intéresser à la création des publications. Actuellement, dè
             return ControleurPublication::rediriger('afficherListe');
         }
 
-        $publication = Publication::create($message, $utilisateur);
+        $publication = Publication::construire($message, $utilisateur);
         (new PublicationRepository())->ajouter($publication);
     }
     ```
