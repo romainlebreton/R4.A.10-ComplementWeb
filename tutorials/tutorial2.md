@@ -370,7 +370,7 @@ Voyons les contraintes d'un bon langage de gabarits :
    {% for item in items %}
    - {{ item }}
    {% else %}
-   No item has been found.
+   Pas d'items trouvés.
    {% endfor %}
    ```
 
@@ -647,12 +647,13 @@ remplacer le contenu d'un bloc en le redéfinissant.
 
 * Une syntaxe `{% else %}` permet de traiter le cas particulier d'un tableau vide :  
 
-   ```twig
-   {% for data in tab %}
-      <p>{{ data }}</p>
-   {% else %}
-   Pas de données dans le tableau
-   {% endfor %}
+  ```twig
+  {% for data in tab %}
+     <p>{{ data }}</p>
+  {% else %}
+  Pas de données dans le tableau
+  {% endfor %}
+  ```
 
 <div class="exercise">
 
