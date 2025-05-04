@@ -96,6 +96,12 @@ Comme toute librairie PHP, **PHPUnit** s'installe à l'aide de **composer**.
     }
     ```
 
+    Ensuite, exécutez la commande suivante afin de mettre à jour le fichier `autoloader.php` :
+
+    ```bash
+    composer dump-autoload
+    ```
+
 4. À la racine de votre projet (toujours dans votre conteneur docker), exécutez la commande suivante, qui permet d'exécuter les tests :
 
     ```bash
