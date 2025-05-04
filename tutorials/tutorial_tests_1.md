@@ -89,7 +89,7 @@ Comme toute librairie PHP, **PHPUnit** s'installe à l'aide de **composer**.
         "autoload": {
             "psr-4": {
                 "TheFeed\\": "src",
-                "Tests\\Unit": "tests/unit"
+                "Tests\\Unit\\": "tests/unit"
             }
         },
         ...
