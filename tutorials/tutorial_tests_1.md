@@ -25,31 +25,89 @@ PHPUnit intègre par défaut les outils nécessaires à l'utilisation de **mocks
 
 ### Installation et configuration
 
-Comme toute librairie PHP, **PHPUnit** s'installe à l'aide de **composer**. Nous allons utiliser une version légèrement antérieure pour pouvoir profiter facilement des options d'analyse de couverture de code.
+Comme toute librairie PHP, **PHPUnit** s'installe à l'aide de **composer**.
 
 <div class="exercise">
 
-1. À la racine de votre projet, exécutez la commande suivante :
+1. À la racine de votre projet, exécutez la commande suivante (toujours dans votre conteneur docker) :
 
     ```bash
-    composer require phpunit/phpunit:^10
+    composer require phpunit/phpunit
     ```
 
     S'il vous est demandé si vous préférez placer le package dans `require-dev`, vous pouvez répondre `yes`. Cela permet de différencier dans le `composer.json` les dépendances liées au fonctionnement global de l'application (celles de la section `require`) et celles exclusivement liées à la phase de développement, aux tests, etc. (comme `phpunit`). La commande `composer install` installe toutes les dépendances, mais si on utilise l'option `--no-dev`, seules les dépendances de `require` seront installées.
    
-2. Dans le dossier `src`, créez un dossier `Test`.
+2. Nous allons maintenant configurer `PHPUnit` et créer les dossiers nécessaires à son fonctionnement. Commencez par créer un fichier `phpunit.xml` à la racine du projet et complétez-le avec le contenu suivant :
 
-3. Sur votre IDE, cliquez sur `Run` puis `Edit Configurations`. Ajoutez une nouvelle configuration (bouton `+`) et sélectionnez `PHPUnit`.
+    ```xml
+    <?xml version="1.0" encoding="UTF-8"?>
+    <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+            bootstrap="vendor/autoload.php"
+            cacheDirectory=".phpunit.cache"
+            executionOrder="depends,defects"
+            displayDetailsOnPhpunitDeprecations="true"
+            failOnRisky="true"
+            failOnWarning="true">
 
-4. Nommez la nouvelle configuration **Tests unitaires**. Au niveau de l'option `Test Scope` sélectionnez `Directory` puis indiquez le chemin du dossier `Test` créé précédemment. Concernant l'option `Prefered Coverage Engine` sélectionnez `XDebug`.
-   <!-- et enfin, au niveau de la case `Interpreter`, veillez à bien indiquer `PHP 8.1`.  -->
-   Appliquez et validez.
+        <testsuites>
+            <testsuite name="unit">
+                <directory>./tests/unit</directory>
+            </testsuite>
+        </testsuites>
 
-5. Rendez-vous dans `File` → `Settings` → `PHP` → `Test Framework`. Cochez la case `Use Composer autoloader`. Appliquez et validez.
+        <source ignoreIndirectDeprecations="true" restrictNotices="true" restrictWarnings="true">
+            <include>
+                <directory>src</directory>
+            </include>
+        </source>
 
-6. Exécutez le projet en choisissant la configuration `Tests unitaires` (bouton "play" en haut à droite). Vous devriez obtenir un message vous informant qu'aucun test n'a été exécuté (c'est normal, pour le moment !)
+        <coverage>
+            <report>
+                <clover outputFile="reports/coverage/coverage.xml"/>
+            </report>
+        </coverage>
+    </phpunit>
+    ```
 
+    Analysons un peu le contenu de ce fichier de configuration :
+
+    * Le paramètre `bootstrap` permet d'indiquer où se trouve le fichier d'autoloading, nécessaire pour charger le bon fichier à partir de son `namespace`.
+
+    * Le paramètre `cacheDirectory` permet de définir la localisation dossier de cache utilisé par `PHPUnit`.
+
+    * La section `testsuites` nous permet de configurer plusieurs batteries de tests : tests unitaires, tests d'intégration, etc. Pour ce TD, nous n'utiliserons que des tests unitaires. On configure le dossier de test **en dehors du code source du projet** dans un dossier `tests/units`.
+
+    * La section `source` permet d'indiquer où se situent le code source de notre projet (le code qui sera testé). Ici, on indique donc `src`.
+
+    * Enfin, la section `coverage` permet de définir où sera généré le rapport concernant la **couverture de code** (dont nous reparlerons plus tard).
+
+3. A la racine de votre projet, créez un dossier `tests` puis, à l'intérieur, un dossier `unit`. Ensuite, afin de bénéficier d'un namespace en camel case (pour plus de confort) comme pour le reste du projet, modifiez le fichier `composer.json` afin de spécifier le bon namespace dans la section `autoload` :
+
+    ```json
+    {
+        "autoload": {
+            "psr-4": {
+                "TheFeed\\": "src",
+                "Tests\\Unit": "tests/unit"
+            }
+        },
+        ...
+    }
+    ```
+
+4. À la racine de votre projet (toujours dans votre conteneur docker), exécutez la commande suivante, qui permet d'exécuter les tests :
+
+    ```bash
+    php -d xdebug.mode=coverage ./vendor/bin/phpunit
+    ```
+
+    Il n'y a pas de résultat pour le moment, mais c'est normal, vous n'avez pas encore de tests !
+
+5. Deux dossiers ont été générés : `reports`  et `.phpunit.cache`. Ces répertoires ne doivent pas être versionnés, excluez-les donc dans votre fichier `.gitignore`.
 </div>
+
+Il est bien sûr possible de configurer votre **IDE** pour lancer les tests depuis l'interface plutôt qu'en ligne de commande, mais la **conteneurisation** du projet rend cela un peu plus compliqué à mettre en place. Pour ce TD, nous nous contenterons donc de lancer les tests avec une commande.
 
 ### Une première classe de test
 
@@ -90,7 +148,7 @@ Il existe également deux versions **statiques** de ces méthodes : `setUpBefore
 Prenons l'exemple de la classe suivante :
 
 ```php
-namespace TheFeed\Test;
+namespace TheFeed\Modele;
 
 use Exception;
 
@@ -132,10 +190,11 @@ class Ensemble {
 On pourrait alors écrire la classe de test suivante :
 
 ```php
-namespace TheFeed\Test;
+namespace Tests\Unit;
 
 use Exception;
 use PHPUnit\Framework\TestCase;
+use TheFeed\Lib\Ensemble;
 
 class EnsembleTest extends TestCase {
 
@@ -178,15 +237,43 @@ class EnsembleTest extends TestCase {
 
 <div class="exercise">
 
-1. Dans le dossier `Test`, créez les classes `Ensemble` et `EnsembleTest` en copiant le code donné ci-dessus.
+1. Dans le dossier `src/Lib`, créez la classe `Ensemble` puis, dans `test\unit` la classe `EnsembleTest` en copiant le code donné ci-dessus.
 
-2. Lancez les tests unitaires et observez les résultats.
+2. Lancez les tests unitaires (avec la commande donnée précédemment) et observez les résultats.
 
 3. Glissez une erreur dans le code de la classe `Ensemble` et relancez les tests. Observez la sortie. Remettez tout en ordre (enlevez le bug).
 
 </div>
 
-**Attention** ! Le nom de toutes vos classes de tests doit se terminer par `Test` ! (Sinon la classe ne sera pas prise en compte lors de l'exécution de tests). Aussi, chaque nom de méthode de test doit débuter par `test`.
+**Attention** ! Le nom de toutes vos classes de tests doit se terminer par `Test` ! (Sinon la classe ne sera pas prise en compte lors de l'exécution de tests). Aussi, chaque nom de méthode de test doit soit débuter par `test` soit posséder l'attribut `#[Test]` :
+
+```php
+namespace Tests\Unit;
+
+use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\Test;
+
+//Le nom termine par "Test"
+class MonTest extends TestCase {
+
+    //Sera exécuté, car est préfixé par "test"
+    public function testCoucou() {
+
+    }
+
+    //Ne sera pas exécuté
+    public function coucou1() {
+
+    }
+
+    //Sera exécuté, car possède l'attribut #[Test]
+    #[Test]
+    public function coucou2() {
+
+    }
+   
+}
+```
 
 <!-- Afin de prendre en main l'outil, vous allez créer une classe simple puis une classe de test permettant de la tester.
 
@@ -378,7 +465,7 @@ Débutons avec la création d'un nouvel utilisateur.
 
 2. Ajoutez une méthode `creerUtilisateur` qui prend en paramètre un *login*, un *mot de passe*, une *adresse mail* et enfin un tableau de *données de l'image de profil*. Cette méthode reprendra en grande partie le code de `creerDepuisFormulaire` du contrôleur `ControleurUtilisateur`.
 
-    Comme d'habitude, il ne faudra pas faire appels aux variables liées à la requête dans cette méthode (`$_POST`, `$_FILES`, etc.). Ces données vous sont fournies par le contrôleur et peuvent être `null`. Il faudra d'ailleurs penser à vérifier si ces valeurs sont nulles ou non. La méthode ne doit rien retourner (simplement créer l'utilisateur) et lever des `ServiceException` si différentes contraintes sont violées (taille du login, mot de passe, format de l'adresse mail, etc.). Le paramètre `$donneesPhotoDeProfil` correspond au tableau obtenu par lecture de `$_FILES["..."]` 
+    Comme d'habitude, il ne faudra pas faire appels aux variables liées à la requête dans cette méthode (`$_POST`, `$_FILES`, etc.). Ces données vous sont fournies par le contrôleur et peuvent être `null`. Il faudra d'ailleurs penser à vérifier si ces valeurs sont nulles ou non. La méthode ne doit rien retourner (simplement créer l'utilisateur) et lever des `ServiceException` si différentes contraintes sont violées (taille du login, mot de passe, format de l'adresse mail, etc.). Le paramètre `$donneesPhotoDeProfil` correspond au tableau obtenu par lecture de `$_FILES["..."]`.
 
     ```php
     public function creerUtilisateur($login, $motDePasse, $email, $donneesPhotoDeProfil) : void {
@@ -472,7 +559,7 @@ Maintenant que la partie **métier** de notre application est (partiellement) ex
 
 <div class="exercise">
 
-1. Créez une classe `PublicationServiceTest` dans le répertoire `Test`.
+1. Créez une classe `PublicationServiceTest` dans le répertoire `tests\unit`.
 
 2. Ajoutez un attribut `service` qui sera ré-instancié par un `PublicationService` avant chaque test (via le `setUp`).
 
@@ -502,6 +589,7 @@ Il est difficile de savoir jusqu'où tester une application. Le but des tests n'
 
 Il faut également se poser la question de **la portée** des tests. Doit-on (peut-on ?) tout tester ? Par exemple, est-il pertinent d'écrire des tests unitaires pour les contrôleurs dans leur état actuel vu que leur rôle se limite à la réalisation d'un pont entre la couche présentation (les vues, la requête HTTP) et la couche service ? Cela relève plutôt de tests réalisés directement sur l'interface (ce que vous faisiez jusqu'ici). Il est possible de mettre en place des tests unitaires sur à peu près tous les éléments du programme, mais généralement, on va plutôt se concentrer sur la partie métier avec les **services** puis la partie **modèle**. Obtenir une couverture proche de 100% sur ces parties constitue un premier critère de qualité.
 
+<!-->
 <div class="exercise">
 
 1. Si vous travaillez sur votre machine, vérifiez que l'extension `xdebug` est installée. Pour cela, cliquez sur `Run` puis `Edit Configurations`. Au niveau de la configuration de `Tests Unitaires`, vérifiez que la case `Prefered Covered Engine` est bien réglée sur `XDdebug`. Si un message d'erreur "XDebug extension is not installed" est présent, il va donc falloir installer cette extension. Pour obtenir les détails d'installation pour votre machine, vous pouvez notamment utiliser [cette page](https://xdebug.org/wizard).
@@ -515,5 +603,33 @@ Il faut également se poser la question de **la portée** des tests. Doit-on (pe
 4. Parcourez les différents fichiers de l'application (notamment `PublicationService`) et observez les lignes de code. Au niveau des numéros de lignes, une section verte indique que la ligne a été parcourue (et bien sûr, une section rouge indique l'inverse).
 
 </div>
+-->
 
-Maintenant, prenez l'habitude de toujours lancer vos tests avec la couverture de code activée !
+<div class="exercise">
+
+1. Après chaque lancement des tests unitaires, un fichier de **couverture de code** est généré par PHPUnit. Il s'agit du fichier `reports/coverage.xml`. En l'état, ce fichier est assez illisible, mais **PHPStorm** va nous permettre d'en analyser les données facilement. Si vous n'utilisez pas **PHPStorm**, rendez-vous au point 6 pour une solution alternative.
+
+2. Sur **PHPStorm**, ouvrez le menu de couverture de code en cliquant sur `View` → `Tool Windows` → `Coverage`. Un panneau s'ouvre à droite (il peut être fermé et rouvert grâce à l'icône de bouclier). À l'intérieur de ce menu, cliquez sur **Import a report collected in CI from disk**. Choissisez ensuite le fichier `reports/coverage.xml`.
+
+3. **PHPStorm** fait un rapport vis-à-vis du contenu du fichier. Explorez son contenu. Il est notamment indiqué les fichiers qui ont été sollicités par les tests, le pourcentage de lignes de codes couvertes, etc.
+
+4. Parcourez les différents fichiers de l'application (notamment `PublicationService`) et observez les lignes de code. Au niveau des numéros de lignes, une section verte indique que la ligne a été parcourue (et bien sûr, une section rouge indique l'inverse).
+
+5. Après exécution des tests, il faut réimporter le fichier `coverage.xml` afin de mettre à jour l'analyse menée par **PHPStorm**. pour cela, vous pouvez utiliser le troisième bouton situé en haut du panneau d'analyse de la couverture de code. 
+
+6. Si vous n'utilisez pas **PHPStorm**, il est sans doute possible de faire quelque-chose de similaire avec votre IDE. Il est aussi possible de générer un rapport en HTML (pour afficher un mini-site) en ajoutant la section suivante dans la partie `coverage` de `phpunit.xml` :
+
+    ```xml
+    <coverage>
+        <report>
+            ...
+            <html outputDirectory="reports"/>
+        </report>
+    </coverage>
+    ```
+
+    Après exécution des tests, le site web sera généré dans `reports` et il est accessible en ouvrant le fichier `index.html` avec un navigateur.
+
+</div>
+
+Maintenant, prenez l'habitude de vérifier la couverture de code de vos tests!
