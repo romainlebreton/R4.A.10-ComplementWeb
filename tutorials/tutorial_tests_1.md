@@ -595,7 +595,7 @@ Il est difficile de savoir jusqu'où tester une application. Le but des tests n'
 
 Il faut également se poser la question de **la portée** des tests. Doit-on (peut-on ?) tout tester ? Par exemple, est-il pertinent d'écrire des tests unitaires pour les contrôleurs dans leur état actuel vu que leur rôle se limite à la réalisation d'un pont entre la couche présentation (les vues, la requête HTTP) et la couche service ? Cela relève plutôt de tests réalisés directement sur l'interface (ce que vous faisiez jusqu'ici). Il est possible de mettre en place des tests unitaires sur à peu près tous les éléments du programme, mais généralement, on va plutôt se concentrer sur la partie métier avec les **services** puis la partie **modèle**. Obtenir une couverture proche de 100% sur ces parties constitue un premier critère de qualité.
 
-<!-->
+<!--
 <div class="exercise">
 
 1. Si vous travaillez sur votre machine, vérifiez que l'extension `xdebug` est installée. Pour cela, cliquez sur `Run` puis `Edit Configurations`. Au niveau de la configuration de `Tests Unitaires`, vérifiez que la case `Prefered Covered Engine` est bien réglée sur `XDdebug`. Si un message d'erreur "XDebug extension is not installed" est présent, il va donc falloir installer cette extension. Pour obtenir les détails d'installation pour votre machine, vous pouvez notamment utiliser [cette page](https://xdebug.org/wizard).
