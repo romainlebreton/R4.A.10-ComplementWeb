@@ -285,7 +285,7 @@ Après toutes ces opérations, votre application ne doit plus fonctionner ! Pa
 
 ### Le conteneur de services
 
-Comme mentionné précédemment, nous avons besoin d'un outil et d'un endroit dans le code permettant de contenir tous les services et d'injecter les différents instances concrètes à ceux qui ont en besoin. Un tel outil est généralement appelé **conteneur IoC** (conteneur Inversion of Control) ou bien **conteneur de services**. Lors du premier TD de complément web, vous avez créé une ébauche de ce conteneur modélisé par la classe située dans `Lib/Conteneur.php`.
+Comme mentionné précédemment, nous avons besoin d'un outil et d'un endroit dans le code permettant de contenir tous les services et d'injecter les différentes instances concrètes à ceux qui ont en besoin. Un tel outil est généralement appelé **conteneur IoC** (conteneur Inversion of Control) ou bien **conteneur de services**. Lors du premier TD de complément web, vous avez créé une ébauche de ce conteneur modélisé par la classe située dans `Lib/Conteneur.php`.
 
 Dans une application web bien construite, la toute première étape avant de transmettre la requête au contrôleur est de se servir du conteneur afin d'enregistrer les services puis résoudre toutes les dépendances et ainsi disposer de tous les objets utiles au traitement de la demande. C'est d'ailleurs ce que vous faites déjà partiellement dans `RouteurURL`.
 
@@ -684,6 +684,11 @@ Prenons l'exemple de votre classe `PublicationServiceTest`. Celle-ci ne doit plu
 Nous pourrions réécrire le test `testNombrePublications` comme suit :
 
 ```php
+namespace Tests\Unit;
+
+use TheFeed\Modele\Repository\PublicationRepositoryInterface;
+use TheFeed\Modele\Repository\UtilisateurRepositoryInterface;
+
 class PublicationServiceTest extends TestCase
 {
 
@@ -831,6 +836,10 @@ En tout cas, dans le contexte de l'application **The Feed**, il vous faudra cré
 Dans le cas de tests unitaires sur des repositories, on peut imaginer que la fonction `setUp` va remplir la base avec différentes données initiales et que la fonction `tearDown` va nettoyer la base (la vider). Par exemple :
 
 ```php
+namespace Tests\Unit\Configuration;
+
+use TheFeed\Modele\Repository\ConnexionBaseDeDonneesInterface;
+
 class ConfigurationBDDTestUnitaire implements ConfigurationBDDInterface {
 
     public function getLogin(): string
@@ -851,7 +860,14 @@ class ConfigurationBDDTestUnitaire implements ConfigurationBDDInterface {
         return ...
     }
 }
+```
 
+```php
+namespace Tests\Unit;
+
+use TheFeed\Modele\Repository\ConnexionBaseDeDonneesInterface;
+use TheFeed\Modele\Repository\ConnexionBaseDeDonnees;
+use Tests\Unit\Configuration\ConfigurationBDDTestUnitaire;
 
 class ExempleRepositoryTest extends TestCase {
 
@@ -893,14 +909,14 @@ Nous allons réaliser une première classe de test pour le repository des **util
 
 <div class="exercise">
 
-1. **Si vous travaillez sur votre serveur local** veillez à activer l'extension `pdo_sqlite` au niveau de votre fichier `php.ini` (il faut décommenter la ligne `;extension=pdo_sqlite`).
+<!-- 1. **Si vous travaillez sur votre serveur local** veillez à activer l'extension `pdo_sqlite` au niveau de votre fichier `php.ini` (il faut décommenter la ligne `;extension=pdo_sqlite`). -->
 
-2. Téléchargez [ce fichier]({{site.baseurl}}/assets/TD_SAE_Test_Archi/db_test.db) qui contient la structure de la base de données de `The Feed` sous le format `SQLite`. Placez ce fichier dans le dossier `Test`.
+1. Téléchargez [ce fichier]({{site.baseurl}}/assets/TD_SAE_Test_Archi/db_test.db) qui contient la structure de la base de données de `The Feed` sous le format `SQLite`. Placez ce fichier dans un nouveau dossier `Configuration` situé dans `tests`.
 
-3. Toujours dans le dossier `Test`, créez un fichier `ConfigurationBDDTestUnitaire` avec le contenu suivant :
+2. Dans le dossier `tests/Configuration`, créez un fichier `ConfigurationBDDTestUnitaire` avec le contenu suivant :
 
     ```php
-    namespace TheFeed\Test;
+    namespace Tests\Unit\Configuration;
 
     use TheFeed\Configuration\ConfigurationBDDInterface;
 
@@ -928,16 +944,17 @@ Nous allons réaliser une première classe de test pour le repository des **util
     }
     ```
 
-4. Créez une classe de test `UtilisateurRepositoryTest` avec le contenu suivant :
+3. Créez une classe de test `UtilisateurRepositoryTest` avec le contenu suivant :
 
     ```php
-    namespace TheFeed\Test;
+    namespace Tests\Unit;
 
     use PHPUnit\Framework\TestCase;
     use TheFeed\Modele\Repository\ConnexionBaseDeDonnees;
     use TheFeed\Modele\Repository\ConnexionBaseDeDonneesInterface;
     use TheFeed\Modele\Repository\UtilisateurRepository;
     use TheFeed\Modele\Repository\UtilisateurRepositoryInterface;
+    use Tests\Unit\Configuration\ConfigurationBDDTestUnitaire;
 
     class UtilisateurRepositoryTest extends TestCase
     {
@@ -976,9 +993,9 @@ Nous allons réaliser une première classe de test pour le repository des **util
     }
     ```
 
-5. Comprenez ce que fait cette classe. Prenez le temps de bien l'étudier.
+4. Comprenez ce que fait cette classe. Prenez le temps de bien l'étudier.
 
-6. Complétez cette classe en écrivant plusieurs autres tests unitaires.
+5. Complétez cette classe en écrivant plusieurs autres tests unitaires.
 
 </div>
 
@@ -994,7 +1011,7 @@ Mais pas de panique, nous pouvons utiliser notre `conteneur de services` pour co
 
 1. Dans `UtilisateurService`, ajoutez un paramètre `$dossierPhotoDeProfil` (de type `string`) dans le constructeur, qui devra être défini comme attribut de la classe (donc il faut utiliser la syntaxe avec `private`). Cet attribut contiendra le chemin du répertoire stockant les photos de profil.
 
-2. Dans la méthode `creerUtilisateur`, lors de la construction du chemin du fichier contenant la photo de profil , utilisez votre nouvel attribut.
+2. Dans la méthode `creerUtilisateur`, lors de la construction du chemin du fichier contenant la photo de profil, utilisez votre nouvel attribut.
 
 3. Dans `conteneur.yml`, enregistrez un `paramètre` correspondant au chemin du dossier contenant les photos de profil en utilisant le paramètre `project_root`. Comme pour les services, il est possible d'utiliser un paramètre lors de la définition d'un autre paramètre, ainsi : `%project_root%/chemin/vers/dossier`.
 
@@ -1044,16 +1061,16 @@ Dans le contexte concret de l'application, ce service exécutera la fonction `mo
     }
     ```
 
-3. Enfin, dans le dossier `Test`, créez une classe `TestFileMovingService` comme suit :
+3. Enfin, dans le dossier `tests/unit`, créez un dossier `Mocks` puis à l'intérieur, une classe `FileMovingServiceMock` comme suit :
 
     ```php
-    namespace TheFeed\Test;
+    namespace Tests\Unit\Mocks;
 
     use TheFeed\Service\FileMovingServiceInterface;
 
-    class TestFileMovingService implements FileMovingServiceInterface
+    class FileMovingServiceMock implements FileMovingServiceInterface
     {
-        private static string $ASSETS_FOLDER = __DIR__."/assets/";
+        private static string $ASSETS_FOLDER = __DIR__."/../../assets/";
 
         public function moveFile($fileName, $pathDestination)
         {
@@ -1074,12 +1091,12 @@ Maintenant que nous avons réglé tous les problèmes liés aux effets de bord d
 
 <div class="exercise">
 
-1. Créez un dossier `assets` dans `Test` puis placez-y une photo de profil quelconque au format `PNG` et renommez-la `test.png`.
+1. Créez un dossier `assets` dans `tests` puis placez-y une photo de profil quelconque au format `PNG` et renommez-la `test.png`.
 
 2. Créez une classe `UtilisateurServiceTest` avec le squelette de code suivant et complétez-le :
 
     ```php
-    namespace TheFeed\Test;
+    namespace Tests\Unit;
 
     use PHPUnit\Framework\TestCase;
     use TheFeed\Modele\Repository\UtilisateurRepositoryInterface;
@@ -1094,7 +1111,7 @@ Maintenant que nous avons réglé tous les problèmes liés aux effets de bord d
         private $utilisateurRepositoryMock;
 
         //Dossier où seront déplacés les fichiers pendant les tests
-        private  $dossierPhotoDeProfil = __DIR__."/tmp/";
+        private  $dossierPhotoDeProfil = __DIR__."/../tmp/";
 
         private FileMovingServiceInterface $fileMovingService;
 
@@ -1132,6 +1149,7 @@ Maintenant que nous avons réglé tous les problèmes liés aux effets de bord d
 
     }
     ```
+
 3. Lancez les tests unitaires, vérifiez qu'ils passent.
 
 4. Complétez la classe en écrivant plus de tests unitaires pertinents, au moins jusqu'à atteindre une couverture de code de 100% pour cette classe.
