@@ -29,7 +29,7 @@ Comme toute librairie PHP, **PHPUnit** s'installe à l'aide de **composer**.
 
 <div class="exercise">
 
-1. À la racine de votre projet, exécutez la commande suivante (toujours dans votre conteneur docker) :
+1. À la racine de votre projet, exécutez la commande suivante (**toujours dans votre conteneur docker**) :
 
     ```bash
     composer require phpunit/phpunit
@@ -102,7 +102,7 @@ Comme toute librairie PHP, **PHPUnit** s'installe à l'aide de **composer**.
     composer dump-autoload
     ```
 
-4. À la racine de votre projet (toujours dans votre conteneur docker), exécutez la commande suivante, qui permet d'exécuter les tests :
+4. À la racine de votre projet (**toujours dans votre conteneur docker**), exécutez la commande suivante, qui permet d'exécuter les tests :
 
     ```bash
     php -d xdebug.mode=coverage ./vendor/bin/phpunit
