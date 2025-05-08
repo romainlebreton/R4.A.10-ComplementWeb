@@ -17,7 +17,7 @@ Comme vous l'avez sûrement déjà remarqué, il y a de gros problèmes avec les
 
 * La base de données doit obligatoirement être allumée pendant l'exécution de tests...
 
-Tout cela est dû au fait que notre classe `PublicationService` est fortement dépendante d'autres classes et notamment d'une classe repository. Il en va de même pour `UtilisateurService`. En fait, nous ne pouvons pas (encore) qualifier nos tests de tests **unitaires** car les nombreuses dépendances entraînent un test plus global des différents modules attachés à cette classe de manière indésirable. De plus, nous agissons sur la base de données (de "production") ce qui n'est pas bon.
+Tout cela est dû au fait que notre classe `PublicationService` est fortement dépendante d'autres classes et notamment d'une classe *repository*. Il en va de même pour `UtilisateurService`. En fait, nous ne pouvons pas (encore) qualifier nos tests de tests **unitaires**, car les nombreuses dépendances entraînent un test plus global des différents modules attachés à cette classe de manière indésirable. De plus, nous agissons sur la base de données (de "production") ce qui n'est pas bon.
 
 Un **test unitaire** doit seulement porter sur une portion de code très précise (typiquement une méthode) et ne doit pas concrètement déclencher l'exécution d'autres services dans l'environnement de l'application (pas d'effet de bord). De plus, le test ne doit pas dépendre de l'état concret de l'application à l'instant du test (typiquement, le test ne doit pas dépendre de l'état de la base de données !).
 
@@ -25,7 +25,7 @@ Pour régler ces problèmes, nous pouvons utiliser deux outils :
 
 * L'application des principes **SOLID** notamment **l'inversion des dépendances** (principe `D`) afin de réaliser de l'injection de dépendances pour faire en sorte que les dépendances des différentes classes soient interchangeables.
 
-* L'utilisation de **mocks** afin de simuler et configurer à souhait les dépendances d'une classe lors des tests unitaires afin de construire un scénario précis. L'idée est de contrôler ce que les différentes dépendances d'une classe vont fournir comme réponse lorsqu'elles sont utilisées lors d'un test unitaire.
+* L'utilisation de **mocks** pour simuler et configurer à souhait les dépendances d'une classe lors des tests unitaires afin de construire un scénario précis. L'idée est de contrôler ce que les différentes dépendances d'une classe vont fournir comme réponse lorsqu'elles sont utilisées lors d'un test unitaire.
 
 ### Aparté sur les routes
 
@@ -35,7 +35,7 @@ Assurez-vous de migrer toutes vos routes en utilisant la nouvelle syntaxe avec l
 
 ### Injection des dépendances et inversion de contrôle
 
-Lorsqu'une classe est amenée à utiliser des instances d'autres classes lors de l'exécution de ses différentes méthodes on dit qu'il existe une dépendance entre ces deux classes (de la classe utilisatrice vers la classe utilisée). En **UML**, cette dépendance se traduit notamment par une flèche pointillée.
+Lorsqu'une classe est amenée à utiliser des instances d'autres classes lors de l'exécution de ses différentes méthodes, on dit qu'il existe une dépendance entre ces deux classes (de la classe utilisatrice vers la classe utilisée). En **UML**, cette dépendance se traduit notamment par une flèche pointillée.
 
 Dans un tel contexte, il peut alors être judicieux d'appliquer le concept **d'inversion de contrôle** en favorisant le découplage entre les objets en injectant les dépendances de la classe plutôt que de laisser la classe instancier un objet de la classe cible ou bien utiliser un singleton.
 
@@ -150,7 +150,7 @@ Globalement, on peut retenir qu'une bonne architecture implique que :
 
    * Les **instances** concrètes sont **injectées** dans les classes qui doivent utiliser un service. Cela peut se faire sous la forme de **setters** ou bien directement comme arguments pour le **constructeur** de l'objet. Cela renforce l'indépendance des classes. La classe n'instancie pas elle-même les composants dont elle a besoin, ils sont **injectés** depuis l'extérieur. On appelle cela **l'inversion de contrôle**.
 
-   * Il est possible d'utiliser la même instance et de l'injecter dans différentes classes. En fait, l'instance n'est initialisé qu'à un seul endroit. Cela facilite donc également sa construction si elle nécessite différents paramètres. Il est également possible de générer plusieurs instances du service et de sélectionner lequel est injecté dans quelle classe.
+   * Il est possible d'utiliser la même instance et de l'injecter dans différentes classes. En fait, l'instance n'est initialisée qu'à un seul endroit. Cela facilite donc également sa construction si elle nécessite différents paramètres. Il est aussi possible de générer plusieurs instances du service et de sélectionner lequel est injecté dans quelle classe.
 
 Notre prochain objectif est donc de remanier les classes des `controleurs`, des `services` et des `repositories` afin de les rendre indépendantes des classes concrètes, en mettant en place une architecture favorisant l'injection de dépendance.
 
@@ -273,7 +273,7 @@ Notre prochain objectif est donc de remanier les classes des `controleurs`, des 
     $this->connexionBaseDeDonnees->getPdo()
     ```
 
-5. Faites une opération similaire au niveau des deux classes `PublicationService` et `UtilisateurService` en injectant les classes `repository` comme dépendances, via le constructeur. Il faudra éliminer toutes les instanciations de repository pour utiliser vos nouvelles dépendances. Là-aussi, mettez en place des interfaces pour ces deux services. Attention `PublicationService` utilise les deux repositories.
+5. Faites une opération similaire au niveau des deux classes `PublicationService` et `UtilisateurService` en injectant les classes `repository` comme dépendances, via le constructeur. Il faudra éliminer toutes les instanciations de *repository* pour utiliser vos nouvelles dépendances. Là-aussi, mettez en place des interfaces pour ces deux services. Attention `PublicationService` utilise les deux *repositories*.
 
 6. Rendez tous vos `controleurs` (même le générique) non statiques. C'est-à-dire que toutes les méthodes ne doivent plus être statiques. De même, les appels statiques du type `Controlleur::` doivent être remplacés par `$this->`. Ici aussi, soyez malin et utilisez votre IDE pour effectuer cette tâche rapidement.
 
@@ -353,7 +353,7 @@ Nous utiliserons cette fonctionnalité pour quelques cas spécifiques, mais, en 
 
 <div class="exercise">
 
-1. Installez le conteneur de service de symfony :
+1. Installez le conteneur de service de Symfony :
 
     ```bash
     composer require symfony/dependency-injection
@@ -397,11 +397,11 @@ Nous utiliserons cette fonctionnalité pour quelques cas spécifiques, mais, en 
 
     **Attention** : vérifiez bien l'ordre des arguments dans `publication_service` (selon l'ordre que vous avez défini dans le constructeur de `PublicationService`).
 
-    **Prenez le temps de comprendre ces lignes de code!** S'il y a un élément que vous ne comprenez pas, demandez à votre enseignant chargé de TD. Pour le moment, la syntaxe est assez verbeuse, mais nous allons alléger tout cela dans un futur exercice.
+    **Prenez le temps de comprendre ces lignes de code !** S'il y a un élément que vous ne comprenez pas, demandez à votre enseignant chargé de TD. Pour le moment, la syntaxe est assez verbeuse, mais nous allons alléger tout cela dans un futur exercice.
 
 2. Pour le moment, remplacez les appels statiques `ControleurGenerique::afficherErreur` par `(new ControleurGenerique())->afficherErreur`. Plus tard, nous utiliserons plutôt un **service** pour faire cela.
 
-3. Nous avons enregistré la partie permettant de gérer les publications. Maintenant, il faut indiquer resolver de contrôleur d'utiliser le contrôleur enregistré dans le conteneur ! Pour cela, remplacez la ligne instanciant un `ControllerResolver` en instanciant un `ContainerControllerResolver` à la place. Il faut donner comme arguments du constructeur de cette nouvelle classe votre conteneur (`$conteneur`).
+3. Nous avons enregistré la partie permettant de gérer les publications. Maintenant, il faut indiquer au `ControllerResolver` d'utiliser le contrôleur enregistré dans le conteneur ! Pour cela, remplacez la ligne instanciant un `ControllerResolver` en instanciant un `ContainerControllerResolver` à la place. Il faut donner comme arguments du constructeur de cette nouvelle classe votre conteneur (`$conteneur`).
 
     *Explication* : La classe `ContainerControllerResolver` ira chercher le service indiqué dans la route dans le conteneur, puis appellera l'action indiquée dans la route.
 
@@ -557,9 +557,9 @@ Actuellement, nous utilisons toujours l'ancien `Conteneur` (celui de `Lib`) dans
 
    * `request_stack`, correspondant à un objet `RequestStack` que nous pouvons simplement déclarer dans `conteneur.yml`.
 
-   * `request_context`, correspondant à un objet `RequestContext` que nous sommes obligés de déclarer directement dans `traiterRequete` car cet objet à besoin d'être configuré avec les données de la requête courante.
+   * `request_context`, correspondant à un objet `RequestContext` que nous sommes obligés de déclarer directement dans `traiterRequete` car cet objet a besoin d'être configuré avec les données de la requête courante.
 
-   * `routes` : correspondant à la collection contenant nos routes (renvoyée par `$loader->load(...)`). Ici aussi, nous sommes obligés de faire cette déclaration dans `traiterRequete` (car il faut exécuter le code pour récupérer toutes les routes...).
+   * `routes` : correspondant à la collection contenant nos routes (renvoyée par `$loader->load(...)`). Ici aussi, nous devons faire cette déclaration dans `traiterRequete` (parce qu'il faut exécuter le code pour récupérer toutes les routes...).
 
    Faites donc les ajouts nécessaires :
 
@@ -580,7 +580,7 @@ Actuellement, nous utilisons toujours l'ancien `Conteneur` (celui de `Lib`) dans
 
 4. Dans votre fichier `conteneur.yml`, déclarez deux nouveaux services : `url_generator` (correspondant à la classe `Symfony\Component\Routing\Generator\UrlGenerator`) et `url_helper` (correspondant à la classe `Symfony\Component\HttpFoundation\UrlHelper`). 
    
-   Concernant les `arguments` de ces deux services, utilisez les différents services que nous avons définis lors de la question précédente (normalement, vous pouvez toujours trouvez l'instanciation de ces objets dans `traiterRequete`, si vous souhaitez voir comment cela est fait).
+   Concernant les `arguments` de ces deux services, utilisez les différents services que nous avons définis lors de la question précédente (normalement, vous pouvez toujours trouver l'instanciation de ces objets dans `traiterRequete`, si vous souhaitez voir comment cela est fait).
 
 5. Dans `traiterRequete`, supprimez l'instanciation des variables `twigLoader` et `twig`. À la place, récupérez le **service** correspondant à `twig`.
 
@@ -717,7 +717,7 @@ class PublicationServiceTest extends TestCase
 }
 ```
 
-Un autre aspect très utile des mocks est de pouvoir exécuter un `callback` (une fonction) lorsqu'une méthode est exécutée tout en récupérant les valeurs des paramètres de la méthode exécutée. Cela permet donc d'analyser ce qui a été donné par un service à notre mock lors d'un appel de méthode.
+Un autre aspect très utile des *mocks* est de pouvoir exécuter un `callback` (une fonction) lorsqu'une méthode est exécutée tout en récupérant les valeurs des paramètres de la méthode exécutée. Cela permet donc d'analyser ce qui a été donné par un service à notre *mock* lors d'un appel de méthode.
 
 On configure tout cela grâce à la méthode `willReturnCallback` lors de la configuration d'une méthode sur un **mock**.
 
@@ -769,9 +769,9 @@ Maintenant que vous connaissez les **mocks**, vous allez pouvoir les utiliser po
 
 <div class="exercise">
 
-1. Reprenez votre classe `PublicationServiceTest` et adaptez-la pour faire fonctionner vos anciens tests en utilisant des **mocks** pour les dépendances du service. Vous pouvez repartir de l'exemple `testNombrePublications` donné dans la section précédente. Dans certains tests, pour la partie concernant les **utilisateurs**, il faudra bien configurer votre mock afin qu'il renvoie un faux utilisateur (parfois **null** et parfois non... Tout dépend du contexte du test !).
+1. Reprenez votre classe `PublicationServiceTest` et adaptez-la pour faire fonctionner vos anciens tests en utilisant des **mocks** pour les dépendances du service. Vous pouvez repartir de l'exemple `testNombrePublications` donné dans la section précédente. Dans certains tests, pour la partie concernant les **utilisateurs**, il faudra bien configurer votre *mock* afin qu'il renvoie un faux utilisateur (parfois **null** et parfois non... Tout dépend du contexte du test !).
 
-2. Créez un test `testCreerPublicationValide`. Le but de ce test est de vérifier que tout fonctionne bien lorsque les spécifications de création d'une publication sont respectées. En utilisant votre **mock** du repository des publications, vous devrez intercepter l'appel à **ajouter** afin de vérifier que les données transmises sont bien conformes.
+2. Créez un test `testCreerPublicationValide`. Le but de ce test est de vérifier que tout fonctionne bien lorsque les spécifications de création d'une publication sont respectées. En utilisant votre **mock** du *repository* des publications, vous devrez intercepter l'appel à **ajouter** afin de vérifier que les données transmises sont bien conformes.
 
 3. Ajoutez des tests qui vous semblent pertinents !
 
@@ -779,7 +779,7 @@ Maintenant que vous connaissez les **mocks**, vous allez pouvoir les utiliser po
 
 </div>
 
-Bien sûr, notre contexte de test dans ce sujet reste assez simpliste, mais cela vous donne déjà une idée de comment réaliser des tests unitaires assez précis et indépendants du contexte de l'application. Vous l'aurez remarqué, avec cette nouvelle façon de fonctionner, la base de données n'est pas sollicitée et on ne dépend plus des utilisateurs réellement inscrits ou des publications réellement créées. Et on ne risque pas de réellement créer une nouvelle publication après chaque exécution des tests !
+Bien sûr, notre contexte de test dans ce sujet reste assez simpliste, mais cela vous donne déjà une idée de comment réaliser des tests unitaires assez précis et indépendants du contexte de l'application. Vous l'aurez remarqué, avec cette nouvelle façon de fonctionner, la base de données n'est pas sollicitée et on ne dépend plus des utilisateurs réellement inscrits ou des publications réellement créées. Et on ne risque pas de créer une nouvelle publication après chaque exécution des tests !
 
 ### Traitement des requêtes
 
@@ -815,11 +815,11 @@ Un premier objectif à vous fixer serait d'obtenir une couverture de code (proch
 
 Nous allons maintenant travailler différentes extensions de ce TD afin de pouvoir tester plus d'aspects de l'application, régler des problèmes que vous pourriez rencontrer lors des tests unitaires, améliorer encore plus l'architecture de l'application et l'indépendance de ses classes en transformant plus d'entités en **services**.
 
-### Tester les repositories
+### Tester les *repositories*
 
-Dans nos tests précédents, nous avons supprimé l'interaction avec la base de données en **mockant** nos repositories. Néanmoins, il peut être aussi intéressant de tester ces repositories ! Avoir des tests automatisés permettrait de détecter des éventuelles erreurs dans les requêtes SQL.
+Dans nos tests précédents, nous avons supprimé l'interaction avec la base de données en **mockant** nos *repositories*. Néanmoins, il peut être aussi intéressant de tester ces *repositories* ! Avoir des tests automatisés permettrait de détecter des éventuelles erreurs dans les requêtes SQL.
 
-Mais comment faire ? Car, comme nous l'avons expliqué précédemment, il n'est pas envisageable d'agir directement sur la base de données réelle de l'application lors de nos tests. La réponse est simple : il nous faut utiliser une base de données dédiée aux tests ! Cela est possible car nous avons fait en sorte que la connexion à la base de données soit injectée comme une dépendance des repositories.
+Mais comment faire ? Car, comme nous l'avons expliqué précédemment, il n'est pas envisageable d'agir directement sur la base de données réelle de l'application lors de nos tests. La réponse est simple : il nous faut utiliser une base de données dédiée aux tests ! Cela est possible, car nous avons fait en sorte que la connexion à la base de données soit injectée comme une dépendance des *repositories*.
 
 Généralement, pour la base de données de tests, deux choix sont possibles :
 
@@ -831,9 +831,9 @@ Généralement, quand cela est possible, on préfère choisir la seconde option,
 <!-- (c'est le cas dans votre *SAÉ* avec *PostGIS*).  -->
 Dans ce cas, on réalisera une copie locale de la structure de la base, sur le même type de SGBD.
 
-En tout cas, dans le contexte de l'application **The Feed**, il vous faudra créer un fichier de configuration dédié ou bien un mock de `ConfigurationBDDInterface`.
+En tout cas, dans le contexte de l'application **The Feed**, il vous faudra créer un fichier de configuration dédié ou bien un *mock* de `ConfigurationBDDInterface`.
 
-Dans le cas de tests unitaires sur des repositories, on peut imaginer que la fonction `setUp` va remplir la base avec différentes données initiales et que la fonction `tearDown` va nettoyer la base (la vider). Par exemple :
+Dans le cas de tests unitaires sur des *repositories*, on peut imaginer que la fonction `setUp` va remplir la base avec différentes données initiales et que la fonction `tearDown` va nettoyer la base (la vider). Par exemple :
 
 ```php
 namespace Tests\Unit\Configuration;
@@ -905,7 +905,7 @@ class ExempleRepositoryTest extends TestCase {
 }
 ```
 
-Nous allons réaliser une première classe de test pour le repository des **utilisateurs**. Une base **SQLite** sera utilisée.
+Nous allons réaliser une première classe de test pour le *repository* des **utilisateurs**. Une base **SQLite** sera utilisée.
 
 <div class="exercise">
 
@@ -999,11 +999,11 @@ Nous allons réaliser une première classe de test pour le repository des **util
 
 </div>
 
-Bien sûr, si vous testez plusieurs repositories, il est possible de mutualiser les lignes de code de la méthode `setUp` dont le but est de remplir la base de données (avec de l'héritage, par exemple). On pourrait aussi avoir un système où on définit un script de remplissage de la base qui est chargé et exécuté avant chaque test.
+Bien sûr, si vous testez plusieurs *repositories*, il est possible de mutualiser les lignes de code de la méthode `setUp` dont le but est de remplir la base de données (avec de l'héritage, par exemple). On pourrait aussi avoir un système dans lequel on définit un script de remplissage de la base qui est chargé et exécuté avant chaque test.
 
 ### Tester le service utilisateur
 
-Pour la plupart des méthodes de `UtilisateurService`, vous devriez être en mesure d'écrire des tests unitaires comme vous l'avez fait pour `PublicationService`. Néanmoins, il y a un **effet de bord** indésirable qui se produit lors de l'exécution de la méthode `creerUtilisateur`. En effet, même si dans le cadre des tests nous pouvons mocker le repository, cette méthode va placer une image (la photo de profil) dans le dossier `ressources/img/utilisateurs` ! 
+Pour la plupart des méthodes de `UtilisateurService`, vous devriez être en mesure d'écrire des tests unitaires comme vous l'avez fait pour `PublicationService`. Néanmoins, il y a un **effet de bord** indésirable qui se produit lors de l'exécution de la méthode `creerUtilisateur`. En effet, même si dans le cadre des tests, nous pouvons *mocker* le *repository*, cette méthode va placer une image (la photo de profil) dans le dossier `ressources/img/utilisateurs` ! 
 
 Mais pas de panique, nous pouvons utiliser notre `conteneur de services` pour contourner ce problème. L'idée est de transformer le dossier de destination en un paramètre du service qui sera injecté.
 

@@ -7,10 +7,10 @@ lang: fr
 
 L'objectif de cette séance est de vous former à la mise en place de tests unitaires sur une application web PHP.
 
-Nous allons voir que pour qu'une application soit testable efficacement il faut que celle-ci présente une architecture réfléchie permettant de véritablement tester une partie du code (une classe) de manière indépendante. Pour cela,
+Nous allons voir que pour qu'une application soit testable efficacement, il faut que celle-ci présente une architecture réfléchie permettant de véritablement tester une partie du code (une classe) de manière indépendante. Pour cela,
 il faudra appliquer les différents principes **SOLID** que vous avez étudié cette année, notamment dans le cours de **qualité de développement**.
 
-Pour illustrer tout cela, nous allons donc repartir du code de l'application **The Feed** obtenu à l'issu du 
+Pour illustrer tout cela, nous allons donc repartir du code de l'application **The Feed** obtenu à l'issue du 
 [TD2 de complément web]({{site.baseurl}}/tutorials/tutorial2). Vous devez donc avoir terminé ce TD avant de commencer celui-ci.
 
 Le TD devra être obligatoirement réalisé sur **PHPStorm** afin de profiter des différentes fonctionnalités de couplage avec PHPUnit qu'offre cet IDE.
@@ -78,11 +78,11 @@ Comme toute librairie PHP, **PHPUnit** s'installe à l'aide de **composer**.
 
     * La section `testsuites` nous permet de configurer plusieurs batteries de tests : tests unitaires, tests d'intégration, etc. Pour ce TD, nous n'utiliserons que des tests unitaires. On configure le dossier de test **en dehors du code source du projet** dans un dossier `tests/units`.
 
-    * La section `source` permet d'indiquer où se situent le code source de notre projet (le code qui sera testé). Ici, on indique donc `src`.
+    * La section `source` permet d'indiquer où se situe le code source de notre projet (le code qui sera testé). Ici, on indique donc `src`.
 
     * Enfin, la section `coverage` permet de définir où sera généré le rapport concernant la **couverture de code** (dont nous reparlerons plus tard).
 
-3. A la racine de votre projet, créez un dossier `tests` puis, à l'intérieur, un dossier `unit`. Ensuite, afin de bénéficier d'un namespace en camel case (pour plus de confort) comme pour le reste du projet, modifiez le fichier `composer.json` afin de spécifier le bon namespace dans la section `autoload` :
+3. À la racine de votre projet, créez un dossier `tests` puis, à l'intérieur, un dossier `unit`. Ensuite, afin de bénéficier d'un *namespace* en *CamelCase* (pour plus de confort) comme pour le reste du projet, modifiez le fichier `composer.json` dans le but de spécifier le bon *namespace* dans la section `autoload` :
 
     ```json
     {
@@ -96,7 +96,7 @@ Comme toute librairie PHP, **PHPUnit** s'installe à l'aide de **composer**.
     }
     ```
 
-    Ensuite, exécutez la commande suivante afin de mettre à jour le fichier `autoloader.php` :
+    Ensuite, exécutez la commande suivante pour mettre à jour le fichier `autoloader.php` (**toujours dans votre conteneur docker**) :
 
     ```bash
     composer dump-autoload
@@ -110,7 +110,7 @@ Comme toute librairie PHP, **PHPUnit** s'installe à l'aide de **composer**.
 
     Il n'y a pas de résultat pour le moment, mais c'est normal, vous n'avez pas encore de tests !
 
-5. Deux dossiers ont été générés : `reports`  et `.phpunit.cache`. Ces répertoires ne doivent pas être versionnés, excluez-les donc dans votre fichier `.gitignore`.
+5. Deux dossiers ont été générés : `reports` et `.phpunit.cache`. Ces répertoires ne doivent pas être versionnés, excluez-les donc dans votre fichier `.gitignore`.
 </div>
 
 Il est bien sûr possible de configurer votre **IDE** pour lancer les tests depuis l'interface plutôt qu'en ligne de commande, mais la **conteneurisation** du projet rend cela un peu plus compliqué à mettre en place. Pour ce TD, nous nous contenterons donc de lancer les tests avec une commande.
@@ -140,7 +140,7 @@ Parmi les méthodes d'assertion, on peut citer :
 Cette liste est bien sûr non exhaustive et vous pourrez explorer plus en détail toutes les assertions disponibles sur la [documentation officielle](https://docs.phpunit.de/en/10.5/assertions.html).
 
 Une autre méthode bien pratique est aussi `expectException(exceptionClass)`. Cette méthode est à utiliser avant 
-d'exécuter un bout de code et permet de vérifier que l'exception précisée à bien été levée. On peut aussi utiliser `expectExceptionMessage(message)` pour vérifier le message de l'exception levée.
+d'exécuter un bout de code et permet de vérifier que l'exception précisée a bien été levée. On peut aussi utiliser `expectExceptionMessage(message)` pour vérifier le message de l'exception levée.
 
 Enfin, dans chaque classe de test, il est possible de redéfinir quatre méthodes bien utiles :
 
@@ -361,9 +361,9 @@ Nous allons commencer à extraire la logique métier de notre application en cr�
    ```php
    public function recupererPublications(): array
    ```
-   qui permet de récupérer toutes les publications depuis le repository correspondant **et de les renvoyer**. Vous pouvez directement copier le code correspondant depuis la méthode `afficherListe` de `ControleurPublication`.
+   qui permet de récupérer toutes les publications depuis le *repository* correspondant **et de les renvoyer**. Vous pouvez directement copier le code correspondant depuis la méthode `afficherListe` de `ControleurPublication`.
 
-4. Modifiez le code de la méthode `afficherListe` de `ControleurPublication` pour utiliser votre nouveau **service** au lieu de faire appel au repository.
+4. Modifiez le code de la méthode `afficherListe` de `ControleurPublication` pour utiliser votre nouveau **service** au lieu de faire appel au *repository*.
 
 5. Vérifiez que votre site fonctionne toujours bien.
 
@@ -371,7 +371,7 @@ Nous allons commencer à extraire la logique métier de notre application en cr�
 
 Bien, vous avez créé votre premier service ! Mais l'intérêt d'avoir séparé ce petit bout de code n'apparait pas encore clairement. Nous allons donc pousser les choses un peu plus loin lors de la prochaine étape.
 
-Nous allons nous intéresser à la création des publications. Actuellement, dès qu'il détecte une erreur dans la formation du message, le **contrôleur** ajoute un message flash d'erreur et redirige l'utilisateur. Ces vérifications font parti de la logique **métier** et peuvent être gérées à l'aide d'exceptions. La logique à appliquer serait plutôt la suivante :
+Nous allons nous intéresser à la création des publications. Actuellement, dès qu'il détecte une erreur dans la formation du message, le **contrôleur** ajoute un message flash d'erreur et redirige l'utilisateur. Ces vérifications font partie de la logique **métier** et peuvent être gérées à l'aide d'exceptions. La logique à appliquer serait plutôt la suivante :
 
 * Le contrôleur récupère les valeurs des paramètres depuis la requête et les passe au service.
 * Le service a pour but de réaliser une action (et éventuellement d'envoyer un résultat). S'il y a un problème (notamment par rapport aux paramètres), il lève une exception.
@@ -523,7 +523,7 @@ La méthode `afficherPublications` effectue deux actions : récupération de l'u
 
 <div class="exercise">
 
-1. Dans la classe `UtilisateurService`, créez une méthode `recupererUtilisateurParId` qui prend en paramètre un identifiant d'utilisateur **et un booléen** `autoriserNull`. Ce booléen a pour but de préciser si une exception doit être levée ou non si l'utilisateur sélectionné n'existe pas (dans certains cas, on veut simplement récupérer la valeur `null` sans lever d'exceptions). La méthode doit donc renvoyer, à l'issu, l'utilisateur ciblé par l'identifiant (en se servant du repository). Si `autoriserNull` vaut `false` et que l'utilisateur récupéré est `null`, il faut lever une `ServiceException` (l'utilisateur n'existe pas !).
+1. Dans la classe `UtilisateurService`, créez une méthode `recupererUtilisateurParId` qui prend en paramètre un identifiant d'utilisateur **et un booléen** `autoriserNull`. Ce booléen a pour but de préciser si une exception doit être levée ou non si l'utilisateur sélectionné n'existe pas (dans certains cas, on veut simplement récupérer la valeur `null` sans lever d'exceptions). La méthode doit donc renvoyer à terme l'utilisateur ciblé par l'identifiant (en se servant du *repository*). Si `autoriserNull` vaut `false` et que l'utilisateur récupéré est `null`, il faut lever une `ServiceException` (l'utilisateur n'existe pas !).
 
     ```php
     public function recupererUtilisateurParId($idUtilisateur, $autoriserNull = true) : ?Utilisateur {
@@ -585,13 +585,13 @@ Maintenant que la partie **métier** de notre application est (partiellement) ex
 
 </div>
 
-Relisez les tests que vous venez d'écrire. Ne remarquez-vous pas quelques éléments étranges et mêmes dérangeants ? Pensez sur le long terme. Nous reviendrons sur tout cela assez vite et nous n'écrirons pas de tests sur le service des utilisateurs pour le moment.
+Relisez les tests que vous venez d'écrire. Ne remarquez-vous pas quelques éléments étranges et même dérangeants ? Pensez sur le long terme. Nous reviendrons sur tout cela assez vite et nous n'écrirons pas de tests sur le service des utilisateurs pour le moment.
 
 ### Couverture de code et portée des tests
 
 Il est temps pour vous de découvrir un outil fort utile pour pouvoir mesurer (en partie) la qualité de vos tests : la **couverture de code**. Cet outil permet de réaliser des statistiques sur les portions de code que vos tests permettent de tester. Après l'exécution des tests, on peut alors visualiser le pourcentage de code testé sur une classe et on peut même aller dans le détail en visualisant les lignes de code qui ont été franchies par les tests et celles qui n'ont jamais été franchies.
 
-Il est difficile de savoir jusqu'où tester une application. Le but des tests n'est en réalité pas de vérifier que tout fonctionne mais plutôt de trouver des dysfonctionnements. Le nombre et la variété des tests à produire dépendent donc fortement du contexte. Néanmoins, une couverture de code de **100%** (donc, des tests qui passent au moins une fois par chaque ligne de code du programme) est un premier indicateur de la qualité des tests. Dans ce cas, on peut alors considérer qu'il y a un nombre assez important de tests et qu'ils sont assez variés. Néanmoins, cela ne signifie pas nécessairement qu'il faut s'arrêter de tester à partir de là. Il faut prévoir le plus de scénarios possibles (deux scénarios différents peuvent déclencher les mêmes lignes de code).
+Il est difficile de savoir jusqu'où tester une application. Le but des tests n'est en réalité pas de vérifier que tout fonctionne, mais plutôt de trouver des dysfonctionnements. Le nombre et la variété des tests à produire dépendent donc fortement du contexte. Néanmoins, une couverture de code de **100%** (donc, des tests qui passent au moins une fois par chaque ligne de code du programme) est un premier indicateur de la qualité des tests. Dans ce cas, on peut alors considérer qu'il y a un nombre assez important de tests et qu'ils sont assez variés. Néanmoins, cela ne signifie pas nécessairement qu'il faut s'arrêter de tester à partir de là. Il faut prévoir le plus de scénarios possibles (deux scénarios différents peuvent déclencher les mêmes lignes de code).
 
 Il faut également se poser la question de **la portée** des tests. Doit-on (peut-on ?) tout tester ? Par exemple, est-il pertinent d'écrire des tests unitaires pour les contrôleurs dans leur état actuel vu que leur rôle se limite à la réalisation d'un pont entre la couche présentation (les vues, la requête HTTP) et la couche service ? Cela relève plutôt de tests réalisés directement sur l'interface (ce que vous faisiez jusqu'ici). Il est possible de mettre en place des tests unitaires sur à peu près tous les éléments du programme, mais généralement, on va plutôt se concentrer sur la partie métier avec les **services** puis la partie **modèle**. Obtenir une couverture proche de 100% sur ces parties constitue un premier critère de qualité.
 
@@ -615,7 +615,7 @@ Il faut également se poser la question de **la portée** des tests. Doit-on (pe
 
 1. Après chaque lancement des tests unitaires, un fichier de **couverture de code** est généré par PHPUnit. Il s'agit du fichier `reports/coverage.xml`. En l'état, ce fichier est assez illisible, mais **PHPStorm** va nous permettre d'en analyser les données facilement. Si vous n'utilisez pas **PHPStorm**, rendez-vous au point 6 pour une solution alternative.
 
-2. Sur **PHPStorm**, ouvrez le menu de couverture de code en cliquant sur `View` → `Tool Windows` → `Coverage`. Un panneau s'ouvre à droite (il peut être fermé et rouvert grâce à l'icône de bouclier). À l'intérieur de ce menu, cliquez sur **Import a report collected in CI from disk**. Choissisez ensuite le fichier `reports/coverage.xml`.
+2. Sur **PHPStorm**, ouvrez le menu de couverture de code en cliquant sur `View` → `Tool Windows` → `Coverage`. Un panneau s'ouvre à droite (il peut être fermé et rouvert grâce à l'icône de bouclier). À l'intérieur de ce menu, cliquez sur **Import a report collected in CI from disk**. Choisissez ensuite le fichier `reports/coverage.xml`.
 
 3. **PHPStorm** fait un rapport vis-à-vis du contenu du fichier. Explorez son contenu. Il est notamment indiqué les fichiers qui ont été sollicités par les tests, le pourcentage de lignes de codes couvertes, etc.
 
@@ -638,4 +638,4 @@ Il faut également se poser la question de **la portée** des tests. Doit-on (pe
 
 </div>
 
-Maintenant, prenez l'habitude de vérifier la couverture de code de vos tests!
+Maintenant, prenez l'habitude de vérifier la couverture de code de vos tests !
