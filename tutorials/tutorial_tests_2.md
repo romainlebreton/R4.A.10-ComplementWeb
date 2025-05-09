@@ -152,7 +152,7 @@ Globalement, on peut retenir qu'une bonne architecture implique que :
 
    * Il est possible d'utiliser la même instance et de l'injecter dans différentes classes. En fait, l'instance n'est initialisée qu'à un seul endroit. Cela facilite donc également sa construction si elle nécessite différents paramètres. Il est aussi possible de générer plusieurs instances du service et de sélectionner lequel est injecté dans quelle classe.
 
-Notre prochain objectif est donc de remanier les classes des `controleurs`, des `services` et des `repositories` afin de les rendre indépendantes des classes concrètes, en mettant en place une architecture favorisant l'injection de dépendance.
+Notre prochain objectif est donc de remanier les classes des contrôleurs, des services et des *repositories* afin de les rendre indépendantes des classes concrètes, en mettant en place une architecture favorisant l'injection de dépendance.
 
 <div class="exercise">
 
@@ -239,7 +239,12 @@ Notre prochain objectif est donc de remanier les classes des `controleurs`, des 
    * Injectez les classes `repository` comme dépendances, via le constructeur. Il faudra éliminer toutes les instanciations de *repository* pour utiliser vos nouvelles dépendances. Attention `PublicationService` utilise les deux *repositories*.
    * Mettez en place des interfaces pour ces deux services.
 
-4. Rendez tous vos `controleurs` (même le générique) non statiques. C'est-à-dire que toutes les méthodes ne doivent plus être statiques. De même, les appels statiques du type `Controlleur::` doivent être remplacés par `$this->`. Ici aussi, soyez malin et utilisez votre IDE pour effectuer cette tâche rapidement.
+4. Rendez tous vos contrôleurs (même le générique) non statiques, c'est-à-dire
+   que toutes les méthodes ne doivent plus être statiques. De même, les appels
+   statiques du type `Controlleur::` doivent être remplacés par `$this->`. Par
+   exemple, `ControleurGenerique::afficherErreur` se remplace par `(new
+   ControleurGenerique())->afficherErreur`. Ici aussi, soyez malin et utilisez
+   votre IDE pour effectuer cette tâche rapidement.
 
 5. Au niveau de `ControleurPublication` et `ControleurUtilisateur`, réalisez l'injection des deux services (toujours via leur interface). Dans chaque méthode, au lieu d'instancier un service pour réaliser une opération, vous utiliserez vos nouvelles dépendances.
 
@@ -275,7 +280,7 @@ $myService = $container->get('service_name');
 //L'injection est faite via le constructeur
 $serviceReference = $container->register('service_bis', MyServiceBis::class)
 $serviceReference->setArguments([5, "test"]);
-// $serviceReference->get('service_bis') renverra new MyServiceBis(5, "test")
+// $container->get('service_bis') renverra new MyServiceBis(5, "test")
 ```
 La méthode `register` renvoie une **référence du service** (et pas une instance du service). Il est donc possible de préciser divers paramètres comme les arguments du constructeur, des méthodes à exécuter après initialisation...
 
@@ -289,7 +294,7 @@ Maintenant, quelque chose d'un peu plus avancé :
 ```php
 $serviceReference = $container->register('service_third', MyServiceThird::class)
 $serviceReference->setArguments(["%param_one%", new Reference("service_bis")]);
-// $serviceReference->get('service_third') renverra in fine
+// $container->get('service_third') renverra in fine
 // new MyServiceThird("hello", new MyServiceBis(5, "test"))
 ```
 
@@ -308,7 +313,7 @@ Dans un premier temps, nous allons enregistrer les services que nous venons de c
 ```php
 $myService = new MyServiceFourth();
 $container->set('service_fourth', $myService);
-// $serviceReference->get('service_fourth') renverra l'objet déjà instancié...
+// $container->get('service_fourth') renverra l'objet déjà instancié...
 ```
 
 Cette méthode est plus ou moins équivalente au fonctionnement de notre conteneur maison actuel (avec `Conteneur::ajouterService(nom, service)`).
@@ -323,7 +328,7 @@ Nous utiliserons cette fonctionnalité pour quelques cas spécifiques, mais, en 
    composer require symfony/dependency-injection
    ```
 
-2. Dans la méthode `traiterRequete` de `RouteurURL`, au tout début de la méthode, ajoutez les lignes de code suivantes :
+2. Ajoutez les lignes de code suivantes au tout début de la méthode `traiterRequete` de `RouteurURL` (sauf les `use` au début de la classe) :
 
    ```php
    use TheFeed\Controleur\ControleurPublication;
@@ -357,21 +362,20 @@ Nous utiliserons cette fonctionnalité pour quelques cas spécifiques, mais, en 
    $publicationControleurService->setArguments([new Reference('publication_service')]);
    ```
 
-    Comme toujours les `use` sont des imports à faire au début de la classe.
-
     **Attention** : vérifiez bien l'ordre des arguments dans `publication_service` (selon l'ordre que vous avez défini dans le constructeur de `PublicationService`).
 
     **Prenez le temps de comprendre ces lignes de code !** S'il y a un élément que vous ne comprenez pas, demandez à votre enseignant chargé de TD. Pour le moment, la syntaxe est assez verbeuse, mais nous allons alléger tout cela dans un futur exercice.
 
-2. Pour le moment, remplacez les appels statiques `ControleurGenerique::afficherErreur` par `(new ControleurGenerique())->afficherErreur`. Plus tard, nous utiliserons plutôt un **service** pour faire cela.
-
 3. Nous avons enregistré la partie permettant de gérer les publications. Maintenant, il faut indiquer au `ControllerResolver` d'utiliser le contrôleur enregistré dans le conteneur ! Pour cela, remplacez la ligne instanciant un `ControllerResolver` en instanciant un `ContainerControllerResolver` à la place. Il faut donner comme arguments du constructeur de cette nouvelle classe votre conteneur (`$conteneur`).
 
-    *Explication* : La classe `ContainerControllerResolver` ira chercher le service indiqué dans la route dans le conteneur, puis appellera l'action indiquée dans la route.
+    *Explication* : Les classes de résolution de contrôleur ont pour mission d'instancier des contrôleurs. Avant, `ControllerResolver->getController` retrouvait le nom de la classe du contrôleur dans la route, et instanciait un nouvel objet. Par exemple, pour une route avec `"_controller" => "\TheFeed\Controleur\ControleurPublication::afficherListe"`,
+    la résolution de contrôleur `ControllerResolver->getController` récupérait `"\TheFeed\Controleur\ControleurPublication"`, et renvoyait l'objet `new \TheFeed\Controleur\ControleurPublication()`.
 
-4. Chargez la page principale de votre application. Vous obtenez alors un message d'erreur qui explique que `ControleurPublication` n'a pas pu être construit... C'est en fait la faute de la classe `TheFeed/Lib/AttributeRouteControllerLoader` ! En effet, si vous observez le code de cette classe, elle configure la route avec le nom du contrôleur. Alors, quand on essaye d'y accéder, le programme va tenter d'appeler la méthode correspondant à la route sur la classe du contrôleur. Il va alors tenter de construire une instance de la classe, mais il ne possède pas les dépendances (les services) requis par le contrôleur...
+    Désormais, `ContainerControllerResolver->getController` va chercher dans la route le nom de la référence au contrôleur, et appelera le conteneur pour instancier le contrôleur.  Par exemple, si la résolution de contrôleur `ContainerControllerResolver->getController` récupère `"controleur_publication"`, il renverra l'objet `$conteneur->get("controleur_publication")`.
 
-    Pour régler ce problème, au lieu d'utiliser le nom de la classe, nous allons plutôt utiliser le nom de son `service`! Le nom du service correspond à `controleur_xxx`. Il suffit donc de légèrement adapter le code de cette classe :
+4. Chargez la page principale de votre application. Vous obtenez alors un message d'erreur qui explique que `ControleurPublication` n'a pas pu être construit... C'est en fait la faute de la classe `TheFeed/Lib/AttributeRouteControllerLoader` ! En effet, si vous observez le code de cette classe, elle configure la route avec le nom du contrôleur `"\TheFeed\Controleur\ControleurPublication"`, ce qui convenait pour `ControllerResolver`, au lieu du nom de la référence au contrôleur `"controleur_publication"` qui convient à `ContainerControllerResolver`.
+
+    Pour régler ce problème, adaptez le code de `AttributeRouteControllerLoader` :
 
     ```php
     class AttributeRouteControllerLoader extends AttributeClassLoader
@@ -391,9 +395,9 @@ Nous utiliserons cette fonctionnalité pour quelques cas spécifiques, mais, en 
     }
     ```
 
-    On prend le nom "court" du contrôleur (par exemple `ControleurPublication` et non pas `TheFeed\Controleur\ControleurPublication`) et on le convertit en `snake_case` (ce qui donnera `ControleurPublication` → `controleur_publication`).
+    *Explication :* On prend le nom "court" du contrôleur (par exemple `ControleurPublication` et non pas `TheFeed\Controleur\ControleurPublication`) et on le convertit en `snake_case` (ce qui donnera `controleur_publication`).
 
-    Attention, cela dépend bien sûr de votre convention de nommage pour vos services ! Ici, nous avons choisi le `snake_case`. Il faudra donc nous y tenir, et, nommer tous nos contrôleurs : `controleur_xxx`
+    Attention, cela dépend bien sûr de votre convention de nommage pour vos services ! Ici, nous avons choisi le `snake_case`. Il faudra donc nous y tenir, et, nommer toutes nos références aux contrôleurs : `controleur_xxx`
 
 5. Complétez le code afin d'enregistrer le service puis le contrôleur liés aux utilisateurs dans le conteneur.
 
