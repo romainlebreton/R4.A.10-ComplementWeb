@@ -437,7 +437,8 @@ SRP de RouteurURL loupé :
        $twigLoader,
        [
            'autoescape' => 'html',
-           'strict_variables' => true
+           'strict_variables' => true,
+           'debug' => true
        ]
    );
    Conteneur::ajouterService("twig", $twig);
