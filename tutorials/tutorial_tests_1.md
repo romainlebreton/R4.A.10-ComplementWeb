@@ -31,44 +31,44 @@ Comme toute librairie PHP, **PHPUnit** s'installe à l'aide de **composer**.
 
 1. À la racine de votre projet, exécutez la commande suivante (**toujours dans votre conteneur docker**) :
 
-    ```bash
-    composer require phpunit/phpunit
-    ```
+   ```bash
+   composer require phpunit/phpunit
+   ```
 
-    S'il vous est demandé si vous préférez placer le package dans `require-dev`, vous pouvez répondre `yes`. Cela permet de différencier dans le `composer.json` les dépendances liées au fonctionnement global de l'application (celles de la section `require`) et celles exclusivement liées à la phase de développement, aux tests, etc. (comme `phpunit`). La commande `composer install` installe toutes les dépendances, mais si on utilise l'option `--no-dev`, seules les dépendances de `require` seront installées.
+   S'il vous est demandé si vous préférez placer le package dans `require-dev`, vous pouvez répondre `yes`. Cela permet de différencier dans le `composer.json` les dépendances liées au fonctionnement global de l'application (celles de la section `require`) et celles exclusivement liées à la phase de développement, aux tests, etc. (comme `phpunit`). La commande `composer install` installe toutes les dépendances, mais si on utilise l'option `--no-dev`, seules les dépendances de `require` seront installées.
    
 2. Nous allons maintenant configurer `PHPUnit` et créer les dossiers nécessaires à son fonctionnement. Commencez par créer un fichier `phpunit.xml` à la racine du projet et complétez-le avec le contenu suivant :
 
-    ```xml
-    <?xml version="1.0" encoding="UTF-8"?>
-    <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-            xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
-            bootstrap="vendor/autoload.php"
-            cacheDirectory=".phpunit.cache"
-            executionOrder="depends,defects"
-            displayDetailsOnPhpunitDeprecations="true"
-            failOnRisky="true"
-            failOnWarning="true">
+   ```xml
+   <?xml version="1.0" encoding="UTF-8"?>
+   <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+           bootstrap="vendor/autoload.php"
+           cacheDirectory=".phpunit.cache"
+           executionOrder="depends,defects"
+           displayDetailsOnPhpunitDeprecations="true"
+           failOnRisky="true"
+           failOnWarning="true">
 
-        <testsuites>
-            <testsuite name="unit">
-                <directory>./tests/unit</directory>
-            </testsuite>
-        </testsuites>
+       <testsuites>
+           <testsuite name="unit">
+               <directory>./tests/unit</directory>
+           </testsuite>
+       </testsuites>
 
-        <source ignoreIndirectDeprecations="true" restrictNotices="true" restrictWarnings="true">
-            <include>
-                <directory>src</directory>
-            </include>
-        </source>
+       <source ignoreIndirectDeprecations="true" restrictNotices="true" restrictWarnings="true">
+           <include>
+               <directory>src</directory>
+           </include>
+       </source>
 
-        <coverage>
-            <report>
-                <clover outputFile="reports/coverage/coverage.xml"/>
-            </report>
-        </coverage>
-    </phpunit>
-    ```
+       <coverage>
+           <report>
+               <clover outputFile="reports/coverage/coverage.xml"/>
+           </report>
+       </coverage>
+   </phpunit>
+   ```
 
     Analysons un peu le contenu de ce fichier de configuration :
 
@@ -84,29 +84,29 @@ Comme toute librairie PHP, **PHPUnit** s'installe à l'aide de **composer**.
 
 3. À la racine de votre projet, créez un dossier `tests` puis, à l'intérieur, un dossier `unit`. Ensuite, afin de bénéficier d'un *namespace* en *CamelCase* (pour plus de confort) comme pour le reste du projet, modifiez le fichier `composer.json` dans le but de spécifier le bon *namespace* dans la section `autoload` :
 
-    ```json
-    {
-        "autoload": {
-            "psr-4": {
-                "TheFeed\\": "src",
-                "Tests\\Unit\\": "tests/unit"
-            }
-        },
-        ...
-    }
-    ```
+   ```json
+   {
+        autoload": {
+            psr-4": {
+                TheFeed\\": "src",
+                Tests\\Unit\\": "tests/unit"
+            
+        ,
+        ..
+   }
+   ```
 
     Ensuite, exécutez la commande suivante pour mettre à jour le fichier `autoloader.php` (**toujours dans votre conteneur docker**) :
 
-    ```bash
-    composer dump-autoload
-    ```
+   ```bash
+   composer dump-autoload
+   ```
 
 4. À la racine de votre projet (**toujours dans votre conteneur docker**), exécutez la commande suivante, qui permet d'exécuter les tests :
 
-    ```bash
-    php -d xdebug.mode=coverage ./vendor/bin/phpunit
-    ```
+   ```bash
+   php -d xdebug.mode=coverage ./vendor/bin/phpunit
+   ```
 
     Il n'y a pas de résultat pour le moment, mais c'est normal, vous n'avez pas encore de tests !
 
@@ -381,43 +381,43 @@ Nous allons nous intéresser à la création des publications. Actuellement, dè
 
 1. Dans le dossier `Service`, créez un sous-dossier `Exception` puis à l'intérieur de ce nouveau répertoire, une classe `ServiceException` :
 
-    ```php
-    <?php
+   ```php
+   <?php
 
-    namespace TheFeed\Service\Exception;
+   namespace TheFeed\Service\Exception;
 
-    use Exception;
+   use Exception;
 
-    class ServiceException extends Exception
-    {
+   class ServiceException extends Exception
+   {
 
-    }
-    ```
+   }
+   ```
 
 2. Dans `PublicationService`, créez une méthode `creerPublication` qui prend en paramètre un **idUtilisateur** et un **message**. La méthode doit déplacer en grande partie le code de la méthode `creerDepuisFormulaire` de `ControleurPublication` :
 
-    ```php
-    public function creerPublication($idUtilisateur, $message) : void {
-        $utilisateur = (new UtilisateurRepository())->recupererParClePrimaire($idUtilisateur);
+   ```php
+   public function creerPublication($idUtilisateur, $message) : void {
+       $utilisateur = (new UtilisateurRepository())->recupererParClePrimaire($idUtilisateur);
 
-        if ($utilisateur == null) {
-            MessageFlash::ajouter("error", "Il faut être connecté pour publier un feed");
-            return ControleurPublication::rediriger('connecter');
-        }
-                
-        if ($message == null || $message == "") {
-            MessageFlash::ajouter("error", "Le message ne peut pas être vide!");
-            return ControleurPublication::rediriger('afficherListe');
-        }
-        if (strlen($message) > 250) {
-            MessageFlash::ajouter("error", "Le message ne peut pas dépasser 250 caractères!");
-            return ControleurPublication::rediriger('afficherListe');
-        }
+       if ($utilisateur == null) {
+           MessageFlash::ajouter("error", "Il faut être connecté pour publier un feed");
+           return ControleurPublication::rediriger('connecter');
+       }
+               
+       if ($message == null || $message == "") {
+           MessageFlash::ajouter("error", "Le message ne peut pas être vide!");
+           return ControleurPublication::rediriger('afficherListe');
+       }
+       if (strlen($message) > 250) {
+           MessageFlash::ajouter("error", "Le message ne peut pas dépasser 250 caractères!");
+           return ControleurPublication::rediriger('afficherListe');
+       }
 
-        $publication = Publication::construire($message, $utilisateur);
-        (new PublicationRepository())->ajouter($publication);
-    }
-    ```
+       $publication = Publication::construire($message, $utilisateur);
+       (new PublicationRepository())->ajouter($publication);
+   }
+   ```
 
     **Note :** Si vous avez une erreur de l'IDE *`rediriger` has protected
     visibility*, ce n'est pas grave, elle sera réglée avec la prochaine question.
@@ -426,28 +426,27 @@ Nous allons nous intéresser à la création des publications. Actuellement, dè
 
 3. Dans la nouvelle méthode `creerPublication`, remplacez toutes les lignes qui ajoutent un message flash et redirigent l'utilisateur par le déclenchement d'une **ServiceException** contenant le message flash initialement prévu comme message flash. La syntaxe est la suivante :
 
-    ```php
-    throw new ServiceException("Mon message d'erreur!");
-    ```
+   ```php
+   throw new ServiceException("Mon message d'erreur!");
+   ```
 
 4. Modifiez la méthode `creerDepuisFormulaire` de `ControleurPublication` afin d'utiliser le service de publications et de gérer l'exception. Dans le cas où une **ServiceException** est interceptée, vous devez ajouter le message de l'exception comme message flash puis rediriger l'utilisateur vers la route `afficherListe`. Globalement, cela doit ressembler à quelque chose comme ça :
 
-    ```php
-    public static function creerDepuisFormulaire() : Response
-    {
-        $idUtilisateurConnecte = ConnexionUtilisateur::getIdUtilisateurConnecte();
-        $message = $_POST['message'];
-        try {
-            //Utilisation du service
-        }
-        catch(ServiceException $e) {
-            //Ajout du message flash
-        }
+   ```php
+   public static function creerDepuisFormulaire() : Response
+   {
+       $idUtilisateurConnecte = ConnexionUtilisateur::getIdUtilisateurConnecte();
+       $message = $_POST['message'];
+       try {
+           //Utilisation du service
+       }
+       catch(ServiceException $e) {
+           //Ajout du message flash
+       }
 
-        return ControleurPublication::rediriger('afficherListe');
-    }
-
-    ```
+       return ControleurPublication::rediriger('afficherListe');
+   }
+   ```
 
     *Aide :* Allez voir si nécessaire la 
     [documentation de la classe `Exception`](https://www.php.net/manual/fr/class.exception.php).
@@ -473,45 +472,45 @@ Débutons avec la création d'un nouvel utilisateur.
 
     Comme d'habitude, il ne faudra pas faire appels aux variables liées à la requête dans cette méthode (`$_POST`, `$_FILES`, etc.). Ces données vous sont fournies par le contrôleur et peuvent être `null`. Il faudra d'ailleurs penser à vérifier si ces valeurs sont nulles ou non. La méthode ne doit rien retourner (simplement créer l'utilisateur) et lever des `ServiceException` si différentes contraintes sont violées (taille du login, mot de passe, format de l'adresse mail, etc.). Le paramètre `$donneesPhotoDeProfil` correspond au tableau obtenu par lecture de `$_FILES["..."]`.
 
-    ```php
-    public function creerUtilisateur($login, $motDePasse, $email, $donneesPhotoDeProfil) : void {
-        //TO-DO
-        //Verifier que les attributs ne sont pas null
-        //Verifier la taille du login
-        //Verifier la validité du mot de passe
-        //Verifier le format de l'adresse mail
-        //Verifier que l'utilisateur n'existe pas déjà
-        //Verifier que l'adresse mail n'est pas prise
-        //Verifier extension photo de profil
-        //Enregistrer la photo de profil
-        //Chiffrer le mot de passe
-        //Enregistrer l'utilisateur...
-    }
-    ```
+   ```php
+   public function creerUtilisateur($login, $motDePasse, $email, $donneesPhotoDeProfil) : void {
+       //TO-DO
+       //Verifier que les attributs ne sont pas null
+       //Verifier la taille du login
+       //Verifier la validité du mot de passe
+       //Verifier le format de l'adresse mail
+       //Verifier que l'utilisateur n'existe pas déjà
+       //Verifier que l'adresse mail n'est pas prise
+       //Verifier extension photo de profil
+       //Enregistrer la photo de profil
+       //Chiffrer le mot de passe
+       //Enregistrer l'utilisateur...
+   }
+   ```
 
 3. Adaptez la méthode `creerDepuisFormulaire` de `ControleurUtilisateur` pour utiliser votre nouveau service. Attention, il ne faut plus vérifier ici le fait qu'une donnée est nulle ou non (on doit pouvoir passer une donnée nulle au service). En remplacement, vous pouvez utiliser l'**expression** suivante :
 
-    ```php
-    // Si $_POST["donnee"] n'existe pas, $donnee prend la valeur null.
-    $donnee = $_POST["donnee"] ?? null; 
-    ```
+   ```php
+   // Si $_POST["donnee"] n'existe pas, $donnee prend la valeur null.
+   $donnee = $_POST["donnee"] ?? null; 
+   ```
 
     Le nouveau code aura donc cette allure :
 
-    ```php
-    public static function creerDepuisFormulaire(): Response {
-        //Recupérer les différentes variables (login, mot de passe, adresse mail, données photo de profil...)
-        try {
-            //Enregistrer l'utilisateur via le service
-        }
-        catch(ServiceException $e) {
-            //Ajouter message flash d'erreur
-            //Rediriger sur le formulaire de création
-        }
-        //Ajouter un message flash de succès (L'utilisateur a bien été créé !)
-        //Rediriger sur la page d'accueil (route afficherListe)
-    }
-    ```
+   ```php
+   public static function creerDepuisFormulaire(): Response {
+       //Recupérer les différentes variables (login, mot de passe, adresse mail, données photo de profil...)
+       try {
+           //Enregistrer l'utilisateur via le service
+       }
+       catch(ServiceException $e) {
+           //Ajouter message flash d'erreur
+           //Rediriger sur le formulaire de création
+       }
+       //Ajouter un message flash de succès (L'utilisateur a bien été créé !)
+       //Rediriger sur la page d'accueil (route afficherListe)
+   }
+   ```
 
 4. Comme toujours, vérifiez l'état de votre application.
 
@@ -525,15 +524,15 @@ La méthode `afficherPublications` effectue deux actions : récupération de l'u
 
 1. Dans la classe `UtilisateurService`, créez une méthode `recupererUtilisateurParId` qui prend en paramètre un identifiant d'utilisateur **et un booléen** `autoriserNull`. Ce booléen a pour but de préciser si une exception doit être levée ou non si l'utilisateur sélectionné n'existe pas (dans certains cas, on veut simplement récupérer la valeur `null` sans lever d'exceptions). La méthode doit donc renvoyer à terme l'utilisateur ciblé par l'identifiant (en se servant du *repository*). Si `autoriserNull` vaut `false` et que l'utilisateur récupéré est `null`, il faut lever une `ServiceException` (l'utilisateur n'existe pas !).
 
-    ```php
-    public function recupererUtilisateurParId($idUtilisateur, $autoriserNull = true) : ?Utilisateur {
-        $utilisateur = ...
-        if(!$autoriserNull && ...) {
-            ...
-        }
-        return $utilisateur;
-    }
-    ```
+   ```php
+   public function recupererUtilisateurParId($idUtilisateur, $autoriserNull = true) : ?Utilisateur {
+       $utilisateur = ...
+       if(!$autoriserNull && ...) {
+           ...
+       }
+       return $utilisateur;
+   }
+   ```
 
 2. La partie qui a pour but de récupérer des publications doit plutôt être codée au niveau de la classe `PublicationService`. Ajoutez donc une méthode `recupererPublicationsUtilisateur($idUtilisateur)` à ce service en reprenant la partie du code de `afficherPublications` qui récupère les publications.
 
@@ -625,14 +624,14 @@ Il faut également se poser la question de **la portée** des tests. Doit-on (pe
 
 6. Si vous n'utilisez pas **PHPStorm**, il est sans doute possible de faire quelque-chose de similaire avec votre IDE. Il est aussi possible de générer un rapport en HTML (pour afficher un mini-site) en ajoutant la section suivante dans la partie `coverage` de `phpunit.xml` :
 
-    ```xml
-    <coverage>
-        <report>
-            ...
-            <html outputDirectory="reports"/>
-        </report>
-    </coverage>
-    ```
+   ```xml
+   <coverage>
+       <report>
+           ...
+           <html outputDirectory="reports"/>
+       </report>
+   </coverage>
+   ```
 
     Après exécution des tests, le site web sera généré dans `reports` et il est accessible en ouvrant le fichier `index.html` avec un navigateur.
 

@@ -267,7 +267,7 @@ $container = new ContainerBuilder();
 //Enregistrement du service "serviceName" qui représente la classe concrète MyService
 $container->register('service_name', MyService::class)
 
-//Recuperation de l'instance service :
+//Recuperation de l'instance service
 $myService = $container->get('service_name');
 
 //Enregistrement d'un service qui a besoin de paramètres pour être initialisé.
@@ -319,43 +319,43 @@ Nous utiliserons cette fonctionnalité pour quelques cas spécifiques, mais, en 
 
 1. Installez le conteneur de service de Symfony :
 
-    ```bash
-    composer require symfony/dependency-injection
-    ```
+   ```bash
+   composer require symfony/dependency-injection
+   ```
 
 2. Dans la méthode `traiterRequete` de `RouteurURL`, au tout début de la méthode, ajoutez les lignes de code suivantes :
 
-    ```php
-    use TheFeed\Controleur\ControleurPublication;
-    use TheFeed\Controleur\ControleurUtilisateur;
-    use TheFeed\Modele\Repository\ConnexionBaseDeDonnees;
-    use TheFeed\Modele\Repository\PublicationRepository;
-    use TheFeed\Modele\Repository\UtilisateurRepository;
-    use TheFeed\Service\PublicationService;
-    use TheFeed\Service\UtilisateurService;
-    use TheFeed\Configuration\ConfigurationBDDMySQL;
-    use Symfony\Component\DependencyInjection\ContainerBuilder;
-    use Symfony\Component\DependencyInjection\Reference;
+   ```php
+   use TheFeed\Controleur\ControleurPublication;
+   use TheFeed\Controleur\ControleurUtilisateur;
+   use TheFeed\Modele\Repository\ConnexionBaseDeDonnees;
+   use TheFeed\Modele\Repository\PublicationRepository;
+   use TheFeed\Modele\Repository\UtilisateurRepository;
+   use TheFeed\Service\PublicationService;
+   use TheFeed\Service\UtilisateurService;
+   use TheFeed\Configuration\ConfigurationBDDMySQL;
+   use Symfony\Component\DependencyInjection\ContainerBuilder;
+   use Symfony\Component\DependencyInjection\Reference;
 
-    $conteneur = new ContainerBuilder();
+   $conteneur = new ContainerBuilder();
 
-    $conteneur->register('configuration_bdd_my_sql', ConfigurationBDDMySQL::class);
+   $conteneur->register('configuration_bdd_my_sql', ConfigurationBDDMySQL::class);
 
-    $connexionBaseService = $conteneur->register('connexion_base_de_donnees', ConnexionBaseDeDonnees::class);
-    $connexionBaseService->setArguments([new Reference('configuration_bdd_my_sql')]);
+   $connexionBaseService = $conteneur->register('connexion_base_de_donnees', ConnexionBaseDeDonnees::class);
+   $connexionBaseService->setArguments([new Reference('configuration_bdd_my_sql')]);
 
-    $publicationsRepositoryService = $conteneur->register('publication_repository',PublicationRepository::class);
-    $publicationsRepositoryService->setArguments([new Reference('connexion_base_de_donnees')]);
+   $publicationsRepositoryService = $conteneur->register('publication_repository',PublicationRepository::class);
+   $publicationsRepositoryService->setArguments([new Reference('connexion_base_de_donnees')]);
 
-    $utilisateurRepositoryService = $conteneur->register('utilisateur_repository',UtilisateurRepository::class);
-    $utilisateurRepositoryService->setArguments([new Reference('connexion_base_de_donnees')]);
+   $utilisateurRepositoryService = $conteneur->register('utilisateur_repository',UtilisateurRepository::class);
+   $utilisateurRepositoryService->setArguments([new Reference('connexion_base_de_donnees')]);
 
-    $publicationService = $conteneur->register('publication_service', PublicationService::class);
-    $publicationService->setArguments([new Reference('publication_repository'), new Reference('utilisateur_repository')]);
+   $publicationService = $conteneur->register('publication_service', PublicationService::class);
+   $publicationService->setArguments([new Reference('publication_repository'), new Reference('utilisateur_repository')]);
 
-    $publicationControleurService = $conteneur->register('controleur_publication',ControleurPublication::class);
-    $publicationControleurService->setArguments([new Reference('publication_service')]);
-    ```
+   $publicationControleurService = $conteneur->register('controleur_publication',ControleurPublication::class);
+   $publicationControleurService->setArguments([new Reference('publication_service')]);
+   ```
 
     Comme toujours les `use` sont des imports à faire au début de la classe.
 
