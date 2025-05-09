@@ -215,69 +215,33 @@ Notre prochain objectif est donc de remanier les classes des `controleurs`, des 
 
 <div class="exercise">
 
-4. Modifiez les classes `PublicationRepository` et `UtilisateurRepository` pour éliminer tout appel statique à `ConnexionBaseDeDonnees` et à la place, mettre en place l'injection d'une dépendance correspondant à l'interface créée à la question précédente (il faudra créer un nouvel attribut pour stocker cette dépendance). Cette dépendance sera utilisée dans les différentes méthodes afin d'obtenir l'objet `pdo`. Créez également des `interfaces` pour ces deux classes. Soyez malin et utilisez l'`IDE` à votre avantage (`CTRL+R`). Voici un squelette que vous pouvez reprendre pour `PublicationRepository` :
+1. Modifiez les classes `PublicationRepository` et `UtilisateurRepository` pour
+   éliminer tout appel statique à `ConnexionBaseDeDonnees` et à la place, mettre
+   en place l'injection d'une dépendance correspondant à l'interface créée à la
+   question précédente (il faudra créer un nouvel attribut pour stocker cette
+   dépendance). Cette dépendance sera utilisée dans les différentes méthodes
+   afin d'obtenir l'objet `pdo`.
 
-    ```php
-    namespace TheFeed\Modele\Repository;
-    
-    use TheFeed\Modele\DataObject\Publication;
-    
-    interface PublicationRepositoryInterface
-    {
-        public function recuperer(): array;
-        
-        public function recupererParAuteur($idUtilisateur): array;
-    
-        public function ajouter(Publication $publication);
-    
-        public function recupererParClePrimaire($id): ?Publication;
-    
-        public function mettreAJour(Publication $publication);
-    
-        public function supprimer(Publication $publication);
-    }
-    ```
+   *Astuce :* Utilisez le remplacement de *PhpStorm* (`Ctrl+R`) pour modifier rapidement tous les
+   ```php
+   ConnexionBaseDeDonnees::getPdo()
+   ```
+   en 
+   ```php
+   $this->connexionBaseDeDonnees->getPdo()
+   ```
 
-    ```php
-    namespace TheFeed\Modele\Repository;
+2. Créez des interfaces pour les classes `PublicationRepository` et `UtilisateurRepository` et appliquez-les.  
+   *Rappel :* Cette opération peut être automatisée avec votre `IDE` :
+   `Refactor` → `Extract` → `Interface`.
 
-    use TheFeed\Modele\DataObject\Publication;
-    use TheFeed\Modele\DataObject\Utilisateur;
-    use DateTime;
+3. Faites une opération similaire au niveau des deux classes `PublicationService` et `UtilisateurService` : 
+   * Injectez les classes `repository` comme dépendances, via le constructeur. Il faudra éliminer toutes les instanciations de *repository* pour utiliser vos nouvelles dépendances. Attention `PublicationService` utilise les deux *repositories*.
+   * Mettez en place des interfaces pour ces deux services.
 
-    class PublicationRepository implements PublicationRepositoryInterface
-    {
-        public function __construct(private ConnexionBaseDeDonneesInterface $connexionBaseDeDonnees)
-        {}
+4. Rendez tous vos `controleurs` (même le générique) non statiques. C'est-à-dire que toutes les méthodes ne doivent plus être statiques. De même, les appels statiques du type `Controlleur::` doivent être remplacés par `$this->`. Ici aussi, soyez malin et utilisez votre IDE pour effectuer cette tâche rapidement.
 
-        /**
-         * @return Publication[]
-         * @throws \Exception
-         */
-        public function recuperer(): array
-        {
-            $statement = $this->connexionBaseDeDonnees->getPdo()->prepare(...);
-            // ...
-        }
-
-        // ...
-    }
-    ```
-
-    *Astuce :* Utilisez le remplacement de *PhpStorm* (`Ctrl+R`) pour modifier rapidement tous les
-    ```php
-    ConnexionBaseDeDonnees::getPdo()
-    ```
-    en 
-    ```php
-    $this->connexionBaseDeDonnees->getPdo()
-    ```
-
-5. Faites une opération similaire au niveau des deux classes `PublicationService` et `UtilisateurService` en injectant les classes `repository` comme dépendances, via le constructeur. Il faudra éliminer toutes les instanciations de *repository* pour utiliser vos nouvelles dépendances. Là-aussi, mettez en place des interfaces pour ces deux services. Attention `PublicationService` utilise les deux *repositories*.
-
-6. Rendez tous vos `controleurs` (même le générique) non statiques. C'est-à-dire que toutes les méthodes ne doivent plus être statiques. De même, les appels statiques du type `Controlleur::` doivent être remplacés par `$this->`. Ici aussi, soyez malin et utilisez votre IDE pour effectuer cette tâche rapidement.
-
-6. Au niveau de `ControleurPublication` et `ControleurUtilisateur`, réalisez l'injection des deux services (toujours via leur interface). Dans chaque méthode, au lieu d'instancier un service pour réaliser une opération, vous utiliserez vos nouvelles dépendances.
+5. Au niveau de `ControleurPublication` et `ControleurUtilisateur`, réalisez l'injection des deux services (toujours via leur interface). Dans chaque méthode, au lieu d'instancier un service pour réaliser une opération, vous utiliserez vos nouvelles dépendances.
 
 </div>
 
