@@ -320,6 +320,8 @@ Cette méthode est plus ou moins équivalente au fonctionnement de notre contene
 
 Nous utiliserons cette fonctionnalité pour quelques cas spécifiques, mais, en règle générale, nous utiliserons la configuration par lazy-loading grâce à la méthode `register`.
 
+Dans notre application, les noms des services seront les noms de classes avec espace de nom pour suivre les conventions de *Symfony*.
+
 <div class="exercise">
 
 1. Installez le conteneur de service de Symfony :
@@ -344,66 +346,40 @@ Nous utiliserons cette fonctionnalité pour quelques cas spécifiques, mais, en 
 
    $conteneur = new ContainerBuilder();
 
-   $conteneur->register('configuration_bdd_my_sql', ConfigurationBDDMySQL::class);
+   $conteneur->register(ConfigurationBDDMySQL::class, ConfigurationBDDMySQL::class);
 
-   $connexionBaseReference = $conteneur->register('connexion_base_de_donnees', ConnexionBaseDeDonnees::class);
-   $connexionBaseReference->setArguments([new Reference('configuration_bdd_my_sql')]);
+   $connexionBaseReference = $conteneur->register(ConnexionBaseDeDonnees::class, ConnexionBaseDeDonnees::class);
+   $connexionBaseReference->setArguments([new Reference(ConfigurationBDDMySQL::class)]);
 
-   $publicationsRepositoryReference = $conteneur->register('publication_repository',PublicationRepository::class);
-   $publicationsRepositoryReference->setArguments([new Reference('connexion_base_de_donnees')]);
+   $publicationsRepositoryReference = $conteneur->register(PublicationRepository::class, PublicationRepository::class);
+   $publicationsRepositoryReference->setArguments([new Reference(ConnexionBaseDeDonnees::class)]);
 
-   $utilisateurRepositoryReference = $conteneur->register('utilisateur_repository',UtilisateurRepository::class);
-   $utilisateurRepositoryReference->setArguments([new Reference('connexion_base_de_donnees')]);
+   $utilisateurRepositoryReference = $conteneur->register(UtilisateurRepository::class, UtilisateurRepository::class);
+   $utilisateurRepositoryReference->setArguments([new Reference(ConnexionBaseDeDonnees::class)]);
 
-   $publicationServiceReference = $conteneur->register('publication_service', PublicationService::class);
-   $publicationServiceReference->setArguments([new Reference('publication_repository'), new Reference('utilisateur_repository')]);
+   $publicationServiceReference = $conteneur->register(PublicationService::class, PublicationService::class);
+   $publicationServiceReference->setArguments([new Reference(PublicationRepository::class), new Reference(UtilisateurRepository::class)]);
 
-   $publicationControleurReference = $conteneur->register('controleur_publication',ControleurPublication::class);
-   $publicationControleurReference->setArguments([new Reference('publication_service')]);
+   $publicationControleurReference = $conteneur->register(ControleurPublication::class, ControleurPublication::class);
+   $publicationControleurReference->setArguments([new Reference(PublicationService::class)]);
    ```
 
-    **Attention** : vérifiez bien l'ordre des arguments dans `publication_service` (selon l'ordre que vous avez défini dans le constructeur de `PublicationService`).
+    **Attention** : vérifiez bien l'ordre des arguments dans le service lié à `PublicationService` (selon l'ordre que vous avez défini dans le constructeur de `PublicationService`).
 
     **Prenez le temps de comprendre ces lignes de code !** S'il y a un élément que vous ne comprenez pas, demandez à votre enseignant chargé de TD. Pour le moment, la syntaxe est assez verbeuse, mais nous allons alléger tout cela dans un futur exercice.
 
 3. Nous avons enregistré la partie permettant de gérer les publications. Maintenant, il faut indiquer au `ControllerResolver` d'utiliser le contrôleur enregistré dans le conteneur ! Pour cela, remplacez la ligne instanciant un `ControllerResolver` en instanciant un `ContainerControllerResolver` à la place. Il faut donner comme arguments du constructeur de cette nouvelle classe votre conteneur (`$conteneur`).
 
-    *Explication* : Les classes de résolution de contrôleur ont pour mission d'instancier des contrôleurs. Avant, `ControllerResolver->getController` retrouvait le nom de la classe du contrôleur dans la route, et instanciait un nouvel objet. Par exemple, pour une route avec `"_controller" => "\TheFeed\Controleur\ControleurPublication::afficherListe"`,
-    la résolution de contrôleur `ControllerResolver->getController` récupérait `"\TheFeed\Controleur\ControleurPublication"`, et renvoyait l'objet `new \TheFeed\Controleur\ControleurPublication()`.
+    *Explication* : Les classes de résolution de contrôleur ont pour mission d'instancier des contrôleurs. Avant, `ControllerResolver->getController` retrouvait le nom de la classe du contrôleur dans la route, et instanciait un nouvel objet. Par exemple, pour une route avec `"_controller" => "TheFeed\Controleur\ControleurPublication::afficherListe"`,
+    la résolution de contrôleur `ControllerResolver->getController` récupérait `"TheFeed\Controleur\ControleurPublication"`, et renvoyait l'objet `new TheFeed\Controleur\ControleurPublication()`.
 
-    Désormais, `ContainerControllerResolver->getController` va chercher dans la route le nom du service-contrôleur dans le conteneur, et appelera le conteneur pour instancier le contrôleur.  Par exemple, si la résolution de contrôleur `ContainerControllerResolver->getController` récupère `"controleur_publication"`, il renverra l'objet `$conteneur->get("controleur_publication")`.
+    Désormais, `ContainerControllerResolver->getController` va chercher dans la route le nom du service-contrôleur dans le conteneur, et appelera le conteneur pour instancier le contrôleur.  Par exemple, si la résolution de contrôleur `ContainerControllerResolver->getController` récupère toujours `"TheFeed\Controleur\ControleurPublication"`, il renverra l'objet `$conteneur->get("TheFeed\Controleur\ControleurPublication")`.
 
-4. Chargez la page principale de votre application. Vous obtenez alors un message d'erreur qui explique que `ControleurPublication` n'a pas pu être construit... C'est en fait la faute de la classe `TheFeed/Lib/AttributeRouteControllerLoader` ! En effet, si vous observez le code de cette classe, elle configure la route avec le nom du contrôleur `"\TheFeed\Controleur\ControleurPublication"`, ce qui convenait pour `ControllerResolver`, au lieu du nom du service-contrôleur dans le conteneur `"controleur_publication"` qui convient à `ContainerControllerResolver`.
+4. Complétez le code afin d'enregistrer le service puis le contrôleur liés aux utilisateurs dans le conteneur.
 
-    Pour régler ce problème, adaptez le code de `AttributeRouteControllerLoader` :
+5. Chargez la page principale de votre application. Elle devrait fonctionner !
 
-    ```php
-    class AttributeRouteControllerLoader extends AttributeClassLoader
-    {
-        /**
-        * Configures the _controller default parameter of a given Route instance.
-        */
-        protected function configureRoute(Route $route, \ReflectionClass $class, \ReflectionMethod $method, object $annot): void
-        {
-            $route->setDefault('_controller', $this->toSnakeCase($class->getShortName()).'::'.$method->getName());
-        }
-
-        private function toSnakeCase($controllerName) : string {
-            return ltrim(strtolower(preg_replace('/[A-Z]([A-Z](?![a-z]))*/', '_$0', $controllerName)), '_');
-        }
-
-    }
-    ```
-
-    *Explication :* On prend le nom "court" du contrôleur (par exemple `ControleurPublication` et non pas `TheFeed\Controleur\ControleurPublication`) et on le convertit en `snake_case` (ce qui donnera `controleur_publication`).
-
-    Attention, cela dépend bien sûr de votre convention de nommage pour vos services ! Ici, nous avons choisi le `snake_case`. Il faudra donc nous y tenir, et, nommer tous nos services-contrôleurs dans le conteneur : `controleur_xxx`
-
-5. Complétez le code afin d'enregistrer le service puis le contrôleur liés aux utilisateurs dans le conteneur.
-
-6. Chargez la page principale de votre application. Elle devrait fonctionner !
-
-7. Naviguez à travers l'application et vérifiez que tout fonctionne comme avant.
+6. Naviguez à travers l'application et vérifiez que tout fonctionne comme avant.
 
 </div>
 
@@ -443,22 +419,22 @@ parameters:
 
 services:
 
-  configuration_bdd_my_sql:
+  TheFeed\Configuration\ConfigurationBDDMySQL:
     class: TheFeed\Configuration\ConfigurationBDDMySQL
 
-  connexion_base_de_donnees:
+  TheFeed\Modele\Repository\ConnexionBaseDeDonnees:
     class: TheFeed\Modele\Repository\ConnexionBaseDeDonnees
-    arguments: ['@configuration_bdd_my_sql']
+    arguments: ['@TheFeed\Configuration\ConfigurationBDDMySQL']
 
   #Repositories
-  publication_repository:
+  TheFeed\Modele\Repository\PublicationRepository:
       class: TheFeed\Modele\Repository\PublicationRepository
-      arguments: ['@connexion_base_de_donnees']
+      arguments: ['@TheFeed\Modele\Repository\ConnexionBaseDeDonnees']
 
   #Services
-  publication_service:
+  TheFeed\Service\PublicationService:
     class: TheFeed\Service\PublicationService
-    arguments: ['@publication_repository', '@utilisateur_repository']
+    arguments: ['@TheFeed\Modele\Repository\PublicationRepository', '@TheFeed\Modele\Repository\UtilisateurRepository']
 
   #Controleurs
 ```
@@ -506,13 +482,13 @@ Actuellement, nous utilisons toujours l'ancien `Conteneur` (celui de `Lib`) dans
    ```yaml
    services:
      #Twig
-     twig_loader:
+     Twig\Loader\FilesystemLoader:
        class: Twig\Loader\FilesystemLoader
        arguments: ['%project_root%/src/vue/']
-     twig:
+     Twig\Environment:
        class: Twig\Environment
        arguments:
-         $loader: '@twig_loader'
+         $loader: '@Twig\Loader\FilesystemLoader'
          $options:
            autoescape: 'html'
            strict_variables: true
@@ -520,59 +496,33 @@ Actuellement, nous utilisons toujours l'ancien `Conteneur` (celui de `Lib`) dans
    ```
    Il y a beaucoup de paramètres nécessaires à l'instanciation de ce service, donc, encore une fois, prenez le temps de comprendre ces lignes de code et appeler votre enseignant si besoin. Par exemple, comprenez-vous bien le paramètre `%project_root%/src/vue/` ?   
 
-   Concernant le `$` devant les `arguments` du service `twig`, c'est pour utiliser les arguments nommés dans le constructeur. Par exemple, `$loader: '@twig_loader'` impliquera que l'appel suivant du constructeur `new Twig\Environment(loader: new Reference('twig_loader'),...)`. Cette forme de déclaration est obligatoire dans le cas présent car l'argument `options` est un tableau associatif dans le constructeur de `Environment`.
+   Concernant le `$` devant les `arguments` du service `Twig\Environment`, c'est pour utiliser les arguments nommés dans le constructeur. Par exemple, `$loader: '@Twig\Loader\FilesystemLoader'` impliquera que l'appel suivant du constructeur `new Twig\Environment(loader: new Reference('Twig\Loader\FilesystemLoader'),...)`. Cette forme de déclaration est obligatoire dans le cas présent car l'argument `options` est un tableau associatif dans le constructeur de `Environment`.
 
-3. Pour pouvoir enregistrer les services `url_generator` (correspondant à `UrlGenerator`) et `url_helper` (correspondant à `UrlHelper`) via notre fichier de configuration, nous avons besoin de trois services :
-
-   * `request_stack`, correspondant à un objet `RequestStack` que nous pouvons simplement déclarer dans `conteneur.yml`.
-
-   * `request_context`, correspondant à un objet `RequestContext` que nous sommes obligés de déclarer directement dans `traiterRequete` car cet objet a besoin d'être configuré avec les données de la requête courante.
-
-   * `routes` : correspondant à la collection contenant nos routes (renvoyée par `$loader->load(...)`). Ici aussi, nous devons faire cette déclaration dans `traiterRequete` (parce qu'il faut exécuter le code pour récupérer toutes les routes...).
-
-   Faites donc les ajouts nécessaires :
-
-   ```yaml
-   #Configuration/conteneur.yml
-   services:
-     #Services
-     request_stack:
-       class: Symfony\Component\HttpFoundation\RequestStack
-   ```
+3. Pour pouvoir enregistrer le service `Symfony\Component\Routing\Generator\UrlGenerator` (qui est utilisé dans `ControleurGenerique::rediriger`),
+   il suffit de rajouter la ligne suivante dans `RouteurURL.php`:
 
    ```php
-   //Après l'instanciation de l'objet $contexteRequete
-   $conteneur->set('request_context', $contexteRequete);
-   //Après que les routes soient récupérées
-   $conteneur->set('routes', $routes);
+   $conteneur->set(UrlGenerator::class, $generateurUrl);
    ```
 
-4. Dans votre fichier `conteneur.yml`, déclarez deux nouveaux services : `url_generator` (correspondant à la classe `Symfony\Component\Routing\Generator\UrlGenerator`) et `url_helper` (correspondant à la classe `Symfony\Component\HttpFoundation\UrlHelper`). 
-   
-   Concernant les `arguments` de ces deux services, utilisez les différents services que nous avons définis lors de la question précédente (normalement, vous pouvez toujours trouver l'instanciation de ces objets dans `traiterRequete`, si vous souhaitez voir comment cela est fait).
+4. Concernant le service `UrlHelper`, comme il n'est plus utilisé que dans *Twig*,
+   vous pouvez supprimer de l'ancien conteneur `TheFeed\Lib\Conteneur` : supprimer son ajout dans `RouteurURL.php`, et sa récupération 
+   (notamment dans `vueGenerale.php`).
 
-5. Dans `traiterRequete`, supprimez l'instanciation des variables `twigLoader` et `twig`. À la place, récupérez le **service** correspondant à `twig`.
+5. Dans `traiterRequete`, supprimez l'instanciation des variables `twigLoader` et `twig`. À la place, récupérez le **service** correspondant à `Twig\Environment`.
 
    ```php
    //Remplacer :
    $twigLoader = new FilesystemLoader(...);
    $twig=new Environment(...);
    //Par :
-   $twig=$conteneur->get('twig');
+   $twig=$conteneur->get('Twig\Environment');
    ```
 
-   Supprimez ensuite l'enregistrement de `twig` dans l'ancien `Conteneur` :
-
-   ```php
-   //Supprimer :
-   Conteneur::ajouterService("twig", $twig);
-   ```
-
-6. Poursuivez ce travail de nettoyage en remplaçant le contenu des variables `$generateurUrl` et `$assistantUrl` par un accès au service correspondant dans le conteneur. Vous supprimerez les derniers appels à `Conteneur::ajouterService` dans cette méthode.
-
+   Supprimez ensuite l'enregistrement `Conteneur::ajouterService("twig", $twig);` de `twig` dans l'ancien `Conteneur`.
 </div>
 
-Oh non ! L'application ne marche toujours pas ! En effet, le `ControleurGenerique` recupère toujours des services denotre ancien `Conteneur` ! Il faut donc le déclarer lui aussi comme service et lui injecter tous les services dont il a besoin... Mais, comme tous les contrôleurs héritent de ce contrôleur, il faut donc injecter à tous les sous-contrôleurs les services dont a besoin le contrôleur générique...
+Oh non ! L'application ne marche toujours pas ! En effet, le `ControleurGenerique` recupère toujours des services de notre ancien `Conteneur` ! Il faut donc le déclarer lui aussi comme service et lui injecter tous les services dont il a besoin... Mais, comme tous les contrôleurs héritent de ce contrôleur, il faut donc injecter à tous les sous-contrôleurs les services dont a besoin le contrôleur générique...
 
 Plutôt que de lui injecter les services un par un, nous allons directement lui injecter le conteneur. Ainsi, il piochera dedans pour utiliser les services dont il a besoin. Injecter le conteneur à un autre service (en l'occurrence, ici, un contrôleur) n'est pas une très bonne pratique, notamment pour les tests, mais ce n'est pas très grave dans le cas de `ControleurGenerique`, car cette classe n'a pas vraiment pour but d'être testée (même les contrôleurs, de manière générale). Seul `ControleurGenerique` aura le droit d'utiliser le conteneur (l'attribut sera déclaré privé) et il n'y aura qu'un paramètre à ajouter aux contrôleurs enfants.
 
@@ -598,24 +548,30 @@ Plutôt que de lui injecter les services un par un, nous allons directement lui 
    }
    ```
 
-3. Faites de même pour `ControleurUtilisateur`.
+3. Comme le constructeur de `ControleurPublication`, il faut donc mettre à jour
+   les liste des `arguments` pour le service correspondant dans `conteneur.yml`.
+   Heureusement, le conteneur est automatiquement référencé par *Symfony* sous
+   le nom de service `service_container`. Ajoutez une référence à ce service
+   dans la liste des `arguments` du service de `ControleurPublication`.
 
-4. Dans `ControleurGenerique`, modifiez tous les appels à `Conteneur::recupererService(...)` en utilisant le nouveau conteneur injecté dans la classe (attention, `generateurUrl` est devenu `url_generator`).
+4. Faites de même pour `ControleurUtilisateur`.
 
-5. Dans `traiterRequete` de `RouteurURL`, il faut que le conteneur s'enregistre lui-même dans le conteneur ! On peut faire cela très simplement, comme pour n'importe quel service :
+5. Dans `ControleurGenerique`, modifiez tous les appels à
+   `Conteneur::recupererService(...)` en utilisant le nouveau conteneur injecté
+   dans la classe. Attention, `generateurUrl` est devenu `Symfony\Component\Routing\Generator\UrlGenerator`, et `twig` est devenu `Twig\Environment`.
 
-   ```php
-   $conteneur->set('container', $conteneur);
-   ```
-6. Pour rappel, le constructeur de `ControleurPublication` et `ControleurUtilisateur` ont été modifiés ! Il faut donc mettre à jour les liste des `arguments` pour les deux services correspondant dans `conteneur.yml`.
+   Normalement, vous venez de supprimer les derniers appels à l'ancien conteneur `TheFeed\Lib\Conteneur`.
 
-7. Enfin, vous aurez peut-être remarqué que votre `IDE` râle au niveau de la fin de la méthode `traiterRequete`, car il manque un paramètre (le conteneur) pour instancier `ControleurGenerique` afin de gérer nos cas d'erreurs. Pour régler cet ultime problème :
+6. Enfin, vous aurez peut-être remarqué que votre `IDE` râle au niveau de la fin
+   de la méthode `traiterRequete` (dans le `catch`), car il manque un paramètre
+   pour instancier `ControleurGenerique`. Pour régler cet ultime problème :
 
    * Enregistrez un **service** (dans `conteneur.yml`) correspondant au `ControleurGenerique`.
 
-   * Dans la méthode `traiterRequete`, utilisez ce service au lieu d'instancier directement `ControleurGenerique`.
+   * Dans la méthode `traiterRequete`, récupérer ce service à partir du
+     conteneur au lieu d'instancier directement `ControleurGenerique`.
 
-8. Vérifiez que votre application fonctionne de nouveau.
+7.  Vérifiez que votre application fonctionne de nouveau.
 </div>
 
 ## À vos tests !
@@ -985,7 +941,7 @@ Mais pas de panique, nous pouvons utiliser notre `conteneur de services` pour co
 
 3. Dans `conteneur.yml`, enregistrez un `paramètre` correspondant au chemin du dossier contenant les photos de profil en utilisant le paramètre `project_root`. Comme pour les services, il est possible d'utiliser un paramètre lors de la définition d'un autre paramètre, ainsi : `%project_root%/chemin/vers/dossier`.
 
-4. Injectez ce nouveau paramètre comme `argument` du `utilisateur_service` en utilisant sa **référence**. Pour rappel, on peut faire référence à un attribut du conteneur avec la syntaxe : `%nom_attribut%`.
+4. Injectez ce nouveau paramètre comme `argument` du `TheFeed\Service\UtilisateurService` en utilisant sa **référence**. Pour rappel, on peut faire référence à un attribut du conteneur avec la syntaxe : `%nom_attribut%`.
 
 5. Vérifiez que l'inscription fonctionne toujours bien (et que l'image arrive là où il faut).
 

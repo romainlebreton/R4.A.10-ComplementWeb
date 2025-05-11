@@ -807,7 +807,7 @@ La fonction est alors disponible dans *Twig*, par exemple comme ceci :
    * une fonction `route` pour la méthode `$generateurUrl->generate()` ;
    * une fonction `asset` pour la méthode `$assistantUrl->getAbsoluteUrl()` ;
 
-1. Utilisez ces fonctions dans toutes vos vues *Twig* pour réparer tous les
+2. Utilisez ces fonctions dans toutes vos vues *Twig* pour réparer tous les
    liens (CSS, menu, action du formulaire, images de profil), sauf le lien 
    "Ma Page" du menu de navigation vers la route paramétrée de l'utilisateur connecté.
 
@@ -827,10 +827,11 @@ La fonction est alors disponible dans *Twig*, par exemple comme ceci :
    ```
    * pour l'*asset* correspondant à la photo de profil, vous aurez besoin de
      concaténer des chaînes de caractères avec `~` en *Twig*.
-
-
-2. Testez votre site ; le CSS et les liens doivent remarcher.
-
+     
+3. Testez votre site ; le CSS et les liens doivent remarcher.
+4. Puisque `$assistantUrl` n'est plus utilisé que dans *Twig*,
+   vous pouvez supprimer son ajout au conteneur dans `RouteurURL.php`, et sa récupération 
+   (notamment dans `vueGenerale.php`).
 </div>
 
 Il ne nous reste plus qu'à restaurer les utilisateurs connectés et les messages
@@ -847,7 +848,7 @@ $twig->addGlobal('nomVariableTwig', $variablePHP);
    *Rappel :* Par convention dans notre site, cette variable vaut `null` si
    l'utilisateur n'est pas connecté.
 
-1. Mettez à jour `base.html.twig` et `publication/feed.html.twig` pour prendre
+2. Mettez à jour `base.html.twig` et `publication/feed.html.twig` pour prendre
    en compte si l'utilisateur est connecté au niveau de l'interface.
 
    *Aide :* Pour tester si un objet n'est pas `null`, vous pouvez faire
