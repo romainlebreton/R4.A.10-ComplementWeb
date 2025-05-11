@@ -373,7 +373,7 @@ Dans notre application, les noms des services seront les noms de classes avec es
     *Explication* : Les classes de résolution de contrôleur ont pour mission d'instancier des contrôleurs. Avant, `ControllerResolver->getController` retrouvait le nom de la classe du contrôleur dans la route, et instanciait un nouvel objet. Par exemple, pour une route avec `"_controller" => "TheFeed\Controleur\ControleurPublication::afficherListe"`,
     la résolution de contrôleur `ControllerResolver->getController` récupérait `"TheFeed\Controleur\ControleurPublication"`, et renvoyait l'objet `new TheFeed\Controleur\ControleurPublication()`.
 
-    Désormais, `ContainerControllerResolver->getController` va chercher dans la route le nom du service-contrôleur dans le conteneur, et appelera le conteneur pour instancier le contrôleur.  Par exemple, si la résolution de contrôleur `ContainerControllerResolver->getController` récupère toujours `"TheFeed\Controleur\ControleurPublication"`, il renverra l'objet `$conteneur->get("TheFeed\Controleur\ControleurPublication")`.
+    Désormais, `ContainerControllerResolver->getController` va chercher dans la route le nom du service-contrôleur dans le conteneur, et appellera le conteneur pour instancier le contrôleur. Par exemple, si la résolution de contrôleur `ContainerControllerResolver->getController` récupère toujours `"TheFeed\Controleur\ControleurPublication"`, il renverra l'objet `$conteneur->get("TheFeed\Controleur\ControleurPublication")`.
 
 4. Complétez le code afin d'enregistrer le service puis le contrôleur liés aux utilisateurs dans le conteneur.
 
@@ -522,7 +522,7 @@ Actuellement, nous utilisons toujours l'ancien `Conteneur` (celui de `Lib`) dans
    Supprimez ensuite l'enregistrement `Conteneur::ajouterService("twig", $twig);` de `twig` dans l'ancien `Conteneur`.
 </div>
 
-Oh non ! L'application ne marche toujours pas ! En effet, le `ControleurGenerique` recupère toujours des services de notre ancien `Conteneur` ! Il faut donc le déclarer lui aussi comme service et lui injecter tous les services dont il a besoin... Mais, comme tous les contrôleurs héritent de ce contrôleur, il faut donc injecter à tous les sous-contrôleurs les services dont a besoin le contrôleur générique...
+Oh non ! L'application ne marche toujours pas ! En effet, le `ControleurGenerique` récupère toujours des services de notre ancien `Conteneur` ! Il faut donc le déclarer lui aussi comme service et lui injecter tous les services dont il a besoin... Mais, comme tous les contrôleurs héritent de ce contrôleur, il faut donc injecter à tous les sous-contrôleurs les services dont a besoin le contrôleur générique...
 
 Plutôt que de lui injecter les services un par un, nous allons directement lui injecter le conteneur. Ainsi, il piochera dedans pour utiliser les services dont il a besoin. Injecter le conteneur à un autre service (en l'occurrence, ici, un contrôleur) n'est pas une très bonne pratique, notamment pour les tests, mais ce n'est pas très grave dans le cas de `ControleurGenerique`, car cette classe n'a pas vraiment pour but d'être testée (même les contrôleurs, de manière générale). Seul `ControleurGenerique` aura le droit d'utiliser le conteneur (l'attribut sera déclaré privé) et il n'y aura qu'un paramètre à ajouter aux contrôleurs enfants.
 
