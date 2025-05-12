@@ -484,12 +484,10 @@ ex. `/publications` ou `/connexion`) et une action, c'est-à-dire une fonction P
 
 5. **Ajoutez** le code suivant pour appeler enfin l'action PHP correspondante : 
    ```php
-   call_user_func($donneesRoute["_controller"]);
+   $donneesRoute["_controller"]();
    ```
-   **Explication :** La fonction `call_user_func($nomFonction)` exécute la
-   fonction dont le nom est stocké dans `$nomFonction`. Elle est proche du code
-   `$nomFonction()`, mais accepte des entrées plus générales -- nous la
-   préférerons donc.
+   **Explication :** Ce code exécute la fonction dont le nom est stocké dans
+   `$donneesRoute["_controller"]`.
 
 6. Votre site doit désormais répondre correctement à une requête à l'URL
    `web/controleurFrontal.php/publications`, sauf les liens vers le CSS et les
@@ -530,11 +528,12 @@ Passons à notre deuxième route : `/connexion`.
    * De manière générale, la valeur associée à `_controller` devra être au
      format
      [`callable`](https://www.php.net/manual/en/language.types.callable.php),
-     car c'est ce qui est accepté par `call_user_func()`. Parmi les `callable`,
-     on trouve le format `"NomDeClasseQualifie::NomMethodeStatique` ou
-     `["NomDeClasseQualifie", "NomMethodeStatique"]` pour les méthodes
-     statiques, ou encore `[$instanceDeLaClasse, "NomMethode"]` pour les
-     méthodes classiques.
+     car c'est ce qui est accepté lorsque l'on fait
+     `$donneesRoute["_controller"]()`. Parmi les `callable`, on trouve le format
+     `"NomDeClasseQualifie::nomMethodeStatique` ou `["NomDeClasseQualifie",
+     "nomMethodeStatique"]` pour les méthodes statiques, ou encore
+     `[$instanceDeLaClasse, "nomMethode"]` ou
+     `$instanceDeLaClasse->nomMethode(...)` pour les méthodes classiques.
 
 2. Testez la page `web/controleurFrontal.php/connexion` qui doit marcher, sauf
    les liens vers le CSS et les photos qui deviennent invalides. Cherchez
@@ -714,7 +713,7 @@ au lieu de le lire depuis le *query string* avec `$_REQUEST['idUtilisateur']`.
    qui récupère l'identifiant de l'utilisateur dans `$_REQUEST` en introduisant un paramètre.
 
 2. Si vous testez la route, vous verrez qu'elle ne marche pas, car
-   `call_user_func` appelle `afficherPublications` sans lui donner d'arguments (il
+   `$donneesRoute["_controller"]()` appelle `afficherPublications` sans lui donner d'arguments (il
    attend `$idUtilisateur`).
 
 3. Affichez `$donneesRoute` pour voir comment `UrlMatcher` a extrait `idUtilisateur` de
@@ -757,7 +756,7 @@ avec la valeur `19` pour la méthode `ControleurUtilisateur::afficherPublication
    ```
 
 1. Faites évoluer le code de `RouteurURL` en rajoutant à la fin (juste **avant**
-   `call_user_func`)
+   `$donneesRoute["_controller"]()`)
 
    ```php
    use Symfony\Component\HttpKernel\Controller\ArgumentResolver;
@@ -775,8 +774,8 @@ avec la valeur `19` pour la méthode `ControleurUtilisateur::afficherPublication
    et en modifiant
 
    ```diff
-   -call_user_func($donneesRoute["_controller"]);
-   +call_user_func_array($controleur, $arguments);
+   -$donneesRoute["_controller"]();
+   +$controleur(...$arguments);
    ```
 
 1. Testez la route `web/utilisateurs/19/publications` en remplaçant `19` par un identifiant
@@ -881,7 +880,7 @@ besoin.
    ```
 
 2. Initialisez les deux services `$assistantUrl` et `$generateurUrl` dans
-   `RouteurUrl` (avant l'appel à `call_user_func_array`). 
+   `RouteurUrl` (avant l'appel à `$donneesRoute["_controller"](...arguments)`). 
    Puis stockez-les dans le conteneur.
 
    ```php
