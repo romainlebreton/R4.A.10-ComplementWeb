@@ -300,3 +300,22 @@ services:
   TheFeed\Controleur\ControleurGenerique:
     public: true
 ```
+
+## Affichage du conteneur (Optionnel)
+
+Si vous êtes curieux d'observer le conteneur compilé, vous pouvez
+rajouter les lignes suivantes dans `RouteurURL.php` après la compilation :
+
+```php
+use Symfony\Component\DependencyInjection\Dumper\PhpDumper;
+
+$conteneur->compile();
+# Pensez à donner les droits d'écriture sur cache/container.php
+$file = __DIR__ .'/../../cache/container.php';
+$dumper = new PhpDumper($conteneur);
+file_put_contents($file, $dumper->dump());
+```
+
+Vous pourrez aller voir le conteneur compilé dans `cache/container.php`. Ce
+fichier ressemble à une *factory*. Pour information, *Symfony* utilise ce
+système de cache du conteneur pour ne pas le recompiler à chaque fois.
