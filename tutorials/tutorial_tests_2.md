@@ -218,8 +218,8 @@ Notre prochain objectif est donc de remanier les classes des contrôleurs, des s
 1. Modifiez les classes `PublicationRepository` et `UtilisateurRepository` pour
    éliminer tout appel statique à `ConnexionBaseDeDonnees` et à la place, mettre
    en place l'injection d'une dépendance correspondant à l'interface créée à la
-   question précédente (il faudra créer un nouvel attribut pour stocker cette
-   dépendance). Cette dépendance sera utilisée dans les différentes méthodes
+   question précédente. Il faudra créer un nouvel attribut pour stocker cette
+   dépendance. Cette dépendance sera utilisée dans les différentes méthodes
    afin d'obtenir l'objet `pdo`.
 
    *Astuce :* Utilisez le remplacement de *PhpStorm* (`Ctrl+R`) pour modifier rapidement tous les
@@ -231,9 +231,15 @@ Notre prochain objectif est donc de remanier les classes des contrôleurs, des s
    $this->connexionBaseDeDonnees->getPdo()
    ```
 
-2. Créez des interfaces pour les classes `PublicationRepository` et `UtilisateurRepository` et appliquez-les.  
+2. Créez deux interfaces distinctes pour les classes `PublicationRepository` et
+   `UtilisateurRepository` et appliquez-les.  
    *Rappel :* Cette opération peut être automatisée avec votre `IDE` :
    `Refactor` → `Extract` → `Interface`.
+
+   *Remarque :* Si vous vous demandez l'intérêt de créer une interface
+   `PublicationRepositoryInterface` alors qu'il n'y a que
+   `PublicationRepository` qui l'implémente, la raison est que nous créerons
+   bientôt une autre implémentation avec des *mocks* pour les tests.
 
 3. Faites une opération similaire au niveau des deux classes `PublicationService` et `UtilisateurService` : 
    * Injectez les classes `repository` comme dépendances, via le constructeur. Il faudra éliminer toutes les instanciations de *repository* pour utiliser vos nouvelles dépendances. Attention `PublicationService` utilise les deux *repositories*.
