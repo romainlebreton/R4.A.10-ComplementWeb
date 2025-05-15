@@ -397,7 +397,7 @@ Nous allons nous intéresser à la création des publications. Actuellement, dè
 2. Dans `PublicationService`, créez une méthode `creerPublication` qui prend en paramètre un **idUtilisateur** et un **message**. La méthode doit déplacer en grande partie le code de la méthode `creerDepuisFormulaire` de `ControleurPublication` :
 
    ```php
-   public function creerPublication($idUtilisateur, $message) : void {
+   public function creerPublication($idUtilisateur, $message) {
        $utilisateur = (new UtilisateurRepository())->recupererParClePrimaire($idUtilisateur);
 
        if ($utilisateur == null) {
