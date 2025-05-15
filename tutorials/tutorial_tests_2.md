@@ -843,9 +843,9 @@ Nous allons réaliser une première classe de test pour le *repository* des **ut
 
 <!-- 1. **Si vous travaillez sur votre serveur local** veillez à activer l'extension `pdo_sqlite` au niveau de votre fichier `php.ini` (il faut décommenter la ligne `;extension=pdo_sqlite`). -->
 
-1. Téléchargez [ce fichier]({{site.baseurl}}/assets/TD_SAE_Test_Archi/db_test.db) qui contient la structure de la base de données de `The Feed` sous le format `SQLite`. Placez ce fichier dans un nouveau dossier `Configuration` situé dans `tests`.
+1. Téléchargez [ce fichier]({{site.baseurl}}/assets/TD_SAE_Test_Archi/db_test.db) qui contient la structure de la base de données de `The Feed` sous le format `SQLite`. Placez ce fichier dans un nouveau dossier `Configuration` situé dans `tests\unit`.
 
-2. Dans le dossier `tests/Configuration`, créez un fichier `ConfigurationBDDTestUnitaire` avec le contenu suivant :
+2. Dans le dossier `tests/unit/Configuration`, créez un fichier `ConfigurationBDDTestUnitaire` avec le contenu suivant :
 
    ```php
    namespace Tests\Unit\Configuration;
