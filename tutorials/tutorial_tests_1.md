@@ -86,13 +86,13 @@ Comme toute librairie PHP, **PHPUnit** s'installe à l'aide de **composer**.
 
    ```json
    {
-        autoload": {
-            psr-4": {
-                TheFeed\\": "src",
-                Tests\\Unit\\": "tests/unit"
-            
-        ,
-        ..
+        "autoload": {
+            "psr-4": {
+                "TheFeed\\": "src",
+                "Tests\\Unit\\": "tests/unit"
+            }
+        },
+        ...
    }
    ```
 
@@ -154,7 +154,7 @@ Il existe également deux versions **statiques** de ces méthodes : `setUpBefore
 Prenons l'exemple de la classe suivante :
 
 ```php
-namespace TheFeed\Modele;
+namespace TheFeed\Lib;
 
 use Exception;
 
