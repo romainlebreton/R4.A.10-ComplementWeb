@@ -20,12 +20,8 @@ Cours *R4.A.10 -- Complément Web* en
 2. Lundi 28 avril 2025 -- [TD 2](tutorials/tutorial2) -- Réponses HTTP, Moteur de template *Twig* 
 3. Lundi 05 mai 2025 -- [TD 3](tutorials/tutorial_tests_1) -- Tests unitaires, Couche Service
 4. Lundi 12 mai 2025 -- [TD 4](tutorials/tutorial_tests_2) -- Conteneur de services, Mock
-
-<!--
-4. Lundi **11 mars 2024** -- fin [TD 4](tutorials/tutorial_tests_2) puis [TD 5](tutorials/tutorial3) -- API REST, authentification par JWT
-5. Lundi **18 mars 2024** -- fin [TD 5](tutorials/tutorial3) -- API REST, authentification par JWT
-
--->
+4. Lundi 19 mai 2025 -- fin [TD 4](tutorials/tutorial_tests_2) puis [TD 5](tutorials/tutorial3) -- API REST, authentification par JWT
+5. Lundi 26 mai 2025 -- fin [TD 5](tutorials/tutorial3) -- API REST, authentification par JWT
 
 <!-- 
 ## SAÉ du Parcours A
@@ -43,3 +39,4 @@ Cours *R4.A.10 -- Complément Web* en
 
 1. [Écriture de routes simplifiées (comme dans Symfony)](tutorials/complement_route_attribut)
 2. [Configuration automatique des services (comme dans Symfony)](tutorials/complement_autowiring)
+3. [Déboguer pas à pas votre code PHP avec XDebug et PhpStorm](tutorials/complement_xdebug)
