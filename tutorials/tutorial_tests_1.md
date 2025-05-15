@@ -86,13 +86,13 @@ Comme toute librairie PHP, **PHPUnit** s'installe à l'aide de **composer**.
 
    ```json
    {
-        autoload": {
-            psr-4": {
-                TheFeed\\": "src",
-                Tests\\Unit\\": "tests/unit"
-            
-        ,
-        ..
+        "autoload": {
+            "psr-4": {
+                "TheFeed\\": "src",
+                "Tests\\Unit\\": "tests/unit"
+            }
+        },
+        ...
    }
    ```
 
@@ -154,7 +154,7 @@ Il existe également deux versions **statiques** de ces méthodes : `setUpBefore
 Prenons l'exemple de la classe suivante :
 
 ```php
-namespace TheFeed\Modele;
+namespace TheFeed\Lib;
 
 use Exception;
 
@@ -397,7 +397,7 @@ Nous allons nous intéresser à la création des publications. Actuellement, dè
 2. Dans `PublicationService`, créez une méthode `creerPublication` qui prend en paramètre un **idUtilisateur** et un **message**. La méthode doit déplacer en grande partie le code de la méthode `creerDepuisFormulaire` de `ControleurPublication` :
 
    ```php
-   public function creerPublication($idUtilisateur, $message) : void {
+   public function creerPublication($idUtilisateur, $message) {
        $utilisateur = (new UtilisateurRepository())->recupererParClePrimaire($idUtilisateur);
 
        if ($utilisateur == null) {
