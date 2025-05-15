@@ -829,9 +829,6 @@ La fonction est alors disponible dans *Twig*, par exemple comme ceci :
      concaténer des chaînes de caractères avec `~` en *Twig*.
      
 3. Testez votre site ; le CSS et les liens doivent remarcher.
-4. Puisque `$assistantUrl` n'est plus utilisé que dans *Twig*,
-   vous pouvez supprimer son ajout au conteneur dans `RouteurURL.php`, et sa récupération 
-   (notamment dans `vueGenerale.php`).
 </div>
 
 Il ne nous reste plus qu'à restaurer les utilisateurs connectés et les messages
@@ -906,6 +903,12 @@ et d'appeler la méthode `lireMessages()` dans la vue *Twig* avec `messagesFlash
     </div>
    ```
 
+   **Attention :** Ne pas utiliser la méthode `lireTousMessages` pour récupérer
+   les messages d'un seul type. En effet, les messages sont *flash*,
+   c'est-à-dire supprimé quand ils sont lus. Donc si on utilise
+   `lireTousMessages` pour lire seulement un type de message, les messages des
+   autres types sont quand même lus et supprimés. 
+
 3. Créez la vue manquante `src/vue/utilisateur/inscription.html.twig` :
    * Cette vue étend `base.html.twig`.
    * Le titre de la page doit être "Inscription".
@@ -920,6 +923,10 @@ et d'appeler la méthode `lireMessages()` dans la vue *Twig* avec `messagesFlash
    * Modifiez la méthode `ControleurGenerique::afficherErreur()` pour appeler
      cette vue.
    * Testez si la vue d'erreur fonctionne en demandant par exemple une route inconnue.
+
+5. Puisque `$assistantUrl` n'est plus utilisé que dans *Twig*, vous pouvez
+   supprimer son ajout au conteneur dans `RouteurURL.php`, et sa récupération
+   (notamment dans `vueGenerale.php`).
 </div>
 
 ## Bonus : pour le projet ?
