@@ -23,9 +23,9 @@ Sous Linux, le nom `host.docker.internal` n’est pas résolu automatiquement.
 Si votre machine hôte n'est pas sur Linux et que le `Dockerfile` de l'image de votre conteneur ne contient pas le code suivant
 ```python
 # Dans votre Dockerfile
-RUN echo "172.17.0.1 host.docker.internal" >> /etc/hosts
+RUN echo "172.17.0.1 host.docker.internal" | tee -a /etc/hosts
 ```
-alors, il faut donc ajouter manuellement l’entrée dans le fichier `/etc/hosts` du conteneur. Exécutez le code suivant dans le terminal de votre conteneur Docker
+alors, il faut donc ajouter manuellement l’entrée dans le fichier `/etc/hosts` du conteneur. Exécutez à chaque démarrage de votre conteneur le code suivant dans le terminal de votre conteneur Docker
 ```bash
 echo "172.17.0.1 host.docker.internal" | tee -a /etc/hosts
 ```
