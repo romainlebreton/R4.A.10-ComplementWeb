@@ -970,8 +970,15 @@ Qui dit deux codes pour le même problème, dit héritage et en particulier inte
       ```
    3. Modifiez l'enregistrement des services liés aux contrôleurs pour y rajouter une référence : 
       * au service lié à `ConnexionUtilisateurSession` dans `ControleurPublication`,
-      * aux services liés à `ConnexionUtilisateurSession` et `ConnexionUtilisateurJWT` dans `ControleurUtilisateur` (attention à l'ordre),
-      * au service lié à `ConnexionUtilisateurJWT` dans `ControleurPublicationAPI` et `ControleurUtilisateurAPI`.
+      * au service lié à `ConnexionUtilisateurJWT` dans `ControleurPublicationAPI` et `ControleurUtilisateurAPI`,
+      * aux services liés à `ConnexionUtilisateurSession` et `ConnexionUtilisateurJWT` dans `ControleurUtilisateur` (attention à l'ordre).  
+        **Attention :** Si vous êtes passés à l'*autowiring* et l'*autoloading*
+        de service comme indiqué dans [le complément *Configuration automatique
+        des services*]({{site.baseurl}}/tutorials/complement_autowiring), il
+        vous faudra aller y voir la section *Cas particulier de
+        `ConnexionUtilisateurInterface`* pour lier les paramètres
+        `$connexionUtilisateurSession` et `$connexionUtilisateurJWT` aux bons
+        services.
    4. Dans `ControleurUtilisateur` et `ControleurPublication`, remplacez les
       appels aux méthodes statiques `ConnexionUtilisateurSession` par des appels
       dynamiques au service.

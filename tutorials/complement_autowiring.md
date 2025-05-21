@@ -301,6 +301,65 @@ services:
     public: true
 ```
 
+### Cas particulier de `ConnexionUtilisateurInterface`
+
+Dans la fin du [TD5]({{site.baseurl}}/tutorials/tutorial3), vous aurez 2
+services de connexion utilisateur qui implémentent l'interface
+`ConnexionUtilisateurInterface` : le service `ConnexionUtilisateurSession` pour une
+connexion basée sur les sessions, et `ConnexionUtilisateurJWT` pour une
+connexion basée sur les JWT.
+
+Cela pose un problème au branchement automatique de service (*autowiring*) qui ne sait pas quel service brancher dans le constructeur de `ControleurUtilisateur` : 
+```php
+public function __construct(
+    private ContainerInterface $container,
+    private PublicationServiceInterface $publicationService,
+    private UtilisateurServiceInterface $utilisateurService,
+    private ConnexionUtilisateurInterface $connexionUtilisateurSession,
+    private ConnexionUtilisateurInterface $connexionUtilisateurJWT,
+)
+```
+
+S'il n'y avait eu qu'une seule implémentation de l'interface, le conteneur de services aurait pu la brancher automatiquement, ou vous auriez pu le faire manuellement avec par exemple le code `YAML` suivant :
+```yml
+TheFeed\Lib\ConnexionUtilisateurInterface: '@TheFeed\Lib\ConnexionUtilisateurSession'
+```
+
+Mais il y a deux implémentations, et il faut indiquer quand il faut utiliser l'une et quand il faut utiliser l'autre.
+
+Trois solutions s'offrent à vous :
+* soit vous déclarez à la main toutes les dépendances de `ControleurUtilisateur` dans `conteneur.yml` pour outrepasser l'*autowiring* : 
+  ```yml
+  TheFeed\Controleur\ControleurUtilisateur:
+    public: true
+    arguments: ['@service_container',
+                '@TheFeed\Service\PublicationServiceInterface',
+                '@TheFeed\Service\UtilisateurServiceInterface',
+                '@TheFeed\Lib\ConnexionUtilisateurSession',
+                '@TheFeed\Lib\ConnexionUtilisateurJWT']  
+  ```
+* soit on configure explicitement l'*autowiring* pour certains paramètres du constructeur :
+  ```php
+  use Symfony\Component\DependencyInjection\Attribute\Autowire;
+
+  public function __construct(
+    private ContainerInterface $container,
+    private PublicationServiceInterface $publicationService,
+    private UtilisateurServiceInterface $utilisateurService,
+    #[Autowire('@TheFeed\Lib\ConnexionUtilisateurSession')] private ConnexionUtilisateurInterface $connexionUtilisateurSession,
+    #[Autowire('@TheFeed\Lib\ConnexionUtilisateurJWT')]     private ConnexionUtilisateurInterface $connexionUtilisateurJWT,
+  )
+  ```
+* soit on donne à l'*autowiring* des indications de type **et** de nom de variable dans `conteneur.yml` pour décider du service à brancher : 
+  ```yml
+  # Si le type du paramètre est ConnexionUtilisateurInterface, on branche la connexion par session
+  TheFeed\Lib\ConnexionUtilisateurInterface: '@TheFeed\Lib\ConnexionUtilisateurSession'
+  # Si le type du paramètre est ConnexionUtilisateurInterface et le nom du paramètre est $connexionUtilisateurJWT, 
+  # on branche la connexion par JWT (règle plus prioritaire)
+  TheFeed\Lib\ConnexionUtilisateurInterface $connexionUtilisateurJWT: '@TheFeed\Lib\ConnexionUtilisateurJWT'
+  ```
+
+
 ## Affichage du conteneur (Optionnel)
 
 Si vous êtes curieux d'observer le conteneur compilé, vous pouvez
