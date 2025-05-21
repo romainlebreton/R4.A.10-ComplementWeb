@@ -5,7 +5,11 @@ layout: tutorial
 lang: fr
 ---
 
-Ce tutoriel vous montre comment configurer automatiquement le conteneur de services.
+Ce tutoriel vous montre comment configurer automatiquement le conteneur de
+services. Il faut avoir fini toute la partie "*1. Les problèmes de dépendances*"
+du [TD4]({{site.baseurl}}/tutorials/tutorial_tests_2), c'est-à-dire avoir un
+conteneur de service configuré en `YAML`, pour pouvoir faire cette note
+complémentaire.
 
 ## Explications générales
 
