@@ -11,32 +11,22 @@ Cours *R4.A.10 -- Complément Web* en
 
 **Mots clés :** Composer, API Rest, Tests
 
-
 ## TDs
 
-<!-- ### Mise en place d'une API REST -->
-
-1. Lundi 07 avril 2025 -- [TD 1](tutorials/tutorial1) -- Routage par URL, Composer
-2. Lundi 28 avril 2025 -- [TD 2](tutorials/tutorial2) -- Réponses HTTP, Moteur de template *Twig* 
-3. Lundi 05 mai 2025 -- [TD 3](tutorials/tutorial_tests_1) -- Tests unitaires, Couche Service
-4. Lundi 12 mai 2025 -- [TD 4](tutorials/tutorial_tests_2) -- Conteneur de services, Mock
-4. Lundi 19 mai 2025 -- fin [TD 4](tutorials/tutorial_tests_2) puis [TD 5](tutorials/tutorial3) -- API REST, authentification par JWT
-5. Lundi 26 mai 2025 -- fin [TD 5](tutorials/tutorial3) -- API REST, authentification par JWT
-
-<!-- 
-## SAÉ du Parcours A
-
-1. Mercredi 8 février 2024 -- Amphi de présentation de la SAÉ  
-   [Slides](classes/SAE4A.html)  
-   [Enregistrement du cours](https://scalelite.umontpellier.fr/playback/presentation/2.3/e49b10a7c1ccf0690a9d9fd7621261207c1f81ec-1675846964015)
-2. Lundi 13 mars 2024 -- [TD SAE](tutorials/tutorial_sae_tests_archi) -- Tests unitaires, Architecture, Injection de dépendances
-3. [Fiche d'aide SAÉ : mise en route](https://docs.google.com/document/d/10r3KsMhyRJp3YKPRL6erLP3su77PbnM2_-oE6xxXfVI/edit?usp=sharing)
-   -- PostgreSQL, xDebug, serveur Web local, Windows
-4. Mise-à-jour des [consignes de la SAÉ](tutorials/consignes_SAE) (15 mars 2024)  
--->
+1. Semaine du 26 janvier 2026 :
+   * Première séance : [TD 1](tutorials/tutorial1) -- Routage par URL, Composer
+   * Deuxième séance : [TD 2](tutorials/tutorial2) -- Réponses HTTP, Moteur de template *Twig*
+{% comment %}
+2. Semaine du 02 février 2026 -- [TD 3](tutorials/tutorial_tests_1) -- Tests unitaires, Couche Service
+3. Semaine du 09 février 2026 -- [TD 4](tutorials/tutorial_tests_2) -- Conteneur de services, Mock
+4. Semaine du 16 février 2026 -- fin [TD 4](tutorials/tutorial_tests_2) puis [TD 5](tutorials/tutorial3) -- API REST, authentification par JWT
+5. Semaine du 23 février 2026 -- fin [TD 5](tutorials/tutorial3) -- API REST, authentification par JWT
+{% endcomment %}
 
 ## Notes Complémentaires
 
 1. [Écriture de routes simplifiées (comme dans Symfony)](tutorials/complement_route_attribut)
+{% comment %}
 2. [Configuration automatique des services (comme dans Symfony)](tutorials/complement_autowiring)
 3. [Déboguer pas à pas votre code PHP avec XDebug et PhpStorm](tutorials/complement_xdebug)
+{% endcomment %}

@@ -49,7 +49,7 @@ Joplin cours openclassroom api restful
 L'objectif de ce TD est d'améliorer nos réponses *HTTP* sur plusieurs points : 
 * ajouter un code de réponse HTTP pour indiquer plus clairement l'état du
   serveur. Ceci est indispensable dans l'optique du développement d'une API
-  *REST*, qui est l'objectif principal de ces 3 premiers TPs ;
+  *REST*, qui est le dernier objectif de ces TDs ;
 * pouvoir répondre du *JSON*, ce qui est aussi un des fondamentaux des API
   *REST* ;
 * utiliser un *template engine* (`Twig`), c'est-à-dire à un langage spécifique pour la
@@ -69,6 +69,7 @@ $response = new Response(
     'Corps de la réponse : page Web ou JSON',
     Response::HTTP_OK, // Code 200 OK
     ['content-type' => 'text/html'] // En-tête pour indiquer une réponse HTML
+    //['content-type' => 'application/json'] En-tête pour indiquer une réponse JSON
 );
 ```
 
@@ -131,13 +132,14 @@ Il ne reste plus qu'à créer un objet `Response` à partir de ce corps de répo
    ```
 
 2. Modifier la première action `ControleurPublication::afficherListe()` pour que
-   le fonction renvoie la réponse fournie par `afficherVue()`.
+   la fonction renvoie la réponse fournie par `afficherVue()`. Il faudra changer le
+   type de retour de l'action et ajouter l'import de `Symfony\Component\HttpFoundation\Response`. 
 
 3. Dans `RouteurURL`, récupérer la réponse renvoyée par
-   `call_user_func_array()`, puis appelez une méthode vue plus haut pour
+   `$controleur(...$arguments)`, puis appelez une méthode vue plus haut pour
    l'envoyer au client *HTTP*.
 
-4. Testez l'URL `web/` qui renvoie vers l'action `afficherListe()`. Cela doit marcher.
+4. Testez l'URL `web/` ou `web/publications` qui renvoie vers l'action `afficherListe()`. Cela doit marcher.
 
    Une fois que nous aurons mis à jour notre système de **redirection** (prochaine étape), 
    nous pourrons mettre à jour toutes les **actions** afin qu'elles renvoient un objet 
@@ -151,17 +153,21 @@ Le composant `HttpFoundation` de `Symfony` fournit aussi la classe
 `RedirectResponse` qui hérite de `Response`. Cette classe permet de bénéficier
 automatiquement d'une redirection plus professionnelle. 
 
-En effet, si vous ouvrez son code source `vendor/symfony/http-foundation/Response.php` dans votre IDE, vous verrez qu'en plus de mettre en place un en-tête `Location :` comme nous le faisions, elle écrit la balise suivante (voir la méthode `setTargetUrl()`)
+En effet, si vous ouvrez son code source `vendor/symfony/http-foundation/RedirectResponse.php` dans votre IDE, vous verrez qu'en plus de mettre en place un en-tête `Location :` comme nous le faisions, elle écrit la balise suivante (voir la méthode `setTargetUrl()`)
 ```html
 <meta http-equiv="refresh" content="0;url=url_de_redirection" />
 ```
-Ceci permet une meilleure compatibilité avec différents navigateurs. En effet,
+Ceci permet une meilleure compatibilité avec différents navigateurs.
+
+<!--
+En effet,
 l'en-tête `Location :` n'est pas 
 [complètement supportée (59% des navigateurs)](https://caniuse.com/mdn-http_headers_location) (cliquez sur le bouton
 `Usage relative` pour améliorer l'affichage du site
 [caniuse.com](https://caniuse.com/)). Au contraire, la balise 
 `<meta http-equiv="refresh" />` est 
 [supportée par 97% des navigateurs actuellement](https://caniuse.com/mdn-html_elements_meta_http-equiv_refresh).
+-->
 
 De plus, `RedirectResponse` associe automatiquement le code de réponse `302
 Found` qui indique une redirection temporaire. Profitons-en pour remarquer que
@@ -186,10 +192,10 @@ $response = new RedirectResponse($url);
 1. Modifier le code de `ControleurGenerique::rediriger()` pour renvoyer une
    nouvelle `RedirectResponse` vers l'URL absolue qui vient d'être générée. 
 
-2. Dans toutes les **actions**, mettez à jour le code pour que l'action :
+2. Dans toutes les **actions** des contrôleurs, mettez à jour le code pour que l'action :
    * Définisse `Response` comme le type de retour de sa méthode.
-   * Renvoie la réponse fournie par `ControleurGenerique::rediriger()`.
-   * Renvoie la réponse fournie par `ControleurGenerique::afficherVue()` (cela fonctionne, car `RedirectResponse` étend `Response`).
+   * Renvoie la réponse fournie par `ControleurGenerique::afficherVue()`.
+   * Renvoie la réponse fournie par `ControleurGenerique::rediriger()` (cela fonctionne, car `RedirectResponse` étend `Response`).
 
 3. Testez votre site qui doit remarcher complètement.
 
@@ -316,7 +322,7 @@ Voici quelques codes de réponse *HTTP* utiles :
       $resolveurDArguments = new ArgumentResolver();
       $arguments = $resolveurDArguments->getArguments($requete, $controleur);
 
-      $reponse = call_user_func_array($controleur, $arguments);
+      $reponse = $controleur(...$arguments);
    } catch (TypeExceptionSpecifique1 $exception) {
       // Remplacez xxx par le bon code d'erreur
       $reponse = ControleurGenerique::afficherErreur($exception->getMessage(), xxx);
@@ -331,7 +337,7 @@ Voici quelques codes de réponse *HTTP* utiles :
 
    **Attention** : en remplaçant votre code par celui ci-dessus, assurez-vous de ne
    pas accidentellement supprimer les deux services ajoutés dans notre **conteneur**
-   maison (`generateurUrl` et `assistantUrl`).
+   maison (`generateurUrl` et `assistantUrl`) ou autre chose.
 
 3. Testez votre code en appelant une route qui n'existe pas. Observez le message
    d'erreur, ainsi que le code de retour avec les outils de développement,
@@ -347,8 +353,9 @@ Voici quelques codes de réponse *HTTP* utiles :
    des outils de développement.
 
 5. Modifiez, le temps de cette question, votre code pour que l'action `afficherListe()`
-   prenne un argument quelconque. Appelez l'URL `web/`. Observez le message
-   d'erreur et le code de retour avec les outils de développement.
+   prenne un argument quelconque. Appelez l'URL `web/`. Tentez d'accèder à la liste des 
+   publications puis observez le message d'erreur et le code de retour avec les outils 
+   de développement.
 
 </div>
 
@@ -407,11 +414,6 @@ Sources :
 * [Blog de Fabien Potentier (fondateur de *Symfony*) sur la naissance de *Twig*](http://fabien.potencier.org/templating-engines-in-php.html)
 * [Documentation officielle de *Twig*](https://twig.symfony.com/doc/3.x/)
 
-
-
-
-
-
 ### Initialisation de *Twig*
 
 <!-- 
@@ -422,12 +424,13 @@ SRP de RouteurURL loupé :
 
 <div class="exercise">
 
-1. Installez le paquet *Twig* (dans le dossier du projet, dans votre conteneur docker) avec la commande
+1. Installez le paquet *Twig* en exécutant la commande suivante dans le terminal docker 
+ouvert au niveau de la racine de votre projet (`cd ./ComplementWeb/TheFeed`) :
    ```bash
    composer require twig/twig
    ```
 
-2. Initialisez *Twig* dans `RouteurURL.php`. : 
+2. Initialisez *Twig* dans `RouteurURL.php` (avant votre bloc `try/catch`) : 
    ```php
    use Twig\Environment;
    use Twig\Loader\FilesystemLoader;
@@ -457,6 +460,8 @@ SRP de RouteurURL loupé :
 3. Dans le `ControleurGenerique`, créez une nouvelle méthode `afficherTwig` : 
 
     ```php
+   use Twig\Environment;
+
     protected static function afficherTwig(string $cheminVue, array $parametres = []): Response
     {
         /** @var Environment $twig */
@@ -559,14 +564,20 @@ remplacer le contenu d'un bloc en le redéfinissant.
 
 <div class="exercise">
 
-1. Créez les vues `src/vue/base.html.twig` et `src/vue/utilisateur/connexion.html.twig` comme précédemment.
-1. Changer la méthode `afficherFormulaireConnexion` du `ControleurUtilisateur`
-   pour appeler cette vue à l'aide de `afficherTwig`.
-  
-   *Rappel :* Le chemin de la vue est relatif au dossier `src/vue/` que nous
-   avions donné à `FilesystemLoader`.
+1. Créez les vues `src/vue/base.html.twig` et `src/vue/utilisateur/connexion.html.twig` 
+avec le code présenté précédemment (n'essayez de remplir les bouts de code incomplets pour le moment).
+Prenez le temps de lire et comprendre ces fichiers, n'hésitez pas à poser des questions si besoin,
+s'il y a des choses que vous avez du mal à comprendre.
 
-1. L'URL `web/connexion` doit afficher le formulaire de connexion, mais sans CSS.
+2. Changer la méthode `afficherFormulaireConnexion` du `ControleurUtilisateur`
+   pour appeler cette vue à l'aide de `afficherTwig`. Il n'y a pas de paramètres supplémentaires à
+   passer à la vue pour l'instant, vous pouvez donc ne pas préciser de tableau en second argument.
+  
+   *Rappel :* Le chemin de la vue est **relatif** au dossier `src/vue/` que nous
+   avions donné à `FilesystemLoader`. On spécifie donc le sous-chemin comme
+   si on était déjà dans le dossier `src/vue/`.
+
+3. L'URL `web/connexion` doit afficher le formulaire de connexion, mais sans CSS.
 
 </div>
 
@@ -620,6 +631,18 @@ remplacer le contenu d'un bloc en le redéfinissant.
   {% endif %}
   ```
 
+* On peut bien sûr utiliser else, elsif, etc :
+
+  ```twig
+  {% if condition1  %}
+  Code HTML....
+  {% elseif condition2 %}
+  Code HTML....
+  {% else %}
+  Code HTML....
+  {% endif %}
+  ```
+
 * La structure répétitive `for` permet de parcourir une structure itérative (par exemple, un tableau) :
 
   ```twig
@@ -658,7 +681,8 @@ remplacer le contenu d'un bloc en le redéfinissant.
 
 <div class="exercise">
 
-1. Créez une nouvelle vue `src/vue/publication/feed.html.twig` avec le contenu suivant : 
+1. Créez une nouvelle vue `src/vue/publication/feed.html.twig` avec le contenu suivant 
+(n'essayez de remplir les bouts de code incomplets pour le moment) : 
 
    ```twig
    {% extends "base.html.twig" %}
@@ -685,7 +709,7 @@ remplacer le contenu d'un bloc en le redéfinissant.
                {# boucle sur les publications #}
                   <div class="feedy">
                      <div class="feedy-header">
-                           <a href="{# lien vers la route liée à l'action afficherPublications #}">
+                           <a href="{# lien vers la route paramétrée liée à l'action afficherPublications #}">
                               <img class="avatar"
                                     src="{# lien vers l'image de profil de l'auteur de la publication #}"
                                     alt="avatar de l'utilisateur">
@@ -709,11 +733,11 @@ remplacer le contenu d'un bloc en le redéfinissant.
    `ControleurUtilisateur::afficherPublications()` pour appeler cette vue, en
    fournissant en paramètre le tableau des publications.
 
-   **Remarques** : nous n'avons plus besoin des paramètres `cheminVueBody` et `pagetitle`.
-   En effet, le chemin de la vue est donné comme premier paramètre de `afficherTwig` et
-   le titre de la page est définie dans le template. Concernant l'action
-   `afficherPublications`, pour le moment, nous n'afficherons plus un titre de page
-   contenant le login de l'utilisateur (vous ne devez donc pas passer le login 
+   **Remarques** : nous n'avons plus besoin des paramètres `cheminVueBody` et `pagetitle` 
+   que nous passions à toutes nos vues, auparavant. En effet, le chemin de la vue est donné 
+   comme premier paramètre de `afficherTwig` et le titre de la page est définie dans le template. 
+   Concernant l'action `afficherPublications`, pour le moment, nous n'afficherons plus un titre 
+   de page contenant le login de l'utilisateur (vous ne devez donc pas passer le login 
    en paramètre de la vue). Pour l'instant, nous allons utiliser la même vue pour la liste 
    des publications générale et celles spécifiques à un utilisateur. Vous pourrez 
    éventuellement rétablir le rendu d'origine dans un **exercice bonus** à la fin du TD.
@@ -723,7 +747,9 @@ remplacer le contenu d'un bloc en le redéfinissant.
    * Vous gèrerez le cas particulier quand il n'y a pas de publication.
    
    *Note :* la gestion de la date sera faite lors du prochain exercice, les liens et la gestion de l'utilisateur 
-   connecté seront fait plus tard. 
+   connecté seront fait plus tard.
+
+4. Accédez à la route `web/publications` et vérifiez que cela fonctionne (le CSS est toujours casé, c'est normal).
 
 </div>
 
@@ -783,8 +809,8 @@ use Twig\TwigFunction;
 $twig->addFunction(new TwigFunction("route", $callable));
 ```
 où `$callable` est une variable au 
-[format `callable`](https://www.php.net/manual/en/language.types.callable.php#example-71) 
-(comme avec `call_user_func()` au TD1).
+[format `callable`](https://www.php.net/manual/en/language.types.callable.php#example-71).
+
 Pour exemple, pour donner la méthode d'un objet, on peut utiliser la syntaxe
 ```php
 $callable = [$objet, "nomMethode"];
@@ -810,6 +836,8 @@ La fonction est alors disponible dans *Twig*, par exemple comme ceci :
 2. Utilisez ces fonctions dans toutes vos vues *Twig* pour réparer tous les
    liens (CSS, menu, action du formulaire, images de profil), sauf le lien 
    "Ma Page" du menu de navigation vers la route paramétrée de l'utilisateur connecté.
+   Vous ne pouvez pas encore gérer la condition pour vérifier si l'utilisateur 
+   est connecté ou non.
 
    *Aide* :
    * On rappelle que le chemin donné dans `getAbsoluteUrl` est relatif au dossier
@@ -823,7 +851,7 @@ La fonction est alors disponible dans *Twig*, par exemple comme ceci :
    `$generateurUrl->generate()` qui attend un tableau associatif comme deuxième
    argument. Avec *Twig*, les tableaux associatifs se créent avec la syntaxe JSON
    ```twig
-   {'nomCle' : 'valeur'}
+   {'nomCle' : valeur}
    ```
    * pour l'*asset* correspondant à la photo de profil, vous aurez besoin de
      concaténer des chaînes de caractères avec `~` en *Twig*.
@@ -846,13 +874,15 @@ $twig->addGlobal('nomVariableTwig', $variablePHP);
    l'utilisateur n'est pas connecté.
 
 2. Mettez à jour `base.html.twig` et `publication/feed.html.twig` pour prendre
-   en compte si l'utilisateur est connecté au niveau de l'interface.
+   en compte si l'utilisateur est connecté au niveau de l'interface. Il faudra
+   notamment réparer le lien "Ma page" (qui affiche les publications de l'utilisateur 
+   connecté).
 
    *Aide :* Pour tester si un objet n'est pas `null`, vous pouvez faire
    ```twig
    {% if objectVariable is not null %}
    ```
-   ou 
+   ou plus simplement
    ```twig
    {% if objectVariable %}
    ```
@@ -866,7 +896,8 @@ Pour rajouter les messages Flash, nous pourrions être tentés de faire
 $twig->addGlobal('messagesFlash', MessageFlash::lireTousMessages());
 ```
 dans `RouteurURL`. Cependant, nous aimerions que les messages *Flash* soient lus
-au moment de l'évaluation des vues, et non pas au début du script PHP. Du coup,
+au moment de l'évaluation des vues, et non pas au début du script PHP 
+(autrement, les messages flashs ne s'afficheraient qu'à la requête suivante). Du coup,
 nous proposons de stocker une instance de `MessageFlash` : 
 ```php
 $twig->addGlobal('messagesFlash', new MessageFlash());
@@ -912,24 +943,26 @@ et d'appeler la méthode `lireMessages()` dans la vue *Twig* avec `messagesFlash
 3. Créez la vue manquante `src/vue/utilisateur/inscription.html.twig` :
    * Cette vue étend `base.html.twig`.
    * Le titre de la page doit être "Inscription".
-   * Son contenu reprend le contenu de l'ancienne vue `formulaireCreation.php`. Cependant, ne
-   conservez pas les attributs `value` des champs qui correspondent au login et à l'adresse email
-   (qui permettaient de garder en mémoire la dernière valeur saisie en cas d'erreur).
+   * Son contenu reprend le contenu de l'ancienne vue `formulaireCreation.php`.
    * Changez l'action `ControleurUtilisateur::afficherFormulaireCreation()` pour appeler cette vue.
 
 4. Il ne reste plus qu'à gérer la vue d'erreur, qui est appelée en cas d'exception : 
-   * Créez une vue d'erreur `src/vue/erreur.html.twig` qui étend `base.html.twig` 
-   et affiche une variable `messageErreur` qui lui sera donné en paramètre.
+   * Créez une vue d'erreur `src/vue/erreur.html.twig` qui étend `base.html.twig`, 
+   qui a "Problème" comme titre de page et qui affiche une variable `messageErreur` 
+   qui lui sera donné en paramètre.
    * Modifiez la méthode `ControleurGenerique::afficherErreur()` pour appeler
      cette vue.
    * Testez si la vue d'erreur fonctionne en demandant par exemple une route inconnue.
 
 5. Puisque `$assistantUrl` n'est plus utilisé que dans *Twig*, vous pouvez
-   supprimer son ajout au conteneur dans `RouteurURL.php`, et sa récupération
-   (notamment dans `vueGenerale.php`).
+   supprimer son ajout au conteneur dans `RouteurURL.php`.
+
+6. À ce stade, vous ne devez plus avoir aucun appel à `ControleurGeneirque::afficherVue` (vérifiez). 
+Vous pouvez donc maintenant supprimer cette méthode ainsi que toutes vos anciennes vues codées en PHP !
+
 </div>
 
-## Bonus : pour le projet ?
+## Bonus : pour la SAE ?
 
 ### Approche par composants
 
@@ -958,7 +991,7 @@ L'instruction pour inclure un template est la suivante :
 {{ include(cheminTemplate, {'param1' : ..., 'param2' : ... }) }}
 ```
 
-* `cheminTemplate` : correspond au chemin du template à partir de la racine : le dossier `templates` (comme on étend un template, ou qu'on l'utilise dans un contrôleur...)
+* `cheminTemplate` : correspond au chemin du template à partir de la racine : dans notre cas, le dossier `src/vue`.
 
 * Le second paramètre est optionnel et permet de passer des paramètres utilisables par le template inclus.
 
@@ -992,13 +1025,13 @@ Il est d'ailleurs tout à fait possible que ce template "étende" un autre templ
 
 <div class="exercise">
 
-1. Créez un template `publication.html.twig` dans un nouveau dossier `src/vue/vues/publications/composants` contenant le code affichant une publication (vous pouvez rependre la code concerné depuis `feed.html.twig`, par exemple).
+1. Créez un template `publication.html.twig` dans un nouveau dossier `src/vue/publication/composant` contenant le code affichant une publication (vous pouvez rependre la code concerné depuis `feed.html.twig`, par exemple).
 
 2. Dans `src/vue/publication/feed.html.twig` remplacez le code contenu dans votre boucle affichant chaque publication en incluant votre nouveau template à la place. Il faudra passer chaque publication traitée en paramètre.
 
 3. Vérifiez que tout s'affiche toujours normalement sur la page principale.
 
-4. Créez et complétez la vue `page_perso.html` dans `src/vues/utilisateur` :
+4. Créez et complétez la vue `page_perso.html.twig` dans `src/vue/utilisateur` :
 
    ```twig
    {% extends "base.html.twig" %}
@@ -1007,11 +1040,13 @@ Il est d'ailleurs tout à fait possible que ce template "étende" un autre templ
 
    {% block page_content %}
       <main id="the-feed-main">
-         {# Boucle et affichage de chaque publication avec le template ici #}
+         <div id="feed">
+            {# Boucle et affichage de chaque publication avec le template ici #}
+         </div>
       </main>
    {% endblock %}
    ```
-5. Adaptez l'action `afficherPublications` en indiquant la nouvelle vue et en passant le login de l'utilisateur correspondant en paramètre du template.
+5. Adaptez l'action `afficherPublications` en indiquant la nouvelle vue et en passant le login de l'utilisateur correspondant en paramètre du template, en plus de ses publications.
 
 6. Vérifiez que tout fonctionne encore.
 
@@ -1021,7 +1056,7 @@ On pourrait aller plus loin et avoir un template `liste_publications.html.twig` 
 
 <div class="exercise">
 
-1. Si le temps le permet, définissez un nouveau template `liste_publications.html.twig` dans `src/vue/vues/publications/composants` utilisant le template `publication.html.twig`. Ce template gérera l'affichage de chaque publication et le cas où il n'y en a aucune.
+1. Si le temps le permet, définissez et complétez un nouveau template `liste_publications.html.twig` dans `src/vue/publication/composant` utilisant le template `publication/composant/publication.html.twig`. Ce template gérera l'affichage de chaque publication et le cas où il n'y en a aucune.
 
 2. Mettez à jour le code des vues `feed.html.twig` et `page_perso.html` afin d'utiliser ce nouveau template et vérifiez que tout marche toujours comme attendu.
 
@@ -1130,6 +1165,5 @@ https://symfony.com/doc/current/reference/twig_reference.html
 * path
 * url / absolute_url (équivalent de notre route) 
 -->
-
 
 {% endraw %}

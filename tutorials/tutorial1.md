@@ -67,10 +67,8 @@ Session -> flashBag !
 Regarder les notes sous Joplin (lecture livres)
 
 -->
-
-
-Dans les 3 premiers TDs, nous allons développer une API REST en PHP. Afin de
-pouvoir se concentrer sur l'apprentissage des nouvelles notions, nous allons
+Au travers des 5 TDs de ce cours, nous allons développer une API REST en PHP. 
+Afin de pouvoir se concentrer sur l'apprentissage des nouvelles notions, nous allons
 partir du code existant d'un site Web de type **réseau social** appelé '**The
 Feed**'. Ce site contiendra un fil principal de publications et un système de
 connexion d'utilisateur.
@@ -96,7 +94,6 @@ machine a gardé sa configuration du semestre 3, suivez les instructions de
 l'exercice 2 suivant (sautez l'exercice 1). Si vous devez installer Docker,
 suivez les instructions des exercices 1 et 2 suivants.
 
-
 <div class="exercise">
 **Installer Docker**
 
@@ -105,9 +102,7 @@ Docker](https://gitlabinfo.iutmontp.univ-montp2.fr/Enseignants-Web/docker/-/blob
 et faites le tutoriel d’installation et de configuration qui se trouve dans la
 partie *Tutoriel > Premier contact*. Vous ne devez normalement pas y passer plus
 de 30 minutes.
-
 </div>
-
 
 <div class="exercise">
 **Lancer votre serveur Web Docker**
@@ -125,42 +120,34 @@ dans le dossier `public_html` de la machine hôte en naviguant à partir de l'UR
 
 <div class="exercise">
 
-1. Dupliquez (*fork*) vous-même [ce dépôt
-   GitLab](https://gitlabinfo.iutmontp.univ-montp2.fr/r4.a.10-complementweb/TD1)
-   dans votre espace de nom (= votre login IUT). Cette opération est nécessaire pour que vous
-   puissiez pousser vos modifications sur *GitLab*.
+1. Rendez-vous dans [cet espace](https://gitlabinfo.iutmontp.univ-montp2.fr/r4.a.10-complementweb/etu) et 
+trouvez le fork du dépôt `TheFeed` déjà cloné dans un sous-groupe portant votre nom.
 
-2. Clonez votre dépôt *Git* dupliqué dans un répertoire
-   `public-html/ComplementWeb/TD1` pour pouvoir y accéder via votre conteneur *Docker*.
+2. Sur votre ordinateur, dans le dossier partagé `public_html` utilisé par votre conteneur docker, créez un
+nouveau répertoire `ComplementWeb` et clonez le dépôt *Git* `TheFeed` dans ce nouveau répertoire.
 
-3. Dans votre conteneur, déplacez-vous à la racine de ce nouveau répertoire.
+3. Sur l'interface de **Docker Desktop**, cliquez sur votre conteneur puis sur l'onglet **Exec**. Un
+terminal est alors affiché. Gardez ce terminal ouvert pour le reste du TD, vous allez être amené à y
+exécuter plusieurs commandes. Pour une utilisation plus confortable de ce terminal, vous pouvez exécuter 
+la commande `bash`.
 
-4. Il faut donner les droits en lecture / exécution à Apache (utilisateur
-   `www-data`).
-   ```bash
-   setfacl -R -m u:www-data:r-x .
-   ```
-   
-   Comme le site enregistre une photo de profil pour chaque
-   utilisateur, il faut donner les droits en écriture sur le dossier
-   `ressources/img/utilisateurs/`.
-   ```bash
-   setfacl -R -m u:www-data:rwx ./ressources/img/utilisateurs
-   ```
+4. Dans le terminal de votre conteneur, déplacez-vous à la racine du projet, donc dans 
+le répertoire `./ComplementWeb/TheFeed`.
 
-   Dans votre conteneur **Docker**, exécutez aussi les instructions suivantes :
+5. Il faut donner les droits en lecture / exécution à Apache (utilisateur
+   `www-data`). Dans le terminal de votre conteneur **Docker**, exécutez les instructions suivantes :
    ```bash
    chown -R root:www-data .
    chmod g+w ./ressources/img/utilisateurs/
    ```
 
-5. Importez les tables `utilisateurs` et `publications` dans votre base de
+6. Importez les tables `utilisateurs` et `publications` dans votre base de
    données SQL préférée : 
-   * Pour *MySQL*, vous devez : 
+   * Pour *MySQL* via [phpMyAdmin](https://webinfo.iutmontp.univ-montp2.fr/my/), vous devez : 
      * exécuter le [script d'import MySQL]({{site.baseurl}}/assets/TD1/theFeedTD1DepartMySQL.sql),
      * mettre à jour le fichier de configuration `src/Configuration/ConfigurationBDDMySQL.php` 
        avec votre login et mot de passe.
-   * Pour *PostgreSQL*, vous devez : 
+   * Si vous souhaitez plutôt utiliser la base de données *PostgreSQL* fournie par le département, vous devez : 
      * exécuter le [script d'import PostgreSQL]({{site.baseurl}}/assets/TD1/theFeedTD1DepartPostgreSQL.sql),
      * mettre à jour le fichier de configuration `src/Configuration/ConfigurationBDDPostgreSQL.php` 
        avec votre login et mot de passe,
@@ -173,15 +160,12 @@ dans le dossier `public_html` de la machine hôte en naviguant à partir de l'UR
        identifiants (sauf s'ils sont entourés de guillemets doubles `"`, auquel
        car il faudra toujours y faire référence avec des guillemets doubles).
 
-6. Pour plus de confort, vous pouvez éventuellement augmenter la durée de session 
-d'un utilisateur en augmentant la valeur retournée dans la méthode `getDureeExpirationSession` 
-de la classe `src/Configuration/Configuration.php` (actuellement réglée sur 120 secondes).
+7. Tentez d'accéder au site. L'URL devrait être [http://localhost/ComplementWeb/TheFeed/web/controleurFrontal.php](http://localhost/ComplementWeb/TheFeed/web/controleurFrontal.php).
 
-7. Créez un nouvel utilisateur et une nouvelle publication.  
-   *Souvenez-vous* bien de votre identifiant et mot de passe car nous nous en
-   resservirons. 
+8. Créez un nouvel utilisateur via la page d'inscription, connectez-vous et créez une nouvelle publication.  
+   *Souvenez-vous* bien de votre identifiant et mot de passe car nous nous en resservirons.* 
 
-8. Faites marcher le site. Explorez toutes les pages.
+9. Faites marcher le site. Explorez toutes les pages. Enfin, déconnectez-vous.
  
 </div>
 
@@ -196,7 +180,13 @@ va devenir `web/publications`. Et la route
 ```
 web/controleurFrontal.php?controleur=utilisateur&action=afficherFormulaireConnexion
 ```
-deviendra `web/connexion`. 
+deviendra `web/connexion`.
+
+Certaines routes paramétrées seront aussi adaptées. Par exemple, la route
+```
+web/controleurFrontal.php?controleur=utilisateur&action=afficherListePublications&idUtilisateur=1
+```
+va devenir `web/utilisateurs/1/publications`.
 
 Pour ceci, nous allons utiliser une bibliothèque PHP existante, et donc un
 gestionnaire de bibliothèques : `Composer`.
@@ -217,7 +207,7 @@ Commençons donc par remplacer notre *autoloader* `Psr4AutoloaderClass.php` par 
 
 <div class="exercise">
 
-1. Créer un fichier `composer.json` à la racine du site Web avec le contenu suivant
+1. Créer un fichier `composer.json` à la racine du votre dossier `TheFeed` avec le contenu suivant
 
    ```json
    {
@@ -228,18 +218,21 @@ Commençons donc par remplacer notre *autoloader* `Psr4AutoloaderClass.php` par 
       }
    }
    ```
-2. Si vous modifiez le fichier `composer.json`, par exemple pour mettre à jour
-   vos dépendances, vous devez exécuter la commande :
+2. Afin d'installer toutes les dépendances listées dans le fichier `composer.json`, il faut
+   exécuter la commande :
+   ```bash
+   composer install
+   ```
+
+   Dans notre cas, cela va nous permettre d'installer **l'autoloader**.
+
+   Toujours dans votre terminal, à la racine de votre projet, sur docker, exécutez cette commande.
+
+   Dans le futur, si vous modifiez le fichier `composer.json` (par exemple pour mettre à jour
+   vos dépendances) vous devez exécuter la commande :
    ```bash
    composer update
    ```
-
-   **Aide :** Pour ceux qui sont sur leur machine personnelle, vous devrez
-   installer `composer` sur votre machine. Aller voir la [documentation de
-   `composer`](https://getcomposer.org/doc/00-intro.md#installation-linux-unix-macos)
-   à cet effet. Pour Linux, il suffit d'installer un paquet. Pour Windows avec
-   *XAMPP*, [l'installateur Windows](https://getcomposer.org/doc/00-intro.md#using-the-installer)
-   marche très bien.
 
 2. Quand on installe une application ou un nouveau composant, `composer` place
    les librairies téléchargées dans un dossier `vendor`. Il n'est pas nécessaire
@@ -248,8 +241,6 @@ Commençons donc par remplacer notre *autoloader* `Psr4AutoloaderClass.php` par 
    à *Git* d'ignorer son fichier de configuration interne `/composer.lock`.
 
 3. Modifiez le fichier `web/controleurFrontal.php` comme suit :
-
-
 
    ```diff
    -use TheFeed\Lib\Psr4AutoloaderClass;
@@ -265,8 +256,9 @@ Commençons donc par remplacer notre *autoloader* `Psr4AutoloaderClass.php` par 
    ```
    **Aide :** Ce format montre une modification de fichier, similaire à la
    sortie de `git diff`. Les lignes qui commencent par des `+` sont à ajouter, et les lignes avec des `-` à supprimer.
-4. Testez votre site qui doit marcher normalement.
-   
+
+4. Testez votre site qui doit marcher normalement. Si tout est bon, vous pouvez alors supprimer notre 
+ancien **autoloader** : `Lib\Psr4AutoloaderClass.php`. 
 </div>
 
 ### Archivage du routeur par *query string*
@@ -275,10 +267,20 @@ Nous allons déplacer le code de routage actuel dans une classe séparée, dans 
 
 <div class="exercise">
 
-1. Dans le fichier `web/controleurFrontal.php`, faites le changement suivant.
-   Toutes les lignes supprimées de ce fichier doivent être déplacées dans la
-   méthode statique `traiterRequete` d'une nouvelle classe
-   `src/Controleur/RouteurQueryString.php`. 
+1. Créez une nouvelle classe `src/Controleur/RouteurQueryString.php` contenant une méthode statique `traiterRequete`, vide pour le moment:
+
+   ```php
+   <?php
+   namespace TheFeed\Controleur;
+
+   class RouteurQueryString
+   {
+      public static function traiterRequete() : void { }
+   }
+   ```
+
+2. Dans le fichier `web/controleurFrontal.php`, faites le changement suivant.
+   Toutes les lignes supprimées de ce fichier doivent être déplacées dans la méthode statique `traiterRequete` de `src/Controleur/RouteurQueryString.php`.
 
    ```diff
    -// Syntaxe alternative
@@ -304,12 +306,11 @@ Nous allons déplacer le code de routage actuel dans une classe séparée, dans 
    +\TheFeed\Controleur\RouteurQueryString::traiterRequete();
    ```
 
-2. Testez votre site qui doit marcher normalement.
+2. Testez votre site qui doit toujours marcher normalement.
 
 </div>
 
 ## Nouveau routeur par Url
-
 
 <div class="exercise">
 
@@ -322,7 +323,7 @@ Nous allons déplacer le code de routage actuel dans une classe séparée, dans 
 
    class RouteurURL
    {
-      public static function traiterRequete() { }
+      public static function traiterRequete() : void { }
    }
    ```
 
@@ -365,17 +366,15 @@ HTTP seront abordées dans le TD2.
 
 <div class="exercise">
 
-1. Exécutez la commande suivante dans le terminal ouvert au niveau de la racine
-   de votre site web 
+1. Exécutez la commande suivante dans le terminal docker ouvert au niveau de la racine
+   de votre projet :
 
    ```bash
    composer require symfony/http-foundation
    ```
 
-   **Remarque :** Certaines dépendances de *Symfony* nécessite une version de
-     PHP `> 8.1`. Si vous n'avez pas cette version sur votre machine
-     personnelle, vous pouvez peut-être demander une version plus ancienne de
-     cette dépendance.  
+   À l'issue de l'exécution de cette commande, un nouveau composant est ajouté au répertoire
+   `vendor`.
 
 </div>
 
@@ -385,17 +384,24 @@ web/controleurFrontal.php/publications
 web/controleurFrontal.php/connexion
 web/controleurFrontal.php/utilisateurs/2/publications
 ```
-La classe `Request` sera intéressante notamment car elle permet de récupérer la
+La classe `Request` sera intéressante, notamment car elle permet de récupérer la
 partie du chemin qui nous intéresse : `/publications`, `/connexion` ou `/utilisateurs/2/publications`.  
 
+Dans la plupart des exercices qui vont suivre, nous allons utiliser des classes qui proviennent des
+composants installés grâce à composer. Il faudra donc souvent utiliser la directive `use` afin
+d'importer ces classes et pouvoir l'utiliser dans la classe courante. Dans le code donné, nous
+vous indiquons les imports à faire. Il faudra systématiquement placer ces imports tout en haut de la classe,
+juste après la directive `namespace`.
 
 <div class="exercise">
 
 1. Dans `RouteurURL::traiterRequete()`, initialisez l'instance suivante de la
    classe `Requete`
    ```php
+   //A placer en haut de la classe, après "namepsace"
    use Symfony\Component\HttpFoundation\Request;
 
+   //A ajouter dans traiterRequete
    $requete = Request::createFromGlobals();
    ```
    **Explication :** La méthode `createFromGlobals()` récupère les informations de la requête depuis les variables globales `$_GET`, `$_POST`, ... Elle est à peu près équivalente à  
@@ -406,8 +412,12 @@ partie du chemin qui nous intéresse : `/publications`, `/connexion` ou `/utilis
 2. La méthode `$requete->getPathInfo()` permet d'accéder au bout d'URL qui nous
    intéresse (`/publications`, `/connexion` ou `/inscription`).
  
-   **Affichez** cette variable dans `RouteurURL::traiterRequete()` et accédez
-   aux URL précédentes pour voir le chemin s'afficher. 
+   **Affichez** temporairement le contenu de `$requete->getPathInfo()` dans `RouteurURL::traiterRequete()` 
+   (par exemple avec `var_dump`) et accédez aux URL précédentes pour voir le chemin s'afficher.
+
+   Par exemple, tentez d'accéder à [http://localhost/ComplementWeb/TheFeed/web/controleurFrontal.php/publications](http://localhost/ComplementWeb/TheFeed/web/controleurFrontal.php/publications).
+
+   Une fois que vous avez terminé, vous pouvez cesser d'afficher le chemin.
 
 </div>
 
@@ -422,8 +432,8 @@ ex. `/publications` ou `/connexion`) et une action, c'est-à-dire une fonction P
 
 <div class="exercise">
 
-1. Exécutez la commande suivante dans le terminal ouvert au niveau de la racine
-   de votre site web 
+1. Exécutez la commande suivante dans le terminal docker ouvert au niveau de la racine
+   de votre projet :
    ```bash
    composer require symfony/routing
    ```
@@ -432,11 +442,14 @@ ex. `/publications` ou `/connexion`) et une action, c'est-à-dire une fonction P
    `RouteurURL::traiterRequete()` : 
 
    ```php
+   //A placer en haut de la classe, après "namespace", avec les autres "use"
+
    use Symfony\Component\Routing\Route;
    use Symfony\Component\Routing\RouteCollection;
 
-   $routes = new RouteCollection();
+   //A placer à la suite, dans traiterRequete
 
+   $routes = new RouteCollection();
    // Route afficherListe
    $route = new Route(
       path: "/publications", 
@@ -448,7 +461,10 @@ ex. `/publications` ou `/connexion`) et une action, c'est-à-dire une fonction P
    ```
    **Explication :** Une nouvelle `Route $route` associe au chemin (paramètre `path`) `/publications` la
    méthode `afficherListe()` de `ControleurPublication` (paramètre `defaults`). Puis cette route est ajoutée
-   dans l'ensemble de toutes les routes `RouteCollection $routes`.
+   dans l'ensemble de toutes les routes `RouteCollection $routes` sous le nom (unique) `afficherListe`. À noter
+   que le nom donné à la route n'a pas besoin d'être le nom de la fonction visée, cela peut être ce que l'on veut.
+
+   Le **nom** associé à la route est important et nous sera assez utile un peu plus loin dans le TD.
 
    On peut éventuellement simplifier en créant directement une instance de `Route` dans l'appel à `$routes->add` :
 
@@ -461,7 +477,6 @@ ex. `/publications` ou `/connexion`) et une action, c'est-à-dire une fonction P
    )); 
    ```
 
-
 3. Les informations de la requête essentielles pour le routage (méthode `GET` ou
    `POST`, *query string*, paramètres *POST*, ...) sont extraites dans un objet
    séparé : 
@@ -470,7 +485,8 @@ ex. `/publications` ou `/connexion`) et une action, c'est-à-dire une fonction P
 
    $contexteRequete = (new RequestContext())->fromRequest($requete);
    ```
-   **Ajoutez** cette ligne et affichez temporairement son contenu.
+   **Ajoutez** cette ligne (toujours dans `RouteurURL::traiterRequete()`) et 
+   affichez temporairement son contenu (avec `var_dump`).
 
 4. Nous pouvons alors rechercher quelle route correspond au chemin de la requête
    courante : 
@@ -490,8 +506,8 @@ ex. `/publications` ou `/connexion`) et une action, c'est-à-dire une fonction P
    `$donneesRoute["_controller"]`.
 
 6. Votre site doit désormais répondre correctement à une requête à l'URL
-   `web/controleurFrontal.php/publications`, sauf les liens vers le CSS et les
-   photos qui deviennent invalides.
+   `web/controleurFrontal.php/publications` (vérifiez), sauf les liens vers 
+   le CSS et les photos qui deviennent invalides.
 
 </div>
 
@@ -549,24 +565,20 @@ Passons à notre deuxième route : `/connexion`.
 Nous allons régler ce problème en changeant l'URL de nos pages de
 `web/controleurFrontal.php/connexion` vers une URL plus classique
 `web/connexion`. Pour ceci, nous allons configurer *Apache* pour rediriger la
-requête `web/connexion` vers l'URL `web/controleurFrontal.php/connexion`.
+requête `web/connexion` (et les autres) vers l'URL `web/controleurFrontal.php/connexion`.
 
 <div class="exercise">
 
-1. Enregistrez [ce fichier de configuration d'*Apache* fourni par
-   *Symfony*]({{ site.baseurl }}/assets/TD1/htaccessURLRewrite) à
-   la place de `web/.htaccess`.
-
-   **Remarque :**
-   * Si la réécriture d'URL ne marche pas à l'IUT (message d'erreur `Internal Server Error`),
-     vous avez peut-être enregistré le fichier dans `.htaccess`
-     au lieu de `web/.htaccess`.
-   * Si la réécriture d'URL sur votre machine personnelle ne marche
-     pas, une cause possible est qu'il faut activer le module `mod_rewrite` de
-     votre serveur Apache.
+1. Téléchargez [ce fichier de configuration d'*Apache* fourni par
+   *Symfony*]({{ site.baseurl }}/assets/TD1/htaccessURLRewrite). 
+   Remplacez le contenu de `web/.htaccess` par celui du fichier téléchargé.
 
 2. Testez que la page `web/connexion` marche et que le CSS et les images sont
    revenus. En effet, l'URL de base des liens relatifs est de nouveau `web/`.
+
+   **Remarque :** Si la réécriture d'URL ne marche pas (message d'erreur `Internal Server Error`),
+   vous avez peut-être enregistré le fichier dans `.htaccess` à la racine du projet 
+   au lieu de `web/.htaccess`.
 
 3. Changez les liens dans `vueGenerale.php` : 
 
@@ -590,7 +602,6 @@ Expliquer ce que fait ce fichier :
 * voir la redirection permanente dans les DevTools avec le code HTTP 301.
 * Fichier repris de Symfony
 *  -->
-
 
 ### Route selon la méthode HTTP
 
@@ -620,14 +631,14 @@ des éventuelles erreurs de saisie. Il existe des constantes pour chaque méthod
 
 <div class="exercise">
 
-1. Modifiez votre routeur pour avoir les 2 routes `web/connexion` selon la
-   méthode *HTTP*.
+1. Modifiez votre routeur pour avoir deux routes différentes avec le chemin `/connexion` selon la
+   méthode *HTTP* (une avec `GET` pour afficher le formulaire de connexion et une avec `POST` afin 
+   d'effectuer la connexion).
 
    **Attention :** Le nom de chaque route doit être unique (`$routes->add("nomRoute", $route);`).
    Si vous définissez deux routes avec le même nom, la deuxième écrase la première.
 
-2. Corrigez l'URL vers laquelle renvoie
-   `src/vue/utilisateur/formulaireConnexion.php`.
+2. Corrigez l'URL vers laquelle pointe le formulaire dans `src/vue/utilisateur/formulaireConnexion.php`.
 
 3. Essayez de vous connecter au site : vous devez avoir une erreur `Uncaught
    Symfony\...\NoConfigurationException`. En effet, si la connexion réussit,
@@ -637,11 +648,10 @@ des éventuelles erreurs de saisie. Il existe des constantes pour chaque méthod
    
 4. Pour régler temporairement le problème des redirections (qui sera traité
    proprement à la fin du TD), rajoutons une route pour l'URL `web/`. Dupliquez
-   la route `afficherListe` en changeant le *path* (`/publications` → `/`) et en
-   donnant une autre nom à la route pour ne pas écraser la précédente.
+   la route `afficherListe` en changeant le *path* (`/publications` → `/`) et **en
+   donnant une autre nom à la route** pour ne pas écraser la précédente.
 
-5. Essayez de vous connecter au site. Cela doit marche normalement.
-
+5. Essayez de vous connecter au site. Cela doit marcher normalement.
 
 </div>
 
@@ -650,22 +660,25 @@ des éventuelles erreurs de saisie. Il existe des constantes pour chaque méthod
 <div class="exercise">
 
 1. Ajoutez les routes manquantes (sauf celle vers `afficherPublications`) : 
-   * URL `/deconnexion`, méthode `GET` → action `deconnecter` du contrôleur
+   * Chemin `/deconnexion`, méthode `GET` → action `deconnecter` du contrôleur
      utilisateur
-   * URL `/inscription`, méthode `GET` → action `afficherFormulaireCreation` du
+   * Chemin `/inscription`, méthode `GET` → action `afficherFormulaireCreation` du
      contrôleur utilisateur
-   * URL `/inscription`, méthode `POST` → action `creerDepuisFormulaire` du
+   * Chemin `/inscription`, méthode `POST` → action `creerDepuisFormulaire` du
      contrôleur utilisateur
-   * URL `/publications`, méthode `POST` → action `creerDepuisFormulaire` du contrôleur
+   * Chemin `/publications`, méthode `POST` → action `creerDepuisFormulaire` du contrôleur
      publication.  
-     Attention : Il y a déjà une autre route associée à l'URL `/publications`
-     (action `afficherListe`). Il faudra donc spécifier que l'autre route est
-     limité à la méthode `GET`. Pensez-bien à donner des **noms uniques** à vos routes!
+     Attention : Il y a déjà une autre route associée au chemin `/publications`
+     (route `afficherListe`). Il faudra donc spécifier que la route `afficherListe` est
+     limité à la méthode `GET`. Pensez-bien à donner des **noms uniques** à vos routes !
 
 2. Modifiez les liens correspondants dans
    *  `src/vue/publication/liste.php`, 
    *  `src/vue/utilisateur/formulaireCreation.php` 
    *  `src/vue/vueGenerale.php`.
+
+   Rappel : un lien comme `controleurFrontal.php?controleur=utilisateur&action=afficherFormulaireCreation` devient
+   `./inscription`.
 
 </div>
 
@@ -685,14 +698,15 @@ récupérer ces informations supplémentaires. Par exemple, nous allons configur
 notre site pour que l'URL `web/utilisateurs/19/publications` renvoie vers la liste des publications
 de l'utilisateur d'identifiant `19`. Le routeur fourni par `Symfony` permet des
 routes variables `/utilisateurs/{idUtilisateur}/publications` qui permettront d'extraire `$idUtilisateur` de
-l'URL. 
+l'URL et de le passer comme paramètre de la méthode liée à la route dans le contrôleur. 
 
 <div class="exercise">
 
 1. Créez une nouvelle route : 
-   * URL `/utilisateurs/{idUtilisateur}/publications`, méthode `GET` → action `afficherPublications` du contrôleur utilisateur
+   * Nom `afficherPublications` (mais cela pourrait être autre chose), 
+   URL `/utilisateurs/{idUtilisateur}/publications`, méthode `GET` → action `afficherPublications` du contrôleur utilisateur
 
-1. Modifiez `afficherPublications()` (de la classe `ControleurUtilisateur`) pour qu'il prenne `$idUtilisateur` en argument 
+2. Modifiez `afficherPublications()` (de la classe `ControleurUtilisateur`) pour qu'il prenne `$idUtilisateur` en argument 
 au lieu de le lire depuis le *query string* avec `$_REQUEST['idUtilisateur']`.
    
    ```diff
@@ -712,11 +726,11 @@ au lieu de le lire depuis le *query string* avec `$_REQUEST['idUtilisateur']`.
    (récupérer l'utilisateur via le repository, charger la vue, etc.). On supprime seulement la partie
    qui récupère l'identifiant de l'utilisateur dans `$_REQUEST` en introduisant un paramètre.
 
-2. Si vous testez la route, vous verrez qu'elle ne marche pas, car
+3. Si vous testez la route, vous verrez qu'elle ne marche pas, car
    `$donneesRoute["_controller"]()` appelle `afficherPublications` sans lui donner d'arguments (il
    attend `$idUtilisateur`).
 
-3. Affichez `$donneesRoute` pour voir comment `UrlMatcher` a extrait `idUtilisateur` de
+4. Affichez `$donneesRoute` (avec `var_dump`) pour voir comment `UrlMatcher` a extrait `idUtilisateur` de
    l'URL.
 
 </div>
@@ -749,13 +763,14 @@ avec la valeur `19` pour la méthode `ControleurUtilisateur::afficherPublication
 
 <div class="exercise">
 
-1. Importez le composant `HttpKernel`
+1. Exécutez la commande suivante dans le terminal docker ouvert au niveau de la racine
+   de votre projet afin d'importer le composant `HttpKernel`
 
    ```bash
    composer require symfony/http-kernel
    ```
 
-1. Faites évoluer le code de `RouteurURL` en rajoutant à la fin (juste **avant**
+2. Faites évoluer le code de `RouteurURL` en rajoutant à la fin (juste **avant**
    `$donneesRoute["_controller"]()`)
 
    ```php
@@ -778,7 +793,9 @@ avec la valeur `19` pour la méthode `ControleurUtilisateur::afficherPublication
    +$controleur(...$arguments);
    ```
 
-1. Testez la route `web/utilisateurs/19/publications` en remplaçant `19` par un identifiant
+   Notez que les trois points  dans`$controleur(...$arguments)` font partie de la syntaxe.
+
+3. Testez la route `web/utilisateurs/19/publications` en remplaçant `19` par un identifiant
    d'utilisateur ayant quelques publications. La page doit remarcher, mais pas
    le CSS ni les images.
 
@@ -805,7 +822,7 @@ d'arguments dans le contrôleur :
   nom de l'attribut doit correspondre,
 * la requête `Request $requete` (l'argument doit avoir le type `Request`),
 * la valeur par défaut d'une route variable,
-* des services du conteneur de service (*cf.* future séance SAÉ sur les tests
+* des services du conteneur de service (*cf.* futur TD sur les tests
   avec `PHPUnit`),
 * des éléments de la base de données si le type correspond à celui d'une entité
   (`DataObject` dans ce cours)
@@ -828,20 +845,23 @@ use Symfony\Component\HttpFoundation\RequestStack;
 
 $assistantUrl = new UrlHelper(new RequestStack(), $contexteRequete);
 $assistantUrl->getAbsoluteUrl("../ressources/css/styles.css");
-// Renvoie l'URL .../ressources/css/styles.css, peu importe l'URL courante
+// Renvoie une URL absolue générée relativement à partir du point d'entrée du site, c'est-à-dire le fichier controleurFrontal.php qui se trouve dans le dosier web, et cela peu importe l'URL courante.
+//On obtient donc une URL absolue .../ressources/css/styles.css calculée relativement au point d'entrée du site.
+//Dans cet exemple et pour ntore site, on obtient donc l'URL http://localhost/ComplementWeb/TheFeed/ressources/css/styles.css
 ```
 
 D'un autre côté, la classe `UrlGenerator` génère des URL absolues à partir du
-nom d'une route. C'est pratique si on doit changer le chemin de la route *a
+**nom** d'une route. C'est pratique si on doit changer le chemin de la route *a
 posteriori*.
 ```php
 use Symfony\Component\Routing\Generator\UrlGenerator;
 
 $generateurUrl = new UrlGenerator($routes, $contexteRequete);
-$generateurUrl->generate("creerDepuisFormulaire");
-// Renvoie ".../web/publications"
+$generateurUrl->generate("afficherListe");
+// Renvoie une URL vers la route ".../web/publications", dans notre cas http://localhost/ComplementWeb/TheFeed/web/publications
+
 $generateurUrl->generate("afficherPublications", ["idUtilisateur" => 19]);
-// Renvoie ".../web/utilisateurs/19/publications"
+// Renvoie une URL vers la route ".../web/utilisateurs/19/publications"
 ```
 
 Comme nous allons avoir besoin de ces services de génération d'URL dans
@@ -851,10 +871,9 @@ pouvoir y accéder globalement. Dans le cours de [développement Web du semestre
 choix d'avoir des classes statiques utilisant le patron de conception
 *Singleton*. Ce choix a l'inconvénient de rendre difficile les tests.
 
-En attendant la séance de SAÉ sur les tests avec *PhpUnit*, nous allons utiliser
+En attendant le troisième TD sur les tests avec *PhpUnit*, nous allons utiliser
 une classe `Conteneur` pour stocker globalement les services dont nous aurons
 besoin.
-
 
 <div class="exercise">
 
@@ -879,8 +898,11 @@ besoin.
    }
    ```
 
+   Cette classe va nous permettre d'initialiser des services et de les charger n'importe où dans l'application.
+   Dans un futur TD, nous le remplacerons par un conteneur de services importé, beaucoup plus complet et puissant.
+
 2. Initialisez les deux services `$assistantUrl` et `$generateurUrl` dans
-   `RouteurUrl` (avant l'appel à `$donneesRoute["_controller"](...arguments)`). 
+   `RouteurUrl` (juste après avoir défini la variable `$contexteRequete`). 
    Puis stockez-les dans le conteneur.
 
    ```php
@@ -904,19 +926,54 @@ besoin.
    $assistantUrl = Conteneur::recupererService("assistantUrl");
    ```
 
-   Puis utilisez-les dans toutes les vues pour passer tous les liens en URL
-   absolues, soit à partir du nom d'une route, soit à partir du chemin relatif
-   d'un `asset`. À la fin, vous devez avoir corrigé tous les liens : `<a href="">`,
-   `<img src="">`, `<form action="">` et `<link href="">`.
+   Puis utilisez-les dans **toutes les vues** pour passer tous les liens en URL
+   absolues, soit à partir du nom d'une route (pour les liens qui pointent vers une action de l'application), 
+   soit à partir du chemin relatif d'un `asset` (fichier css, image). 
+   
+   Globalement, vous devez remplacer :
+   * Les différents liens, dans les menus, les formulaires (`action`), les publications...
+   * L'import du fichier de style `CSS`.
+   * L'image de profil de l'auteur d'une publication...
+
+   À la fin, vous devez avoir corrigé tous les liens : `<a href="">`, `<img src="">`, `<form action="">` et `<link href="">`.
+
+   Par exemple :
+
+   ```php
+   <img src="../ressources/img/monImage.png">
+   //Devient :
+   <img src="<?=$assistantUrl->getAbsoluteUrl('../ressources/img/monImage.png')?>">
+
+   $nomFichier = "...";
+   <img src="../ressources/img/$nomFichier">
+   //Devient :
+   $chemin = "../ressources/img/".rawurlencode($nomfichier);
+   <img src="<?=$assistantUrl->getAbsoluteUrl($chemin)?>">
+
+   <a href="./publications">
+   //Devient :
+   <a href="<?=$generateurUrl->generate('afficherListe')?>">
+
+   //Route /exemple/{idExemple}
+   <a href="./exemple/{$objet->getId()}">
+   //Devient :
+   <a href="<?=$generateurUrl->generate('nomRouteExemple', ['idExemple' => $objet->getId()])?>">
+   ```
 
    **Remarques :** 
    * `$generateurUrl->generate()` échappe les caractères spéciaux des URL. Vous
      devez donc lui donner les données brutes, et non celles échappées par
      `rawurlencode()`.
    * `$assistantUrl->getAbsoluteUrl()` n'échappe pas les caractères spéciaux des
-     URL. À vous de le faire.
+     URL. À vous de le faire (avec `rawurlencode`).
    * Vous pouvez utiliser la syntaxe raccourcie `<?= $var ?>` équivalente à
    `<?php echo $var ?>` pour améliorer la lisibilité de vos vues.
+   * Les vues autres que `vueGenerale.php` vont détecter `$generateurUrl` et `$assistantUrl` 
+   comme des variables erronées. C'est normal, car elles ne savent pas que ces variables sont 
+   déjà déclarées dans `vueGenerale.php`. Vous pouvez éventuellement déclarer le type de ces 
+   variables au début de chaque vue ou bien plus simplement ignorer cet avertissement. 
+   Nous allons changer notre façon de faire les vues au prochain TD, cela n'a donc pas 
+   beaucoup d'importance, cet avertissement n'aura plus lieu d'être prochainement.
 
 </div>
 
@@ -926,14 +983,23 @@ fini sa première migration pour des routes basées sur les URL !
 <div class="exercise">
 
 1. Changer la méthode `ControleurGenerique::rediriger()` pour qu'elle prenne en
-   entrée le nom d'une route et un tableau optionnel de paramètres pour les
-   routes variables (mêmes arguments que `$generateurUrl->generate()`). Cette
-   fonction doit maintenant rediriger vers l'URL absolue correspondante. Vous
-   aurez besoin de récupérer un service du `Conteneur`.
+   entrée le nom d'une route et un tableau associatif (optionnel) de paramètres pour les
+   routes variables (mêmes arguments que `$generateurUrl->generate()`) :
+   
+   ```diff
+   -protected static function rediriger(string $controleur = "", string $action = ""): void
+   +protected static function rediriger(string $nomRoute, array $parametres = []): void
+   ```
+   
+   Adaptez maintenant le code de cette méthode afin de rediriger vers l'URL absolue correspondant
+   au nom de la route donnée en entrée (et aux éventuels paramètres associés à cette route). 
+   Pour cela, vous aurez besoin de récupérer un certain service du `Conteneur`.
 
-2. Mettez-à-jour tous les appels à `ControleurGenerique::rediriger()`.
+2. Mettez-à-jour tous les appels à `ControleurGenerique::rediriger()`. Pour vous aider, vous
+pouvez vous aider de `PHPSotrm` pour trouver ces appels : Clic droit sur le nom de la méthode puis
+`Find Usages`.
 
-3. Testez votre site.
+3. Testez votre site afin de vérifier que tout fonctionne.
 
 </div>
 
