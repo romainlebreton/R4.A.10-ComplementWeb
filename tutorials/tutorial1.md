@@ -1003,6 +1003,39 @@ pouvez vous aider de `PHPSotrm` pour trouver ces appels : Clic droit sur le nom 
 
 </div>
 
+### Bonus : simplifier la création des routes
+
+À ce stade, vous trouvez peut-être qu'il est plutôt pénible d'ajouter une nouvelle route : 
+cela alourdit la fonction `traiterRequete` de `RouteurURL` qui est déjà bien chargée et cela
+peut vite devenir un enfer à debugguer (imaginez une application avec une centaine de routes !).
+
+Heureusement, il est possible de simplifier tout cela en mettant en place un système de **création de routes par attribut** comme ce qui est fait dans le framework professionnel Symfony.
+
+En `PHP`, le système d'attribut permet de configurer certaines méta-données au-dessus de méthodes, de classes, etc. On peut alors s'en servir afin de mettre un système en place pour définir nos routes ainsi plutôt que dans `traiterRequete` :
+
+```php
+class ControleurPublication extends ControleurGenerique
+{
+
+   #[Route(path: '/publications', name:'afficherListe', methods:["GET"])]
+   public static function afficherListe(): Response {
+      // ...
+   }
+}
+```
+
+Ici, ont créé une route nommée `afficherListe` qui a pour chemin `/publications` et qui est 
+seulement accessible en `GET`. La méthode/action exécutée est celle sous lequel l'attribut 
+est placé (ici, la méthode `afficherListe`).
+
+Si vous souhaitez simplifier le système de gestion des routes, suivez cette
+[note complémentaire]({{site.baseurl}}/tutorials/complement_route_attribut). Il est fortement
+recommandé de le faire : cela est plutôt rapide et de toute façon, dans un futur TD, vous devrez
+obligatoirement le faire si ce n'est pas déjà fait, alors autant le faire tout de suite !
+
+Une fois que le système est mis en place, vous pourrez migrer toutes vos routes vers
+des attributs et ainsi alléger `traiterRequete`.
+
 ## Conclusion
 
 Dans ce TD, nous avons découvert comment changer les URL associées à notre site
