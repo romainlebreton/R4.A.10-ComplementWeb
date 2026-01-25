@@ -1047,8 +1047,3 @@ chemin pour développer une *API REST*.
 
 Enfin, maintenant que vous connaissez les bases de *Composer*, vous pouvez facilement
 rajouter des bibliothèques à votre site web *PHP*.
-
-Si vous souhaitez améliorer le système de création des **routes** pour utiliser des
-**attributs** au-dessus de chaque action liée à une route (dans les contrôleurs) au 
-lieu de tout définir dans `traiterRequete`, vous pouvez lire cette 
-[note complémentaire]({{site.baseurl}}/tutorials/complement_route_attribut).
