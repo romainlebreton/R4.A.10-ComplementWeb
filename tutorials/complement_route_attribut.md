@@ -67,23 +67,14 @@ Pour faire fonctionner cela dans notre framework maison, il faut suivre quelques
 
 3. Enfin, dans `RouteurURL.php`, on remplace toute la création des routes dans `traiterRequete` par :
 
-    ```diff
-    +use Symfony\Component\Config\FileLocator;
-    +use Symfony\Component\Routing\Loader\AttributeDirectoryLoader;
-    +use TheFeed\Lib\AttributeRouteControllerLoader;
-    -
-    +$fileLocator = new FileLocator(__DIR__);
-    +$attrClassLoader = new AttributeRouteControllerLoader();
-    +$routes = (new AttributeDirectoryLoader($fileLocator, $attrClassLoader))->load(__DIR__);
-    -
-    -$routes = new RouteCollection();
-    -$route = new Route(
-    -   path: "/publications", 
-    -    defaults: [
-    -        "_controller" => "\TheFeed\Controleur\ControleurPublication::afficherListe",
-    -    ]
-    -);
-    -$routes->add("afficherListe", $route);
+    ```php
+    use Symfony\Component\Config\FileLocator;
+    use Symfony\Component\Routing\Loader\AttributeDirectoryLoader;
+    use TheFeed\Lib\AttributeRouteControllerLoader;
+
+    $fileLocator = new FileLocator(__DIR__);
+    $attrClassLoader = new AttributeRouteControllerLoader();
+    $routes = (new AttributeDirectoryLoader($fileLocator, $attrClassLoader))->load(__DIR__);
     ```
 
     Les trois lignes ajoutées permettent de :
