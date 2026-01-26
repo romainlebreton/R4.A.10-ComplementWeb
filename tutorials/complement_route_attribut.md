@@ -29,7 +29,7 @@ class MonControleur extends ControleurGenerique
 
 Ici, on définit une route nommée `routeExemple`, qui a pour chemin `/exemple` et qui est 
 seulement accessible via la méthode `GET`. L'action déclenchée par cette route est la
-méthode sous lequel est placé l'attribut : `monAction`.
+méthode placée sous l'attribut : `monAction`.
 
 Pour faire fonctionner cela dans notre framework maison, il faut suivre quelques étapes.
 
@@ -71,11 +71,11 @@ Pour faire fonctionner cela dans notre framework maison, il faut suivre quelques
     +use Symfony\Component\Config\FileLocator;
     +use Symfony\Component\Routing\Loader\AttributeDirectoryLoader;
     +use TheFeed\Lib\AttributeRouteControllerLoader;
-
+    -
     +$fileLocator = new FileLocator(__DIR__);
     +$attrClassLoader = new AttributeRouteControllerLoader();
     +$routes = (new AttributeDirectoryLoader($fileLocator, $attrClassLoader))->load(__DIR__);
-
+    -
     -$routes = new RouteCollection();
     -$route = new Route(
     -   path: "/publications", 
@@ -88,8 +88,8 @@ Pour faire fonctionner cela dans notre framework maison, il faut suivre quelques
 
     Les trois lignes ajoutées permettent de :
     * Initialiser un `FileLocator` qui permet de préciser dans quel répertoire chercher les classes avec des attributs. La valeur `__DIR__` représente le dossier courant (donc `Controleur`).
-    * Initialiser notre service `AttributeRouteControllerLoader` créé plus tôt, qui permet, à partir de créer une route, à partir d'un attribut.
-    * Enfin, on explore tout les contrôleurs à la recherche d'attributs qui définissent des routes et on ajoute les routes correspondantes dans la collection. 
+    * Initialiser notre service `AttributeRouteControllerLoader` créé plus tôt, qui permet de créer une route à partir d'un attribut.
+    * Enfin, on explore tous les contrôleurs à la recherche d'attributs qui définissent des routes et on ajoute les routes correspondantes dans la collection. 
 
 4. Les routes se créent maintenant avec la syntaxe simplifiée suivante : 
 

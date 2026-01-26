@@ -1025,8 +1025,8 @@ class ControleurPublication extends ControleurGenerique
 ```
 
 Ici, ont créé une route nommée `afficherListe` qui a pour chemin `/publications` et qui est 
-seulement accessible en `GET`. La méthode/action exécutée est celle sous lequel l'attribut 
-est placé (ici, la méthode `afficherListe`).
+seulement accessible en `GET`. La méthode/action exécutée est celle placée sous l'attribut 
+(ici, la méthode `afficherListe`).
 
 Si vous souhaitez simplifier le système de gestion des routes, suivez cette
 [note complémentaire]({{site.baseurl}}/tutorials/complement_route_attribut). Il est fortement
