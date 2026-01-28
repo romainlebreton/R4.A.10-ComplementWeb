@@ -137,7 +137,7 @@ le répertoire `./ComplementWeb/TheFeed`.
 5. Il faut donner les droits en lecture / exécution à Apache (utilisateur
    `www-data`). Dans le terminal de votre conteneur **Docker**, exécutez les instructions suivantes :
    ```bash
-   chown -R root:www-data .
+   chown -R 1000:www-data .
    chmod g+w ./ressources/img/utilisateurs/
    ```
 
