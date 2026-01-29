@@ -13,9 +13,9 @@ il faudra appliquer les différents principes **SOLID** que vous avez étudié c
 Pour illustrer tout cela, nous allons donc repartir du code de l'application **The Feed** obtenu à l'issue du 
 [TD2 de complément web]({{site.baseurl}}/tutorials/tutorial2). Vous devez donc avoir terminé ce TD avant de commencer celui-ci.
 
-Le TD devra être obligatoirement réalisé sur **PHPStorm** afin de profiter des différentes fonctionnalités de couplage avec PHPUnit qu'offre cet IDE.
+Il est fortement recommandé de réaliser le TP sur **PHPStorm** afin de profiter des différentes fonctionnalités de couplage avec PHPUnit qu'offre cet IDE.
 
-**Note importante** : Lors du TD, vous utiliserez diverses dépendances dans vos classes. Parfois, il vous sera explicitement cité la ligne d'import de cette dépendance (avec un `use`). Si ce n'est pas le cas, il faudra importer vous-même la bonne classe. Dans ce cas, `PHPStorm` peut vous aider ! La classe dont l'import est manquant apparaitra en surbrillance avec un fond jaune. Vous pouvez alors passer votre curseur sur le nom de la classe et cliquer sur `Import class`.
+**Note importante** : Lors du TD, vous utiliserez diverses dépendances dans vos classes. Parfois, il vous sera explicitement cité la ligne d'import de cette dépendance (avec un `use`). Si ce n'est pas le cas, il faudra importer vous-même la bonne classe. Dans ce cas, `PHPStorm` peut vous aider ! La classe dont l'import est manquant apparaîtra en surbrillance avec un fond jaune. Vous pouvez alors passer votre curseur sur le nom de la classe et cliquer sur `Import class`.
 
 ## Découverte de PHPUnit
 
@@ -74,7 +74,7 @@ Comme toute librairie PHP, **PHPUnit** s'installe à l'aide de **composer**.
 
     * Le paramètre `bootstrap` permet d'indiquer où se trouve le fichier d'autoloading, nécessaire pour charger le bon fichier à partir de son `namespace`.
 
-    * Le paramètre `cacheDirectory` permet de définir la localisation dossier de cache utilisé par `PHPUnit`.
+    * Le paramètre `cacheDirectory` permet de définir la localisation du dossier de cache utilisé par `PHPUnit`.
 
     * La section `testsuites` nous permet de configurer plusieurs batteries de tests : tests unitaires, tests d'intégration, etc. Pour ce TD, nous n'utiliserons que des tests unitaires. On configure le dossier de test **en dehors du code source du projet** dans un dossier `tests/units`.
 
@@ -89,7 +89,7 @@ Comme toute librairie PHP, **PHPUnit** s'installe à l'aide de **composer**.
         "autoload": {
             "psr-4": {
                 "TheFeed\\": "src",
-                "Tests\\Unit\\": "tests/unit"
+                "Tests\\Unit\\": "tests/unit" //A ajouter
             }
         },
         ...
@@ -117,7 +117,7 @@ Il est bien sûr possible de configurer votre **IDE** pour lancer les tests depu
 
 ### Une première classe de test
 
-Un `Test Unitaire` se traduit par une fonction dans une classe dédiée qui exécute différents tests sur des objets de l'application. Il s'agit de vérifier, par exemple, si le retour d'une fonction avec un paramétrage spécifique est bien conforme aux attentes et aux spécifications. On peut aussi tester si l'exécution d'un code déclenche des exceptions.
+Un **test unitaire** se traduit par une fonction dans une classe dédiée qui exécute différents tests sur des objets de l'application. Il s'agit de vérifier, par exemple, si le retour d'une fonction avec un paramétrage spécifique est bien conforme aux attentes et aux spécifications. On peut aussi tester si l'exécution d'un code déclenche des exceptions.
 
 Les possibilités sont très riches. Pour créer une classe de test, il suffit d'étendre la classe `TestCase`. À partir de
 là, le développeur a accès à une grande variété de méthodes internes pour réaliser des **assertions**. Une **assertion** est simplement une vérification qui est faite (sur un résultat, sur un comportement...). Si cette vérification échoue (résultat différent de ce qui est attendu) le test échoue alors.
@@ -142,7 +142,7 @@ Cette liste est bien sûr non exhaustive et vous pourrez explorer plus en détai
 Une autre méthode bien pratique est aussi `expectException(exceptionClass)`. Cette méthode est à utiliser avant 
 d'exécuter un bout de code et permet de vérifier que l'exception précisée a bien été levée. On peut aussi utiliser `expectExceptionMessage(message)` pour vérifier le message de l'exception levée.
 
-Enfin, dans chaque classe de test, il est possible de redéfinir quatre méthodes bien utiles :
+Enfin, dans chaque classe de test, il est possible de redéfinir deux méthodes bien utiles :
 
 * `setUp` : cette méthode est exécutée avant chaque méthode de test. Elle permet, par exemple, de configurer
 certaines variables afin de les rendre vierges avant d'exécuter chaque test.
@@ -161,30 +161,30 @@ use Exception;
 class Ensemble {
 
     private array $tableauEnsemble;
-    
+
     public function __construct() {
         $this->tableauEnsemble = [];
     }
-    
-    public function contient($valeur) {
+
+    public function contient(mixed $valeur): bool {
         return in_array($valeur, $this->tableauEnsemble);
     }
 
-    public function ajouter($valeur) {
+    public function ajouter(mixed $valeur) : void {
         if(!$this->contient($valeur)) {
             $this->tableauEnsemble[] = $valeur;
         }
     }
-    
-    public function getTaille() {
+
+    public function getTaille(): int {
         return count($this->tableauEnsemble);
     }
-    
-    public function estVide() {
+
+    public function estVide(): bool {
         return $this->getTaille() == 0;
     }
-    
-    public function pop() {
+
+    public function pop(): mixed {
         if($this->estVide()) {
             throw new Exception("L'ensemble est vide!");
         }
@@ -320,7 +320,7 @@ Dans un logiciel, on peut trouver différents types de **couche**. Par exemple (
 
 * La couche **métier** qui contient le cœur de l'application, à savoir les différentes **entités** manipulées (essentiellement, les classes dans `DataObject`) ainsi que des classes de **services** qui permettent de manipuler ces entités et d'implémenter la **partie logique** de votre application.
 
-* La couche **application** qui permet de faire le lien entre la couche **présentation** et la couche **métier**. Elle contient les différents **contrôleurs** dont le rôle est de gérer les **évènements** de l'interface, d'interagir avec la couche **métier** et de transmettre les résultats obtenus à l'IHM. Dans une application web, les événements sont les requêtes reçues par l'application web (et ses paramètres, via l'URL). Une requête est décomposée puis la bonne méthode du contrôleur est exécutée avec les paramètres correspondants.
+* La couche **application** qui permet de faire le lien entre la couche **présentation** et la couche **métier**. Elle contient les différents **contrôleurs** dont le rôle est de gérer les **évènements** de l'interface, de vérifier les droits d'accès, d'interagir avec la couche **métier** et de transmettre les résultats obtenus à l'IHM. Dans une application web, les événements sont les requêtes reçues par l'application web (et ses paramètres, via l'URL). Une requête est décomposée puis la bonne méthode du contrôleur est exécutée avec les paramètres correspondants.
 
 * La couche **de persistance** (stockage) qui permet de gérer la **persistance des données** à travers une forme de stockage configurée (base de données, fichier...). Son rôle va donc être de sauvegarder et charger les données des différentes entités de la couche **métier**. C'est cette couche qui va contenir les différents **repositories**.
 
@@ -336,7 +336,7 @@ Cette architecture permet de séparer les entités, les vues et les contrôleurs
 
 * Les différentes **vues** (V) correspondent à la couche **présentation**.
 
-* Les différents **contrôleurs** (C) gèrent la couche **application** et une partie de la couche (logique) **métier** (ils reçoivent les requêtes, vérifient les données, effectuent les opérations, etc.)
+* Les différents **contrôleurs** (C) gèrent la couche **application** et une partie de la couche (logique) **métier** (ils reçoivent les requêtes, vérifient les droits d'accès (est-ce que l'utilisateur courant a le droit d'exécuter cette requête?), vérifient les données, effectuent les opérations, etc.)
 
 
 Néanmoins, il n'est pas explicitement fait mention des **services** dans cette architecture. En fait, dans une architecture `MVC` classique, le **contrôleur** a le rôle des **services** et effectue une grande partie (voir la totalité) partie de la logique métier. Néanmoins, cela peut vite créer des contrôleurs énormes ayant beaucoup trop de responsabilités. C'est pourquoi il est possible de venir placer une couche **service** entre les **contrôleurs**, les **entités** et la couche **stockage**. Ainsi, le contrôleur n'effectue pas de logique métier et on a une séparation plus forte.
@@ -373,7 +373,7 @@ Bien, vous avez créé votre premier service ! Mais l'intérêt d'avoir sépar
 
 Nous allons nous intéresser à la création des publications. Actuellement, dès qu'il détecte une erreur dans la formation du message, le **contrôleur** ajoute un message flash d'erreur et redirige l'utilisateur. Ces vérifications font partie de la logique **métier** et peuvent être gérées à l'aide d'exceptions. La logique à appliquer serait plutôt la suivante :
 
-* Le contrôleur récupère les valeurs des paramètres depuis la requête et les passe au service.
+* Le contrôleur vérifie les droits d'accès (est-ce que l'utilisateur est connecté, est-ce qu'il a le droit d'accéder à cette route ?) puis récupère les valeurs des paramètres depuis la requête et les passe au service.
 * Le service a pour but de réaliser une action (et éventuellement d'envoyer un résultat). S'il y a un problème (notamment par rapport aux paramètres), il lève une exception.
 * Le contrôleur attrape les éventuelles exceptions et redirige l'utilisateur en conséquence.
 
@@ -394,18 +394,16 @@ Nous allons nous intéresser à la création des publications. Actuellement, dè
    }
    ```
 
-2. Dans `PublicationService`, créez une méthode `creerPublication` qui prend en paramètre un **idUtilisateur** et un **message**. La méthode doit déplacer en grande partie le code de la méthode `creerDepuisFormulaire` de `ControleurPublication` :
+2. Dans `PublicationService`, créez une méthode `creerPublication` qui prend en paramètre un **idUtilisateur** et un **message**. La méthode doit déplacer et réadapter (en grande partie) le code de la méthode `creerDepuisFormulaire` de `ControleurPublication` :
 
    ```php
-   public function creerPublication($idUtilisateur, $message) {
-       $utilisateur = (new UtilisateurRepository())->recupererParClePrimaire($idUtilisateur);
-
-       if ($utilisateur == null) {
-           MessageFlash::ajouter("error", "Il faut être connecté pour publier un feed");
-           return ControleurPublication::rediriger('connecter');
+   public function creerPublication(?int $idUtilisateur, ?string $message) {
+       $utilisateur = new UtilisateurRepository()->recupererParClePrimaire($idUtilisateur);
+       if(is_null($utilisateur)) {
+           MessageFlash::ajouter("error", "Utilisateur inexistant!");
+           return ControleurPublication::rediriger('afficherListe');
        }
-               
-       if ($message == null || $message == "") {
+       if (is_null($message) || $message == "") {
            MessageFlash::ajouter("error", "Le message ne peut pas être vide!");
            return ControleurPublication::rediriger('afficherListe');
        }
@@ -422,7 +420,7 @@ Nous allons nous intéresser à la création des publications. Actuellement, dè
     **Note :** Si vous avez une erreur de l'IDE *`rediriger` has protected
     visibility*, ce n'est pas grave, elle sera réglée avec la prochaine question.
 
-    Vous aurez aussi des erreurs liées au type de retour de la méthode, mais n'y prêtez pas attention pour l'instant.
+    Vous aurez aussi probablement des erreurs liées à ce que retourne la méthode, mais n'y prêtez pas attention pour l'instant.
 
 3. Dans la nouvelle méthode `creerPublication`, remplacez toutes les lignes qui ajoutent un message flash et redirigent l'utilisateur par le déclenchement d'une **ServiceException** contenant le message flash initialement prévu comme message flash. La syntaxe est la suivante :
 
@@ -430,15 +428,23 @@ Nous allons nous intéresser à la création des publications. Actuellement, dè
    throw new ServiceException("Mon message d'erreur!");
    ```
 
+   Enfin, vous pourrez changer le type de retour de la méthode par `void`.
+
 4. Modifiez la méthode `creerDepuisFormulaire` de `ControleurPublication` afin d'utiliser le service de publications et de gérer l'exception. Dans le cas où une **ServiceException** est interceptée, vous devez ajouter le message de l'exception comme message flash puis rediriger l'utilisateur vers la route `afficherListe`. Globalement, cela doit ressembler à quelque chose comme ça :
 
    ```php
    public static function creerDepuisFormulaire() : Response
    {
+       //La gestion des droits d'accès aux routes est de la responsabilité du contrôleur
+       if(!ConnexionUtilisateur::estConnecte()) {
+            MessageFlash::ajouter("error", "Il faut être connecté pour publier!");
+            return ControleurPublication::rediriger('afficherFormulaireConnexion');
+        }
        $idUtilisateurConnecte = ConnexionUtilisateur::getIdUtilisateurConnecte();
        $message = $_POST['message'];
        try {
            //Utilisation du service
+           //Les règles métiers liées aux publications sont gérées dans le service correspondant
        }
        catch(ServiceException $e) {
            //Ajout du message flash
@@ -456,11 +462,19 @@ Nous allons nous intéresser à la création des publications. Actuellement, dè
 
 Ici, la séparation entre la couche **service** et **application** est bien visible ! Le contrôleur récupère les éléments nécessaires depuis la requête et le service, lui n'interagit pas directement avec les données de la requête (pas d'accès à `$_POST`) et ne s'intéresse pas aux notions liées à la couche **présentation** (pas de redirection, pas de sélection de vue, pas de messages flash...). Il agit comme un module quasi indépendant des autres couches.
 
+Concernant les droits d'accès simples (par exemple, vérifier que l'utilisateur est connecté, qu'il a un rôle suffisant pour visualiser la page souhaitée, etc), cela relève de la **responsabilité du contrôleur** qui prend en charge la requête. C'est lui qui vérifie que l'utilisateur a le droit d'accéder à une **route** donnée. Cependant, selon la situation, certains droits peuvent aussi être vérifiés du côté des services, si cela dépend de la logique métier. Par exemple, si on avait une fonctionnalité permettant de **supprimer une publication**, il faudrait vérifier que l'utilisateur est bien propriétaire de la publication (ou bien qu'il est administrateur et qu'il a donc tous les droits...). Cette vérification pourrait alors plutôt se faire du côté du **service**, dans la méthode qui permet de supprimer une publication.
+
+En résumé :
+* Si un droit d'accès ne relève que de l'accès à une route donnée, on gère cela au niveau du contrôleur (comme dans `creerDepuisFormulaire` de `ControleurPublication`).
+* Si le droit d'accus relève plutôt de la logique métier (ex : vérifier que l'utilisateur qui modifie une ressource en est bien le propriétaire, ou qu'il est administrateur), cela peut se faire du côté du service.
+
+Du côté de Symfony (que vous étudierez l'année prochaine), un système sophistiqué de "**voters**" permet de déléguer la gestion des droits d'accès à des services de vérification de droits dédiés qui sont généralement appelés dans le contrôleur et les vues, mais qui peuvent aussi être utilisés ailleurs.
+
 ### Un service pour gérer les utilisateurs
 
 Nous allons continuer dans notre lancée et extraire la partie **métier** du contrôleur gérant les fonctionnalités liées aux utilisateurs.
 
-Pour les fonctions qui permettent d'afficher la page de connexion ou d'inscription, il n'y a pas besoin de créer une fonctionnalité sur un service car il s'agit juste d'un affichage de page simple.
+Pour les fonctions qui permettent d'afficher la page de connexion ou d'inscription, il n'y a pas besoin de créer une fonctionnalité sur un service, car il s'agit juste d'un affichage de page simple.
 
 Débutons avec la création d'un nouvel utilisateur. 
 
@@ -470,10 +484,10 @@ Débutons avec la création d'un nouvel utilisateur.
 
 2. Ajoutez une méthode `creerUtilisateur` qui prend en paramètre un *login*, un *mot de passe*, une *adresse mail* et enfin un tableau de *données de l'image de profil*. Cette méthode reprendra en grande partie le code de `creerDepuisFormulaire` du contrôleur `ControleurUtilisateur`.
 
-    Comme d'habitude, il ne faudra pas faire appels aux variables liées à la requête dans cette méthode (`$_POST`, `$_FILES`, etc.). Ces données vous sont fournies par le contrôleur et peuvent être `null`. Il faudra d'ailleurs penser à vérifier si ces valeurs sont nulles ou non. La méthode ne doit rien retourner (simplement créer l'utilisateur) et lever des `ServiceException` si différentes contraintes sont violées (taille du login, mot de passe, format de l'adresse mail, etc.). Le paramètre `$donneesPhotoDeProfil` correspond au tableau obtenu par lecture de `$_FILES["..."]`.
+    Comme d'habitude, **il ne faudra pas faire appels aux variables liées à la requête dans cette méthode** (`$_POST`, `$_FILES`, etc.). Ces données vous sont fournies par le contrôleur et peuvent être `null`. Il faudra d'ailleurs penser à vérifier si ces valeurs sont nulles ou non. La méthode ne doit rien retourner (simplement créer l'utilisateur) et lever des `ServiceException` si différentes contraintes sont violées (taille du login, mot de passe, format de l'adresse mail, etc.). Le paramètre `$donneesPhotoDeProfil` correspond au tableau obtenu par lecture de `$_FILES["..."]`.
 
    ```php
-   public function creerUtilisateur($login, $motDePasse, $email, $donneesPhotoDeProfil) : void {
+   public function creerUtilisateur(?string $login, ?string $motDePasse, ?string $email, ?string $donneesPhotoDeProfil) : void {
        //TO-DO
        //Verifier que les attributs ne sont pas null
        //Verifier la taille du login
@@ -512,37 +526,54 @@ Débutons avec la création d'un nouvel utilisateur.
    }
    ```
 
+   Comme tout le monde peut s'inscrire, il n'y a pas de droits d'accès à gérer ici.
+
 4. Comme toujours, vérifiez l'état de votre application.
 
 </div>
 
 Maintenant, passons au cas de la fonctionnalité permettant d'afficher une page personnelle.
 
+Afin de diminuer le **couplage** entre nos classes, nous allons progressivement faire en sorte que seuls les **services** utilisent les **repositories** et que les contrôleurs utilisent les **services** (et donc ne se servent plus des repositories).
+
 La méthode `afficherPublications` effectue deux actions : récupération de l'utilisateur concerné d'une part (pour afficher son login) et, d'autre part, récupération des publications de l'utilisateur. Il va donc y avoir deux actions à effectuer, dans deux services différents.
 
 <div class="exercise">
 
-1. Dans la classe `UtilisateurService`, créez une méthode `recupererUtilisateurParId` qui prend en paramètre un identifiant d'utilisateur **et un booléen** `autoriserNull`. Ce booléen a pour but de préciser si une exception doit être levée ou non si l'utilisateur sélectionné n'existe pas (dans certains cas, on veut simplement récupérer la valeur `null` sans lever d'exceptions). La méthode doit donc renvoyer à terme l'utilisateur ciblé par l'identifiant (en se servant du *repository*). Si `autoriserNull` vaut `false` et que l'utilisateur récupéré est `null`, il faut lever une `ServiceException` (l'utilisateur n'existe pas !).
+1.  Dans la classe `UtilisateurService`, créez une méthode `recupererUtilisateurParId` qui prend en paramètre un identifiant d'utilisateur et renvoie l'utilisateur ciblé par cet identifiant (en se servant du *repository*), ou `null`, s'il n'existe pas.
 
    ```php
-   public function recupererUtilisateurParId($idUtilisateur, $autoriserNull = true) : ?Utilisateur {
+   public function recupererUtilisateurOuNullParId(?int $idUtilisateur) : ?Utilisateur {
        $utilisateur = ...
-       if(!$autoriserNull && ...) {
-           ...
-       }
        return $utilisateur;
    }
    ```
 
-2. La partie qui a pour but de récupérer des publications doit plutôt être codée au niveau de la classe `PublicationService`. Ajoutez donc une méthode `recupererPublicationsUtilisateur($idUtilisateur)` à ce service en reprenant la partie du code de `afficherPublications` qui récupère les publications.
+2. Toujours dans `UtilisateurService`, créez une méthode `recupererUtilisateurExistantParId` qui prend en paramètre un identifiant d'utilisateur et renvoie l'utilisateur ciblé par cet identifiant. Si l'utilisateur n'existe pas, une `ServiceException` est levée qui doit signaler que l'utilisateur n'existe pas. Évitez la duplication de code ou vous servant de la méthode codée lors de la question précédente :
 
-3. Remplacez le code de `afficherPublications` afin d'utiliser les deux méthodes (`recupererUtilisateurParId` et `recupererPublicationsUtilisateur` de `UtilisateurService` et `PublicationService`). Il ne faudra pas autoriser le fait de récupérer un utilisateur `null`. Veillez à bien traiter une éventuelle `ServiceException`.
+   ```php
+   public function recupererUtilisateurExistantParId(?int $idUtilisateur) : Utilisateur {
+       $utilisateur = ...
+       //Lève une exception si l'utilisateur n'existe pas...
+       return $utilisateur;
+   }
+   ```
+
+   Dans la plupart des cas où on souhaite que l'utilisateur recherché existe, on utilisera cette méthode.
+
+3. Mettez à jour le code de `creerPublication` de `Publicationservice` afin de ne plus utiliser `UtilisateurRepository`, mais plutôt `UtilisateurService` et sa méthode `recupererUtilisateurExistantParId`.
+
+4. La partie qui a pour but de récupérer des publications d'un utilisateur doit plutôt être codée au niveau de la classe `PublicationService`. Ajoutez donc une méthode `recupererPublicationsUtilisateur(?int $idUtilisateur) : array` à ce service qui reprend en partie le code de `afficherPublications` qui récupère les publications en faisant appel au repository. La méthode doit :
+    * Récupérer l'utilisateur ciblé par l'identifiant (grâce à `UtilisateurService`) afin d'être sûr qu'il existe.
+    * Récupérer les publications de l'utilisateur ciblé.
 
 4. {% raw %}
-   Ajoutez une vue `publication/page_perso.html.twig` qui étend le template `publication/feed.html.twig` et modifie simplement `{% block page_title %}` pour que le titre de la page devienne soit `Page perso de login_de_l_utilisateur`. Modifiez `afficherPublications` pour utiliser cette nouvelle vue (et lui passer les bonnes informations).
+    **Si vous n'aviez pas fait le bonus du dernier TD** : ajoutez une vue `utilisateur/page_perso.html.twig` qui étend le template `publication/feed.html.twig` et modifie simplement `{% block page_title %}` pour que le titre de la page devienne soit `Page perso de login_de_l_utilisateur`.
    {% endraw %}
 
-5. Vérifiez que tout fonctionne bien.
+5. Remplacez le code de `afficherPublications` de `ControleurUtilisateur` afin d'utiliser vos nouvelles méthodes `recupererPublicationsUtilisateur` de `PublicationService` pour récupérer les publications de l'utilisateur ciblé puis `recupererUtilisateurParId` de `UtilisateurService` pour obtenir les données de l'utilisateur. Enfin, vous devrez passer le login de l'utilisateur récupéré à la vue `utilisateur/page_perso.html.twig`, en plus des publications, afin que le titre de la page personnelle s'affiche correctement. Veillez à bien traiter une éventuelle `ServiceException`.
+
+6. Vérifiez que tout fonctionne bien. Notamment, vérifiez qu'un message flash est bien affiché quand on essaye de visiter la page personnelle d'un utilisateur qui n'existe pas.
 
 </div>
 
@@ -550,7 +581,7 @@ Si tout marche bien, vous commencez à maîtriser le processus ! Terminons don
 
 <div class="exercise">
 
-1. En vous inspirant du travail réalisé lors des questions précédentes, adaptez la méthode `connecter` afin de faire migrer une partie de la logique du code dans une méthode adaptée dans la classe `UtilisateurService`.
+1. En vous inspirant du travail réalisé lors des questions précédentes, adaptez la méthode `connecter` afin de faire migrer une partie de la logique du code dans une méthode adaptée dans la classe `UtilisateurService` qui pourra prendre un login et un mot de passe en paramètre.
 
 2. Faites de même pour la méthode `deconnecter`.
 
@@ -564,11 +595,11 @@ Maintenant que la partie **métier** de notre application est (partiellement) ex
 
 <div class="exercise">
 
-1. Créez une classe `PublicationServiceTest` dans le répertoire `tests\unit`.
+1. Créez une classe de test `PublicationServiceTest` (qui étend `TestCase`) dans le répertoire `tests\unit`.
 
 2. Ajoutez un attribut `service` qui sera ré-instancié par un `PublicationService` avant chaque test (via le `setUp`).
 
-3. Créez un test `testCreerPublicationUtilisateurInexistant` qui teste de créer une publication en précisant un identifiant d'utilisateur qui n'est pas enregistré dans la base (par exemple, `-1`). Votre test doit vérifier qu'une `ServiceException` est bien levée et que le message d'erreur correspond bien à celui attendu.
+3. Créez un test `testCreerPublicationUtilisateurInexistant` qui teste de créer une publication en précisant un identifiant d'un utilisateur qui n'est pas enregistré dans la base (par exemple, l'identifiant `-1`). Votre test doit vérifier qu'une `ServiceException` est bien levée et que le message d'erreur correspond bien à celui attendu. 
 
 4. Créez un test `testCreerPublicationVide` qui teste de créer une publication sans aucun contenu. Attention, ici, il faut préciser un identifiant d'utilisateur valide (qui est enregistré dans la base). Comme à la question précédente, votre test doit vérifier qu'une `ServiceException` est bien levée et que le message d'erreur correspond bien à celui attendu.
 
@@ -578,7 +609,7 @@ Maintenant que la partie **métier** de notre application est (partiellement) ex
 
 7. Créez un test `testNombrePublicationsUtilisateur` qui teste la récupération de toutes les publications d'un utilisateur. Il faudra préciser un identifiant d'utilisateur existant et vérifier que le compte est bon.
 
-8. Enfin, créez un test `testNombrePublicationsUtilisateurInexistant` qui teste la récupération de toutes les publications d'un utilisateur inexistant (par exemple, `-1`). Le compte des publications doit être de 0 dans ce cas.
+8. Enfin, créez un test `testNombrePublicationsUtilisateurInexistant` qui teste la récupération de toutes les publications d'un utilisateur inexistant (par exemple, `-1`). Ici aussi, une exception doit être levée (car l'utilisateur est inexistant).
 
 9. Si ce n'est pas déjà fait, lancez les tests unitaires et vérifiez que tous les tests passent !
 
@@ -614,7 +645,7 @@ Il faut également se poser la question de **la portée** des tests. Doit-on (pe
 
 1. Après chaque lancement des tests unitaires, un fichier de **couverture de code** est généré par PHPUnit. Il s'agit du fichier `reports/coverage.xml`. En l'état, ce fichier est assez illisible, mais **PHPStorm** va nous permettre d'en analyser les données facilement. Si vous n'utilisez pas **PHPStorm**, rendez-vous au point 6 pour une solution alternative.
 
-2. Sur **PHPStorm**, ouvrez le menu de couverture de code en cliquant sur `View` → `Tool Windows` → `Coverage`. Un panneau s'ouvre à droite (il peut être fermé et rouvert grâce à l'icône de bouclier). À l'intérieur de ce menu, cliquez sur **Import a report collected in CI from disk**. Choisissez ensuite le fichier `reports/coverage.xml`.
+2. Sur **PHPStorm**, ouvrez le menu de couverture de code en cliquant sur `View` → `Tool Windows` → `Coverage`. Un panneau s'ouvre à droite (il peut être fermé et rouvert grâce à l'icône de bouclier). À l'intérieur de ce menu, cliquez sur **Import a report collected in CI from disk**. Choisissez ensuite le fichier `reports/coverage/coverage.xml`.
 
 3. **PHPStorm** fait un rapport vis-à-vis du contenu du fichier. Explorez son contenu. Il est notamment indiqué les fichiers qui ont été sollicités par les tests, le pourcentage de lignes de codes couvertes, etc.
 
