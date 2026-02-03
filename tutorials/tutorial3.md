@@ -1,1098 +1,673 @@
 ---
-title: TD5 &ndash; Développer une API REST
-subtitle: Nommage des URI, verbes HTTP, authentification par JWT
+title: TD3 &ndash; Tests unitaires, Couche Service
+subtitle: PHPUnit, Architecture
 layout: tutorial
 lang: fr
 ---
 
-## API REST
+L'objectif de cette séance est de vous former à la mise en place de tests unitaires sur une application web PHP.
 
-Les API permettent la communication entre différents composants de votre
-application et entre votre application et d’autres développeurs, par
-l’utilisation de requêtes et de réponses. Elles donnent un moyen d’accès aux
-données de façon réutilisable et standardisée.
+Nous allons voir que pour qu'une application soit testable efficacement, il faut que celle-ci présente une architecture réfléchie permettant de véritablement tester une partie du code (une classe) de manière indépendante. Pour cela,
+il faudra appliquer les différents principes **SOLID** que vous avez étudié cette année, notamment dans le cours de **qualité de développement**.
 
-Un standard d'API très présent sur le Web est *REST*. Les contraintes imposées
-par *REST* sont un peu abstraites ; dans ce TD, nous nous intéresserons à ses
-implications concrètes pour un service Web. La motivation est que tous les
-services Web *RESTful*, *c.-à-d.* qui satisfont les contraintes *REST*, soient
-interopérables. Ils doivent donc tous utiliser le même protocole de transfert
-(*HTTP*) et les mêmes formats de données (*JSON* ou *XML*).
+Pour illustrer tout cela, nous allons donc repartir du code de l'application **The Feed** obtenu à l'issue du 
+[TD2 de complément web]({{site.baseurl}}/tutorials/tutorial2). Vous devez donc avoir terminé ce TD avant de commencer celui-ci.
 
-Les aspects fondamentaux d'un service Web *RESTful* sont : 
-* adopter une convention de nommage pour les identifiants de ressources (URI) ;
-* utiliser des verbes HTTP ;
-* utiliser les codes de réponse *HTTP* pour indiquer si une requête a pu être
-  traitée avec succès ;
-* échanger des données au format *JSON* (ou *XML*) ;
-* être sans état (*Stateless*), ou sans mémoire, c'est-à-dire que chaque
-  requête / réponse ne se souvient pas des anciennes,
-* le fonctionnement du service doit pouvoir être découvert, c'est-à-dire que
-  l'on fournit des URL sur les actions liées à une ressource.
+Il est fortement recommandé de réaliser le TP sur **PHPStorm** afin de profiter des différentes fonctionnalités de couplage avec PHPUnit qu'offre cet IDE.
 
+**Note importante** : Lors du TD, vous utiliserez diverses dépendances dans vos classes. Parfois, il vous sera explicitement cité la ligne d'import de cette dépendance (avec un `use`). Si ce n'est pas le cas, il faudra importer vous-même la bonne classe. Dans ce cas, `PHPStorm` peut vous aider ! La classe dont l'import est manquant apparaîtra en surbrillance avec un fond jaune. Vous pouvez alors passer votre curseur sur le nom de la classe et cliquer sur `Import class`.
 
-### Détails supplémentaires
+## Découverte de PHPUnit
 
-Reprenons ces aspects plus en détail : 
+**PHPUnit** est une librairie PHP permettant de réaliser des tests unitaires sur une application PHP. Son fonctionnement est similaire à **JUnit** que vous utilisez notamment en cours de Tests.
 
-#### Noms des ressources
+PHPUnit intègre par défaut les outils nécessaires à l'utilisation de **mocks** ainsi que l'analyse de la **couverture de code**. Nous aurons l'occasion de revenir sur ces notions au cours du TD.
 
-Prenons un exemple de bonne URL : `/clients/33245/commandes/8769/categories/1`.
+### Installation et configuration
 
-On voit que les ressources utilisent des noms, et pas des verbes, en minuscule.
-Les ressources sont regroupées en collection et sont nommées au pluriel. On
-utilise les sous-chemins pour indiquer l'appartenance à une sous-ressource. Par
-exemple, l'URL précédente fait référence aux produits de la catégorie `1` qui appartiennent à la commande `8769` du client `33245`.
-
-#### Verbes HTTP 
-
-Pour indiquer une action sur une ressource, on utilise des verbes HTTP : 
-  * `GET` : lire une ressource,
-  * `POST` : créer une nouvelle ressource,
-  * `PUT` : mettre à jour une ressource complètement en la remplaçant,
-  * `PATCH` : mettre à jour une ressource partiellement en la modifiant 
-  * `DELETE` : supprimer une ressource.
-
-<!-- https://stackoverflow.com/questions/28459418/use-of-put-vs-patch-methods-in-rest-api-real-life-scenarios -->
-
-#### Les codes de statut *HTTP*
-
-Les codes de réponse *HTTP* servent à indiquer si une requête a pu être traitée
-avec succès. Complétons les codes déjà vus : 
-  * Codes de succès `2xx` : 
-    * `200 OK` (attribut `HTTP_OK` de l'objet *PHP* `Response`)  
-      Code de succès générique. Code le plus utilisé.
-    * `201 CREATED` (attribut `HTTP_CREATED`)  
-      Création d'entité réussie, généralement à la suite d'une requête `POST`.
-      Il est courant de fournir un lien vers la ressource créée dans l'en-tête
-      `Location :`. Le corps de réponse peut être vide.
-    * `204 NO CONTENT` (attribut `HTTP_NO_CONTENT`)  
-      Code de succès qui signale un corps de réponse vide, généralement à la suite d'une requête `DELETE` ou `PUT`.
-  * Codes de redirection `3xx` déjà présentés dans 
-    [le TD2]({{site.baseurl}}/tutorials/tutorial2#des-redirections-plus-propres) :
-    * `301 MOVED PERMANENTLY` : redirection permanente 
-    * `302 FOUND` : redirection temporaire   
-  * Codes d'erreur côté client `4xx` déjà présentés dans 
-    [le TD2]({{site.baseurl}}/tutorials/tutorial2#utilisation-des-codes-de-réponses-pour-les-erreurs) : 
-    * `400 BAD REQUEST` : erreur générique
-    * `401 UNAUTHORIZED` : le client doit s'authentifier,
-    * `403 FORBIDDEN` : le client authentifié n'a pas les droits
-    * `404 NOT FOUND` : ressource inconnue
-    * `405 METHOD NOT ALLOWED` : verbe *HTTP* non pris en charge,
-    * `409 CONFLICT` : conflit avec une ressource existante,
-  * Codes d'erreur côté serveur `5xx` :
-    * `500 INTERNAL SERVER ERROR` (attribut `HTTP_INTERNAL_SERVER_ERROR`)  
-      Ne devrait jamais être renvoyé intentionnellement. Généralement, ce code provient d'un `try / catch` global sur le serveur qui traite les exceptions inattendues avec un code `500`. 
-
-#### Tableau récapitulatif
-
-| Verbe *HTTP* | CRUD    | Collection entière (par ex. `/customers`)                              | Item spécifique (par ex. `/customers/{id}`)                                           |
-| ------------ | ------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| `POST`       | Create  | `201` (`Created`). <br> `409` (`Conflict`) si la ressource existe déjà | `405` (`Method Not Allowed`)                                                          |
-| `GET`        | Read    | `200` (`OK`), liste de clients.                                        | `200` (`OK`), client particulier.  <br> `404` (`Not Found`), si l'ID est inconnu.     |
-| `PUT`        | Replace | `405` (`Method Not Allowed`)                                           | `200` (`OK`) ou `204` (`No Content`).  <br> `404` (`Not Found`), si l'ID est inconnu. |
-| `PATCH`      | Modify  | `405` (`Method Not Allowed`)                                           | `200` (`OK`) ou `204` (`No Content`).  <br> `404` (`Not Found`), si l'ID est inconnu. |
-| `DELETE`     | Delete  | `405` (`Method Not Allowed`)                                           | `200` (`OK`) ou `204` (`No Content`).  <br> `404` (`Not Found`), si l'ID est inconnu. |
-{: .centered .pretty}
-
-## Échange de données en *JSON*
-
-Dans l'optique de développer un API *REST*, nous devrons
-échanger des données au format *JSON*.
-
-### Utilisation dans la page Web avec *AJAX*
-
-Commençons en douceur en créant une nouvelle route sans échange de donnée. Cette
-route `web/api/publications/{idPublication}` associée au verbe *HTTP* `DELETE`
-supprimera une publication. Notez que les routes liées à la future API sont
-regroupées sous l'URL `web/api/`.
+Comme toute librairie PHP, **PHPUnit** s'installe à l'aide de **composer**.
 
 <div class="exercise">
 
-1. Commençons par la méthode `supprimerPublication` dans `PublicationService` qui
-   appellera la méthode existante `supprimer` dans l'instance de `PublicationRepository` injectée dans ce service. Comme la
-   couche *Service* s'occupe de la validation, notre méthode
-   `supprimerPublication` va s'assurer que toutes les données sont correctes. Sinon, elle lancera une `ServiceException` avec un message et un code d'erreur. Le code d'erreur reprendra les codes de statut *HTTP*.
+1. Exécutez la commande suivante dans le terminal docker ouvert au niveau de la racine
+   de votre projet :
 
-   **Créez** la méthode
-   `supprimerPublication()` et **ajoutez** les codes suivants
-   lors des différents lancements d'exceptions : 
-   * `Response::HTTP_FORBIDDEN` : l'utilisateur est connecté, mais n'a pas l'autorisation.
-   * `Response::HTTP_NOT_FOUND` : la ressource est inconnue.
-   * `Response::HTTP_UNAUTHORIZED` : l'utilisateur n'est pas connecté.
-  
-   ```php
-   use Symfony\Component\HttpFoundation\Response;
-
-   public function supprimerPublication(int $idPublication, ?string $idUtilisateurConnecte): void
-   {
-      $publication = $this->publicationRepository->recupererParClePrimaire($idPublication);
-
-      if (is_null($idUtilisateurConnecte))
-         throw new ServiceException("Il faut être connecté pour supprimer une publication", Response::XXX);
-
-      if ($publication === null)
-         throw new ServiceException("Publication inconnue.", Response::XXX);
-
-      if ($publication->getAuteur()->getIdUtilisateur() !== intval($idUtilisateurConnecte))
-         throw new ServiceException("Seul l'auteur de la publication peut la supprimer", Response::XXX);
-
-      $this->publicationRepository->supprimer($publication);
-   }
-   ```
-
-   Mettez également à jour **l'interface** `PublicationServiceInterface` afin d'y inclure la signature de cette nouvelle méthode.
-
-2. Créez un nouveau contrôleur `ControleurPublicationAPI` et une nouvelle
-   action `supprimer($idPublication)` avec le code suivant. Indiquez le bon code
-   de réponse en cas de succès.
-
-   ```php
-   namespace TheFeed\Controleur;
-
-   use Symfony\Component\DependencyInjection\ContainerInterface;
-   use TheFeed\Lib\ConnexionUtilisateur;
-   use TheFeed\Service\PublicationServiceInterface;
-   use TheFeed\Service\Exception\ServiceException;
-   use Symfony\Component\HttpFoundation\JsonResponse;
-   use Symfony\Component\HttpFoundation\Response;
-
-   class ControleurPublicationAPI extends ControleurGenerique
-   {
-
-      public function __construct (
-         ContainerInterface $container,
-         private readonly PublicationServiceInterface $publicationService
-      ) 
-      {
-         parent::__construct($container);
-      }
-
-      public function supprimer($idPublication): Response
-      {
-         try {
-               $idUtilisateurConnecte = ConnexionUtilisateur::getIdUtilisateurConnecte();
-               $this->publicationService->supprimerPublication($idPublication, $idUtilisateurConnecte);
-               return new JsonResponse('', Response::XXX);
-         } catch (ServiceException $exception) {
-               return new JsonResponse(["error" => $exception->getMessage()], $exception->getCode());
-         }
-      }
-   }
-   ```
-
-3. Pour pouvoir faire référence à la nouvelle action `supprimer()` dans les
-   routes, il faut d'abord enregistrer `ControleurPublicationAPI` dans le
-   conteneur de services  (`Configuration/conteneur.yml`).  
-   **Enregistrez** un service `TheFeed\Controleur\ControleurPublicationAPI` lié à la classe
-   `ControleurPublicationAPI`. Ce service injectera les services
-   `service_container` et `TheFeed\Service\PublicationService` au contrôleur.
-
-   *Aide :* Inspirez-vous de la déclaration du service
-   `TheFeed\Controleur\ControleurPublication`.
-
-4. Affectez la route `/api/publications/{idPublication}` de méthode *HTTP*
-   `DELETE` à votre action, au niveau de sa déclaration dans le contrôleur.
-   N'oubliez pas de nommer cette route.
-
-</div>
-
-### Découverte de *Postman*
-
-Pour tester ce bout d'API, il faut envoyer une requête de méthode `DELETE`. Pour cela, nous allons utiliser un petit logiciel très pratique quand on développe des `API` : **Postman**.  
-Ce logiciel va permettre de paramétrer et d'envoyer des requêtes de manière
-interactive et de visualiser le résultat très simplement.
-
-Le logiciel est installé sur les machines de l'IUT. Chez vous, vous pouvez le
-[télécharger](https://www.postman.com/downloads/?utm_source=postman-home).
-
-<div class="exercise">
-
-1. Lancez **Postman**. L'application vous propose de créer un compte, mais vous n'en avez pas besoin. Cliquez simplement sur "**Skip signing in and take me straight to the app**" tout en bas.
-
-2. Sur l'interface, créez un nouvel onglet et paramétrez-le ainsi :
-
-    ![Postman config 1](/R4.A.10-ComplementWeb/assets/TD5/postman1.PNG){: .blockcenter}
-
-    * Méthode `DELETE`
-    * Adresse : [https://localhost/chemin_vers_TD5/web/api/publications/3](https://localhost/chemin_vers_TD5/web/api/publications/3)
-
-3. Cliquez sur "**Send**" et observez la réponse. Vous devriez obtenir le message d'erreur "Il faut être connecté pour supprimer une publication" car vous n'êtes en effet pas connecté !
-
-4. Comme notre route n’est accessible qu’aux utilisateurs authentifiés. On
-   va donc fournir à *Postman* un identificateur de session. Connectez-vous sur
-   votre application (depuis votre navigateur) puis exécutez le code JavaScript 
-   suivant dans la console du navigateur
-   (`F12` → `Console`) :
-   ```js
-   document.cookie
-   ```
-   Copiez la valeur associée à la clé `PHPSESSID=`. Conservez bien ce résultat.
-
-5. Sur *Postman*, cliquez sur le bouton **Cookies** à proximité du bouton **SEND**.
-   Dans la fenêtre qui s'ouvre, cliquez sur le cookie `PHPSESSID`.
-   Remplacez ensuite la valeur associé à la clé `PHPSESSID` par la valeur copiée à l'étape précédente.
-
-   ![Postman config 2](/R4.A.10-ComplementWeb/assets/TD5/postman2.PNG){: .blockcenter}
-
-6. Envoyez la requête de nouveau (vérifiez d'être bien connecté sur le site avant).
-   Si vous rechargez votre site Web, la publication correspondante doit avoir disparue.
-
-</div>
-
-### Bouton JavaScript de suppression
-
-Nous allons maintenant rajouter un bouton *HTML*, auquel sera associé un code
-*JavaScript* qui lancera la requête `DELETE`. Nous allons profiter du 
-[TP6 de *JavaScript*](https://gitlabinfo.iutmontp.univ-montp2.fr/r4.01-developpementweb/TD6)
- pour utiliser `fetch` et/ou `async/await` à la place de `XMLHttpRequest`.
-
-Pour que le gestionnaire d'évènement sache quelle publication il doit supprimer,
-nous allons rajouter l'identifiant de publication dans un attribut de la balise.
-Les [attributs `data-*`](https://developer.mozilla.org/fr/docs/Learn/HTML/Howto/Use_data_attributes) ont été conçus à cet effet. Par exemple, si on rajoute les attributs suivants à une balise *HTML*
-```html
-<article
-  id="voitureelectrique"
-  data-columns="3"
-  data-index-number="12314"
->
-```
-on peut les récupérer en *JavaScript* avec 
-```js
-let article = document.getElementById('voitureelectrique');
-article.dataset.columns // "3"
-article.dataset.indexNumber // "12314"
-```
-Attention, les tirets dans l'attribut *HTML* `data-index-number` sont convertis
-en attribut JS `indexNumber` avec un nommage *camelCase*.
-
-{% raw %}
-
-<div class="exercise">
-
-1. Rajouter dans `feed.html.twig` un bouton juste après le paragraphe contenant
-   le message lors de l'affichage des publications. 
-   Remplacez les commentaires *Twig* par le code adéquat.
-
-   ```twig
-   {# si l'utilisateur connecte est l'auteur de la publication #}
-   <button class="delete-feedy" data-id-publication="{# identifiant publication  #}">
-       Supprimer
-   </button>
-   {#  fin si #}
-   ```
-
-2. Créez un script `ressources/js/main.js` avec le contenu suivant. Remplacez
-   `XXX` par le code de succès émis par votre API REST (*cf.* Exercice 1.2) : 
-
-   ```js
-   /**
-    * @param {HTMLElement} button La balise <button> cliquée
-    */
-   function supprimerPublication(button) {
-      // TODO : récupérer l'identifiant de publication de la balise button
-      let idPublication = ; 
-      let URL = apiBase + "publications/" + idPublication;
-
-      fetch(URL, {method: "DELETE"})
-         .then(response => {
-               if (response.status === XXX) {
-                  // Plus proche ancêtre <div class="feedy">
-                  let divFeedy = button.closest("div.feedy");
-                  divFeedy.remove();
-               }
-         });
-   }
-   ```
-
-   Ne vous souciez pas encore du warning sur `apiBase`, nous allons définir cette variable prochainement.
-
-3. Ajouter un `addEventListener` sur les boutons `<button class="delete-feedy">`
-   pour appeler la méthode précédente lors d'un clic (en lui fournissant le bouton 
-   sur lequel est déclenché l'événement).
-
-3. Changez `base.html.twig` pour faire appel au script `main.js` et rajouter quelques variables globales dans *JavaScript*.
-
-   ```diff
-      <link rel="stylesheet" type="text/css" href="{{ asset("../ressources/css/styles.css") }}">
-   +    <script type="text/javascript" src="{{ asset("../ressources/js/main.js") }}" defer></script>
-   </head>
-   <body>
-   +<script type="text/javascript">
-   +    let siteBase = "{{ asset('.') }}";
-   +    let apiBase = siteBase+"/api/"
-   +    let pagePersoBase = siteBase+"/utilisateurs/";
-   +    let imgBase = "{{  asset("../ressources/img") }}";
-   +</script>
-   <header>
-   ```
-
-4. Testez votre site. Un utilisateur connecté doit pouvoir effacer ses publications
-   en cliquant sur le bouton *Supprimer*.
-
-   *Aide :* Si cela ne marche pas, ouvrez l'onglet *Réseau* des outils de
-   développement pour observer la requête émise par le clic et le bouton, et la
-   réponse renvoyée par le serveur.
-
-</div>
-
-{% endraw %}
-
-### Réponse en *JSON*
-
-<!-- 
-JsonSerialize ou symfony/Serializer ? 
-https://symfony.com/doc/current/components/serializer.html
-À peu près pareil : 
-The JsonEncoder encodes to and decodes from JSON strings, based on the PHP json_encode and json_decode functions. 
--->
-
-<!-- Quelles actions veut-on pour notre API ? -->
-
-Nous avons déjà vu la fonction 
-[`json_encode()`](https://www.php.net/manual/fr/function.json-encode.php) pour encoder une variable *PHP*
-en une chaîne de caractères au format *JSON*. Quand il encode un objet, le
-comportement par défaut de *PHP* est d'encoder uniquement les attributs
-publics. Pour pouvoir personnaliser l'encodage *JSON*, une classe doit implémenter l'interface 
-[`JsonSerializable`](https://www.php.net/manual/fr/class.jsonserializable.php), c'est-à-dire fournir une méthode 
-```php
-public function jsonSerialize();
-```
-
-Nous allons utiliser ces notions lors de la création d'une requête qui renvoie les détails d'un utilisateur au format *JSON*.
-
-<div class="exercise">
-
-<!-- 1. Rajoutez et codez la méthode à `UtilisateurService`
-   ```php
-   public function recupererUtilisateurParId($idUtilisateur) : Utilisateur
-   ```
--->
-
-1. Faites en sorte que la classe `Utilisateur` implémente l'interface
-   `JsonSerializable` et rajoutez-lui la méthode : 
-
-   ```php
-   public function jsonSerialize(): array
-   {
-      return [
-         "idUtilisateur" => $this->getIdUtilisateur(),
-         "login" => $this->getLogin(),
-         "nomPhotoDeProfil" => $this->getNomPhotoDeProfil()
-      ];
-   }
-   ```
-
-2. Créez un nouveau contrôleur `ControleurUtilisateurAPI` étendant
-   `ControleurGenerique`. Son constructeur devra donc aussi construire la partie "parent" `ControleurGenerique`, et donc injecter un objet `ContainerInterface` via le constructeur.
-
-   Il faudra aussi injecter une instance de `UtilisateurServiceInterface`.
-
-3. Dans votre nouveau contrôleur, ajoutez une nouvelle action
-   ```php
-   public function afficherDetail($idUtilisateur): Response
-   ```
-   qui récupère l'utilisateur d'identifiant `$idUtilisateur` et renvoie l'utilisateur au
-   format *JSON*. Inspirez-vous de `supprimer` de `ControleurPublicationAPI`. 
-   Vous utiliserez le constructeur `new JsonResponse($object)` qui permet de créer une 
-   réponse qui contient l'encodage *JSON* de `$object`.
-
-   *Note* : il n'y a pas besoin d'appeler explicitement `json_encode`! Comme notre 
-   objet `Utilisateur` est du type `JsonSerializable`, l'appel à `new JsonResponse($object)` effectue
-   implicitement un appel à cette méthode.
-
-4. Enregistrez votre nouveau contrôleur dans le **conteneur de service** (`Configuration/conteneur.yml`).
-
-5. Configurez une route `GET` sur l'URL `/api/utilisateurs/{idUtilisateur}` au niveau de la déclaration de cette action.
-   Testez votre route directement dans le navigateur avec un identifiant d'utilisateur existant.
-   N'oubliez pas de nommer votre route. 
-   
-6. Dans la méthode `recupererUtilisateurParId` de `UtilisateurService`, rajoutez le code
-   d'erreur *HTTP* adéquat si l'utilisateur est inconnu. Testez la route avec un
-   identifiant inconnu (utilisez l'onglet Réseau ou *Postman* pour voir le code
-   de réponse).
-
-   <!-- Response::HTTP_NOT_FOUND -->
-</div>
-
-<div class="exercise">
-
-1. Dans `PublicationService`, ajoutez la méthode suivante :
-
-   ```php
-   /**
-    * @throws ServiceException
-    */
-   public function recupererPublicationParId($idPublication, $autoriserNull = true) : ?Publication {
-      $publication = $this->publicationRepository->recupererParClePrimaire($idPublication);
-      if(!$autoriserNull && $publication == null) {
-         throw new ServiceException("La publication n'existe pas.", Response::HTTP_NOT_FOUND);
-      }
-      return $publication;
-   }
-   ```
-
-   Mettez aussi à jour l'interface de ce service en conséquence.
-
-1. Faites en sorte que la route `GET` d'URL
-   `/api/publications/{idPublication}` appelle sur une action
-   `afficherDetail($idPublication)` dans `ControleurPublicationAPI` et qui renvoie une
-   réponse JSON. Voici, sur un exemple, les informations sur la publication
-   qu'il faut renvoyer : 
-   ```json
-   {
-      "idPublication": 1,
-      "message": "Un exemple de publication",
-      "date": "30 January 2023",
-      "auteur": {
-         "idUtilisateur": 1
-      }
-   }
-   ```
-
-   N'oubliez pas de nommer votre nouvelle route. 
-
-   **Rappel :** Vous avez déjà formaté des dates dans la vue Twig
-   `feed.html.twig`. En PHP, vous pourrez faire en même avec
-   ```php
-   $dateTime->format('d F Y');
-   ```
-
-2. Testez la route avec un identifiant de publication connu et un inconnu.
-</div>
-
-L'exercice précédent a montré un autre avantage de la couche service. Le code de
-`PublicationService::recupererPublicationParId` est utilisé à la fois par
-`ControleurPublicationAPI` et par `ControleurPublication`. Seule l'interface
-change entre l'API et la page Web classique, tandis que le code *métier* reste
-le même.
-
-<div class="exercise">
-
-1. Définissez une route `GET` d'URL `/api/publications` qui appelle
-   une action `afficherListe` (définie dans `ControleurPublicationAPI`) 
-   et renvoie la liste des publications au format JSON. N'oubliez pas de nommer votre route. 
-   
-2. Testez.
-
-</div>
-
-### Corps de la requête en *JSON*
-
-Nous allons maintenant créer une route pour poster une publication. Comme le message
-d'une publication ne peut pas raisonnablement être inclus dans l'URL, nous allons
-l'envoyer dans le corps de la requête. Et quel format de données allons-nous
-utiliser : *JSON* bien sûr !
-
-<div class="exercise">
-
-1. Changer votre fonction `creerPublication()` dans `PublicationService` pour le code
-   suivant, qui gère le cas `$idUtilisateur==null` et récupère l'identifiant de publication depuis le *repository* : 
-
-   ```php
-   public function creerPublication($idUtilisateur, $message): Publication
-   {
-      if ($idUtilisateur == null) throw new ServiceException("Il faut être connecté pour publier un feed", Response::HTTP_UNAUTHORIZED);
-      if ($message == null || $message == "") throw new ServiceException("Le message ne peut pas être vide!", Response::HTTP_BAD_REQUEST);
-      if (strlen($message) > 250) throw new ServiceException("Le message ne peut pas dépasser 250 caractères!", Response::HTTP_BAD_REQUEST);
-
-      $auteur = new Utilisateur();
-      $auteur->setIdUtilisateur($idUtilisateur);
-      $publication = Publication::construire($message, $auteur);
-      $idPublication = $this->publicationRepository->ajouter($publication);
-      $publication->setIdPublication($idPublication);
-      return $publication;
-   }
-   ```
-
-   Attention : on a changé le type de retour de la méthode. Il faut donc mettre à jour l'interface.
-
-2. Créez la méthode `posterPublication` dans `ControleurPublicationAPI` avec le code
-   suivant, que nous allons compléter par la suite.
-
-   ```php
-   use Symfony\Component\HttpFoundation\Request;
-
-   public function posterPublication(Request $request): Response
-   {
-      try {
-         // TODO : récupérer le message inclus dans la requête dans une variable $message
-
-         $idUtilisateurConnecte = ConnexionUtilisateur::getIdUtilisateurConnecte();
-         $publication = $this->publicationService->creerPublication($idUtilisateurConnecte, $message);
-         return new JsonResponse($publication, Response::XXX);
-      } catch (ServiceException $exception) {
-         return new JsonResponse(["error" => $exception->getMessage()], $exception->getCode());
-      } 
-   }
-   ``` 
-3. Complétez la méthode précédente avec les consignes suivantes : 
-   * Indiquez le bon code de réponse en cas de succès.
-   * Le corps d'une requête se récupère avec `$request->getContent()`,
-   * une chaîne de caractères au format *JSON* (celle obtenue à l'étape d'avant) se décode avec `json_decode($string)`,
-   * si l'objet décodé du *JSON* ne contient pas d'attribut message, assignez la
-     valeur par défaut `$message=null`. Pour ceci, utilisez l'une des syntaxes suivantes
-     ```php
-     $valeur = isset($objet->attribut) ? $objet->attribut : "valeur par défaut";
-     // Syntaxe équivalente avec l'opérateur Null coalescent
-     // https://www.php.net/manual/fr/migration70.new-features.php
-     $valeur = $objet->attribut ?? "valeur par défaut";
-     ```
-
-4. En cas de corps de requête malformé, `json_decode` va échouer. Pour traiter
-   cette erreur, on demande à `json_decode` de lancer une `JsonException` avec
-   la commande
-   ```php
-   // On utilise les arguments nommés pour raccourcir
-   // https://www.php.net/manual/fr/functions.arguments.php#functions.named-arguments
-   json_decode($content, flags: JSON_THROW_ON_ERROR);
-   ```
-
-   **Appliquez** ce code et traitez l'exception en rajoutant un nouveau `catch`
-   ```php
-   catch (JsonException $exception) {
-        return new JsonResponse(
-            ["error" => "Corps de la requête mal formé"],
-            Response::HTTP_BAD_REQUEST
-        );
-    }
-    ```
-
-5. Affectez à votre action une nouvelle route `/api/publications` de méthode `POST` (et du nom que vous souhaitez).
-
-</div>
-
-Nous allons maintenant tester notre route avec *Postman*.
-
-<div class="exercise">
-
-1. Créez une nouvelle requête *Postman* (bouton `+`) pointant vers la route 
-`/api/publications` de votre application avec une méthode `POST`. 
-Indiquer le corps de requête suivant dans `Body` → `raw` : 
-   ```json
-   {
-      "message": "test API!"
-   }
-   ```
-
-2. Envoyez la requête.
-   Le serveur vous renvoie la représentation `JSON` de votre nouvelle publication ! 
-   Vérifiez aussi sur le site que la publication est apparue.
-
-   Si vous avez une erreur, vérifiez que votre **cookie** de session est toujours 
-   bien configuré sur *Postman* et que vous êtes bien toujours connecté sur le site.
-
-3. Testez aussi les cas d'erreur où le corps de requête est mal formé, ou
-   le message est vide.
-
-</div>
-
-### Bouton JavaScript pour publier
-
-<div class="exercise">
-
-1. Nous vous fournissons une fonction JavaScript qui renvoie le code *HTML* d'une
-   publication dont les données sont données en argument. **Copiez** ce code dans `main.js`.
-
-   ```js
-   function templatePublication(publication, utilisateur) {
-      return `<div class="feedy">
-      <div class="feedy-header">
-         <a href="${pagePersoBase + publication.auteur.idUtilisateur}">
-               <img alt="profile picture" src="${imgBase}/utilisateurs/${utilisateur.nomPhotoDeProfil}" class="avatar">
-         </a>
-         <div class="feedy-info">
-               <span>${utilisateur.login}</span><span> - </span><span>${publication.date}</span>
-               <p>${publication.message}</p>
-               <button class="delete-feedy" data-id-publication="${publication.idPublication}" onclick="supprimerPublication(this)">Supprimer</button>
-         </div>
-      </div>
-   </div>`;
-   }
-   ```
-
-2. Nous vous fournissons également la méthode de base pour soumettre une publication.
-   **Copiez** ce code dans `main.js` et remplacez `XXX` par le code de succès
-   émis par votre API REST.
-
-   ```js
-   async function soumettrePublication() {
-      const messageElement = document.getElementById('message')
-      // On récupère le message 
-      let message = messageElement.value;
-      // On vide le formulaire
-      messageElement.value = "";
-      // On utilise la variable globale apiBase définie dans base.html.twig
-      let URL = apiBase + "publications";
-
-      let response = await fetch(URL, {
-         // Ajouter la méthode 'POST'
-
-         // Ajouter un corps de requête contenant le message
-
-         // Ajouter des en-têtes pour indiquer 
-         // * le format du corps de requête
-         // * le format de données attendu en retour
-      });
-      if (response.status !== XXX)
-         // (Hors TD) Il faudrait traiter l'erreur 
-         return; 
-      let publication = await response.json();
-      // Utilisateur par défaut en attendant la suite
-      let utilisateur = {nomPhotoDeProfil : "anonyme.jpg", login: "Inconnu"};
-      let formElement = document.getElementById("feedy-new");
-      formElement.insertAdjacentHTML('afterend', templatePublication(publication, utilisateur));
-   }
-   ```
-3. Vous allez compléter le deuxième argument
-   [`options` de la fonction `fetch()`](https://developer.mozilla.org/en-US/docs/Web/API/fetch#parameters) avec les instructions suivantes : 
-   1. indiquez la méthode `POST` dans le champ `method` (voir `supprimerPublication`), 
-   2. le corps de la requête correspondant au champ `body` dont la valeur est
-      une chaîne de caractères. Vous devez utiliser `JSON.stringify()` pour convertir l'objet `JSON` (construit à partir du
-      message récupéré par la méthode) en chaîne de caractères :
-      ```js
-      body: JSON.stringify({message: message}),
-      ```
-   3. les en-têtes s'indiquent dans le champ `headers` : 
-      1. l'en-tête `Content-type` indique le format du corps de la requête,
-      2. l'en-tête `Accept` indique le format souhaité pour le corps de la
-         réponse. 
-      3. Vous pouvez donc indiquer les en-têtes avec 
-         ```js
-         headers: {
-               'Accept': 'application/json',
-               'Content-type': 'application/json; charset=UTF-8',
-         },
-         ```
-
-4. Rajoutez un `addEventListener` sur `<button id="feedy-new-submit">` pour
-   appeler la fonction `soumettrePublication`.
-
-5. Testez dans votre navigateur. La nouvelle publication doit s'afficher sans rechargement de la page.
-   Pour le moment, le login et la photo de profil ne s'affichent pas, c'est normal.  
-   On a ajouté un attribut `onclick` sur le `<button class="delete-feedy">` du template afin de faire en sorte qu'une nouvelle publication puisse être supprimée. C'est un patch nécessaire, car le `addEventListener` que vous avez codé n'a pu enregistrer la gestion de cet événement car la publication n'existait pas encore lors du chargement de la page !
-
-   Plutôt que la méthode `templatePublication`, il serait préférable (dans une implémentation optimale) d'utiliser [la balise template](https://developer.mozilla.org/fr/docs/Web/HTML/Element/template). Avec cette méthode, on pourrait aussi attacher l'événement de clic sur le bouton de suppression plus proprement (pour les nouvelles publications ajoutées dynamiquement).
-
-</div>
-
-Vous pouvez sauter l'exercice suivant si vous estimez que vous manquez de temps
-pour faire les TDs.
-
-<div class="exercise">
-
-1. Modifiez la fonction `soumettrePublication()` pour récupérer l'utilisateur dont
-   l'identifiant est `publication.auteur.idUtilisateur` par une requête à l'URL
-   `/api/utilisateurs/{idUtilisateur}`.
-
-2. Testez que la soumission d'une nouvelle publication remplit bien le *login* et
-   l'image de profil de l'utilisateur.
-
-3. Publiez le message `<h1>Hack!</h1>` et observez le problème. Rechargez la
-   page pour que la publication soit affichée par le serveur et observez la différence.
-
-4. Nettoyer les entrées utilisateurs non fiables à l'aide de la méthode JavaScript : 
-   * le texte de la page HTML et les attributs des balises HTML doivent être échappés avec
-     ```js
-     function escapeHtml(text) {
-        // https://stackoverflow.com/questions/1787322/what-is-the-htmlspecialchars-equivalent-in-javascript
-        return text
-           .replace(/&/g, "&amp;")
-           .replace(/</g, "&lt;")
-           .replace(/>/g, "&gt;")
-           .replace(/"/g, "&quot;")
-           .replace(/'/g, "&#039;");
-     }
-     ```
-   * Dans une URL, la partie dangereuse provenant de l'utilisateur doit être encodée avec [encodeURIComponent](https://developer.mozilla.org/fr/docs/Web/JavaScript/Reference/Global_Objects/encodeURIComponent) comme vu lors du Cours 2 de JavaScript.
-
-</div>
-
-<!-- 
-Idéalement try/catch (~= .catch()) 
-pour traiter les erreurs (par. ex. utilisateur déconnecté entre temps)
--->
-
-
-<!-- Renvoie le lien vers le Tweet créé  -->
-<!-- avec Location ? Ne va pas faire une redirection ? Github -> champ "url" ! -->
-
-
-## *Json Web Token* (`JWT`)
-
-### Authentification avec des `JWT`
-
-Rappelons qu'un service Web *RESTful* doit être sans état (*Stateless*). Ceci
-signifie que l'échange client–serveur s'effectue sans conservation de l'état de
-la session de communication sur le serveur entre deux requêtes successives.
-L'état de la session est conservé par le client et transmis à chaque nouvelle
-requête. Les requêtes du client contiennent donc toute l'information nécessaire
-pour que le serveur puisse y répondre.
-
-Notre `API` ne respecte pas le principe **Stateless** car on utilise des
-sessions pour garder en mémoire que l'utilisateur est connecté et ainsi
-l'autoriser à accéder à des routes sécurisées ou bien supprimer ses propres
-ressources.
-
-Nous allons donc stocker l'identifiant de l'utilisateur côté client dans des
-cookies. Mais attention, nous avons vu au 
-[semestre 3](http://romainlebreton.github.io/R3.01-DeveloppementWeb/tutorials/tutorial7.html)
-que les données stockées dans les cookies sont modifiables par le client. 
-Le client pourrait donc se connecter tout seul sans avoir à s'authentifier.
-
-Une solution classique consiste pour le serveur à rajouter une signature
-cryptographique dans le cookie. Ainsi, le client n'a plus la possibilité de
-modifier son cookie ; sinon il devrait falsifier la signature, ce qui est
-pratiquement impossible puisque seul le serveur est en capacité de signer. 
-Ce mécanisme est fourni par les *Json Web Token* (`JWT`).
-
-En pratique, le serveur stocke les informations d'authentification dans un jeton
-(*token* en anglais). Le serveur dispose d'une *clé privée* secrète avec
-laquelle il *signe* le jeton. Puis le serveur dépose le jeton chez le client
-dans un cookie. Le client peut librement lire ce jeton `JWT`. Mais il ne pourra pas le
-modifier sans que le serveur ne le détecte (grâce au mécanisme de signature).
-
-À chaque requête, le client envoie alors son cookie contenant son jeton `JWT`.
-Le serveur le décode et vérifie s'il n'a pas été altéré. Si tout va bien, il
-peut donc extraire l'information de ce token et l'utiliser en toute confiance
-(il n'a pas été altéré entre temps) sans avoir besoin de `sessions` et de
-maintenir un **état** côté serveur.
-
-Attention néanmoins, contrairement aux sessions, il ne faut pas stocker de
-donner sensibles dans le `JWT` car tout le monde peut facilement le lire ; sa
-sécurité réside seulement dans le fait qu'il ne peut pas être falsifié.
-
-### Présentation du format `JWT`
-
-Expliquons le format sur 
-[l'exemple interactif donné par la page `jwt.io`](https://jwt.io/).
-Un `JWT` décodé est composé de 3 parties : 
-1. des <span style="color:#fb015b">en-têtes</span> au format *JSON* indiquant le type de jeton, ici `JWT`, et
-   l'algorithme de signature (plus de détails à venir), ici `HS256` pour HMAC
-   SHA256, c'est-à-dire Code d'Authentification de Message à base de Hachage
-   (HMAC) qui utilise l'algorithme de hachage cryptographique `SHA256`.
-   ```json
-   {
-      "alg": "HS256",
-      "typ": "JWT"
-   }
-   ```
-1. un <span style="color:#d63aff">corps de message</span> contenant des données au format *JSON*, par exemple
-   ```json
-   {
-      "message": "Feed !",
-   }
-   ```
-   (des noms de champs ont des 
-   [sens particuliers](https://www.rfc-editor.org/rfc/rfc7519#section-4.1) : 
-   `exp` (Expiration Time),
-   `iss` (Issuer), ...)
-
-1. la <span style="color:#00b9f1">signature</span> du message
-
-Pour former le jeton final, chaque partie est [encodée en
-`base64`](https://fr.wikipedia.org/wiki/Base64), puis concaténée avec des points
-`'.'`. Dans l'exemple suivant, <span style="color:#fb015b">la partie
-rouge</span> est l'encodage en `base64` de l'en-tête, <span
-style="color:#d63aff">la partie violette</span> est l'encodage en `base64` du
-corps de message et <span style="color:#00b9f1">la partie bleu ciel</span> est
-la signature : 
-
-<pre><div style="padding: 1em;background:white"><span style="color:#fb015b">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9</span>.<span style="color:#d63aff">eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ</span>.<span style="color:#00b9f1">SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c</span></div></pre>
-
-<div class="exercise">
-
-1. Pour utiliser le `JWT`, nous allons utiliser une bibliothèque externe : 
    ```bash
-   composer require firebase/php-jwt
+   composer require phpunit/phpunit
    ```
 
-2. Créez la classe `src/Lib/JsonWebToken.php` avec le code suivant : 
-   ```php
-   namespace TheFeed\Lib;
+   S'il vous est demandé si vous préférez placer le package dans `require-dev`, vous pouvez répondre `yes`. Cela permet de différencier dans le `composer.json` les dépendances liées au fonctionnement global de l'application (celles de la section `require`) et celles exclusivement liées à la phase de développement, aux tests, etc. (comme `phpunit`). La commande `composer install` installe toutes les dépendances, mais si on utilise l'option `--no-dev`, seules les dépendances de `require` seront installées.
+   
+2. Nous allons maintenant configurer `PHPUnit` et créer les dossiers nécessaires à son fonctionnement. Commencez par créer un fichier `phpunit.xml` à la racine du projet et complétez-le avec le contenu suivant :
 
-   use Firebase\JWT\JWT;
-   use Firebase\JWT\Key;
+   ```xml
+   <?xml version="1.0" encoding="UTF-8"?>
+   <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+           bootstrap="vendor/autoload.php"
+           cacheDirectory=".phpunit.cache"
+           executionOrder="depends,defects"
+           displayDetailsOnPhpunitDeprecations="true"
+           failOnRisky="true"
+           failOnWarning="true">
 
-   class JsonWebToken
+       <testsuites>
+           <testsuite name="unit">
+               <directory>./tests/unit</directory>
+           </testsuite>
+       </testsuites>
+
+       <source ignoreIndirectDeprecations="true" restrictNotices="true" restrictWarnings="true">
+           <include>
+               <directory>src</directory>
+           </include>
+       </source>
+
+       <coverage>
+           <report>
+               <clover outputFile="reports/coverage/coverage.xml"/>
+           </report>
+       </coverage>
+   </phpunit>
+   ```
+
+    Analysons un peu le contenu de ce fichier de configuration :
+
+    * Le paramètre `bootstrap` permet d'indiquer où se trouve le fichier d'autoloading, nécessaire pour charger le bon fichier à partir de son `namespace`.
+
+    * Le paramètre `cacheDirectory` permet de définir la localisation du dossier de cache utilisé par `PHPUnit`.
+
+    * La section `testsuites` nous permet de configurer plusieurs batteries de tests : tests unitaires, tests d'intégration, etc. Pour ce TD, nous n'utiliserons que des tests unitaires. On configure le dossier de test **en dehors du code source du projet** dans un dossier `tests/units`.
+
+    * La section `source` permet d'indiquer où se situe le code source de notre projet (le code qui sera testé). Ici, on indique donc `src`.
+
+    * Enfin, la section `coverage` permet de définir où sera généré le rapport concernant la **couverture de code** (dont nous reparlerons plus tard).
+
+3. À la racine de votre projet, créez un dossier `tests` puis, à l'intérieur, un dossier `unit`. Ensuite, afin de bénéficier d'un *namespace* en *CamelCase* (pour plus de confort) comme pour le reste du projet, modifiez le fichier `composer.json` dans le but de spécifier le bon *namespace* dans la section `autoload` :
+
+   ```json
    {
-      private static string $jsonSecret = "votre_secret_ici";
+        "autoload": {
+            "psr-4": {
+                "TheFeed\\": "src",
+                "Tests\\Unit\\": "tests/unit" //A ajouter
+            }
+        },
+        ...
+   }
+   ```
 
-      public static function encoder(array $contenu) : string {
-         return JWT::encode($contenu, self::$jsonSecret, 'HS256');
-      }
+   Ensuite, exécutez la commande suivante (toujours dans le terminal docker ouvert au niveau de la racine
+   de votre projet), afin de mettre à jour le fichier `autoloader.php` :
 
-      public static function decoder(string $jwt) : array {
-         try {
-               $decoded = JWT::decode($jwt, new Key(self::$jsonSecret, 'HS256'));
-               return (array) $decoded;
-         } catch (\Exception $exception) {
-               return [];
-         }
-      }
+   ```bash
+   composer dump-autoload
+   ```
+
+4. Toujours dans ce même terminal, exécutez la commande suivante, qui permet d'exécuter les tests :
+
+   ```bash
+   php -d xdebug.mode=coverage ./vendor/bin/phpunit
+   ```
+
+    Il n'y a pas de résultat pour le moment, mais c'est normal, vous n'avez pas encore de tests !
+
+5. Deux dossiers ont été générés : `reports` et `.phpunit.cache`. Ces répertoires ne doivent pas être versionnés, excluez-les donc dans votre fichier `.gitignore`.
+</div>
+
+Il est bien sûr possible de configurer votre **IDE** pour lancer les tests depuis l'interface plutôt qu'en ligne de commande, mais la **conteneurisation** du projet rend cela un peu plus compliqué à mettre en place. Pour ce TD, nous nous contenterons donc de lancer les tests avec une commande.
+
+### Une première classe de test
+
+Un **test unitaire** se traduit par une fonction dans une classe dédiée qui exécute différents tests sur des objets de l'application. Il s'agit de vérifier, par exemple, si le retour d'une fonction avec un paramétrage spécifique est bien conforme aux attentes et aux spécifications. On peut aussi tester si l'exécution d'un code déclenche des exceptions.
+
+Les possibilités sont très riches. Pour créer une classe de test, il suffit d'étendre la classe `TestCase`. À partir de
+là, le développeur a accès à une grande variété de méthodes internes pour réaliser des **assertions**. Une **assertion** est simplement une vérification qui est faite (sur un résultat, sur un comportement...). Si cette vérification échoue (résultat différent de ce qui est attendu) le test échoue alors.
+
+Parmi les méthodes d'assertion, on peut citer :
+
+* `assertEquals(resultatAttendu, resultat, message)` : permet de vérifier l'égalité entre un résultat attendu, et un résultat (obtenu après l'exécution d'une méthode, par exemple). Le troisième paramètre est un message (optionnel) qui permet de donner plus détail en cas d'échec du test (ce message sera affiché en sortie).
+
+* `assertTrue(resultat, message)` : permet de vérifier qu'un résultat vaut **true**. Il existe également 
+`assertFalse(resultat, message)`.
+
+* `assertCount(tailleAttendue, structure, message)` : permet de vérifier la taille d'une structure de données
+(typiquement, un tableau).
+
+* `assertEmpty(structure, message)` : permet de vérifier qu'une structure de données est bien vide.
+
+* `assertNull(resultat, message)` : permet de vérifier qu'un résultat est bien **null**. Il existe aussi
+`assertNotNull(resultat, message)`.
+ 
+Cette liste est bien sûr non exhaustive et vous pourrez explorer plus en détail toutes les assertions disponibles sur la [documentation officielle](https://docs.phpunit.de/en/10.5/assertions.html).
+
+Une autre méthode bien pratique est aussi `expectException(exceptionClass)`. Cette méthode est à utiliser avant 
+d'exécuter un bout de code et permet de vérifier que l'exception précisée a bien été levée. On peut aussi utiliser `expectExceptionMessage(message)` pour vérifier le message de l'exception levée.
+
+Enfin, dans chaque classe de test, il est possible de redéfinir deux méthodes bien utiles :
+
+* `setUp` : cette méthode est exécutée avant chaque méthode de test. Elle permet, par exemple, de configurer
+certaines variables afin de les rendre vierges avant d'exécuter chaque test.
+
+* `tearDown` : cette méthode est exécutée après chaque méthode de test. Elle doit permettre de nettoyer les effets de bord occasionnés par chaque test (par exemple : nettoyer la base de données de tests).
+
+Il existe également deux versions **statiques** de ces méthodes : `setUpBeforeClass` et `tearDownAfterClass` qui sont exécutées respectivement avant l'exécution du premier test et après l'exécution du dernier test (donc, une seule fois).
+
+Prenons l'exemple de la classe suivante :
+
+```php
+namespace TheFeed\Lib;
+
+use Exception;
+
+class Ensemble {
+
+    private array $tableauEnsemble;
+
+    public function __construct() {
+        $this->tableauEnsemble = [];
+    }
+
+    public function contient(mixed $valeur): bool {
+        return in_array($valeur, $this->tableauEnsemble);
+    }
+
+    public function ajouter(mixed $valeur) : void {
+        if(!$this->contient($valeur)) {
+            $this->tableauEnsemble[] = $valeur;
+        }
+    }
+
+    public function getTaille(): int {
+        return count($this->tableauEnsemble);
+    }
+
+    public function estVide(): bool {
+        return $this->getTaille() == 0;
+    }
+
+    public function pop(): mixed {
+        if($this->estVide()) {
+            throw new Exception("L'ensemble est vide!");
+        }
+        return array_pop($this->tableauEnsemble);
+    }
+}
+```
+
+On pourrait alors écrire la classe de test suivante :
+
+```php
+namespace Tests\Unit;
+
+use Exception;
+use PHPUnit\Framework\TestCase;
+use TheFeed\Lib\Ensemble;
+
+class EnsembleTest extends TestCase {
+
+    private $ensembleTeste;
+    
+    //On réinitialise l'ensemble avant chaque test
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->ensembleTeste = new Ensemble();
+    }
+    
+    public function testVideDepart() {
+        $this->assertEquals(0, $this->ensembleTeste->getTaille());
+    }
+    
+    public function testAjout() {
+        $this->assertFalse($this->ensembleTeste->contient(7));
+        $this->ensembleTeste->ajouter(7);
+        $this->assertTrue($this->ensembleTeste->contient(7));
+        $this->assertEquals(1, $this->ensembleTeste->getTaille());
+        //On n'ajoute pas deux fois dans un ensemble, donc la taille doit rester à 1
+        $this->ensembleTeste->ajouter(7);
+        $this->assertEquals(1, $this->ensembleTeste->getTaille());
+    }
+    
+    public function testPop() {
+        $this->ensembleTeste->ajouter(1);
+        $this->ensembleTeste->ajouter(2);
+        $this->ensembleTeste->ajouter(3);
+        $this->assertEquals(3, $this->ensembleTeste->pop());
+        $this->assertEquals(2, $this->ensembleTeste->pop());
+        $this->assertEquals(1, $this->ensembleTeste->pop());
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage("L'ensemble est vide!");
+        $this->ensembleTeste->pop();
+    }
+}
+```
+
+<div class="exercise">
+
+1. Dans le dossier `src/Lib`, créez la classe `Ensemble` puis, dans `test\unit` la classe `EnsembleTest` en copiant le code donné ci-dessus.
+
+2. Lancez les tests unitaires (avec la commande donnée précédemment, toujours dans le terminal docker à la racine de votre projet) et observez les résultats.
+
+3. Glissez une erreur dans le code de la classe `Ensemble` et relancez les tests. Observez la sortie. Remettez tout en ordre (enlevez le bug).
+
+</div>
+
+**Attention** ! Le nom de toutes vos classes de tests doit se terminer par `Test` ! (Sinon la classe ne sera pas prise en compte lors de l'exécution de tests). Aussi, chaque nom de méthode de test doit soit débuter par `test` soit posséder l'attribut `#[Test]` :
+
+```php
+namespace Tests\Unit;
+
+use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\Test;
+
+//Le nom termine par "Test"
+class MonTest extends TestCase {
+
+    //Sera exécuté, car est préfixé par "test"
+    public function testCoucou() {
+
+    }
+
+    //Ne sera pas exécuté
+    public function coucou1() {
+
+    }
+
+    //Sera exécuté, car possède l'attribut #[Test]
+    #[Test]
+    public function coucou2() {
+
+    }
+   
+}
+```
+
+<!-- Afin de prendre en main l'outil, vous allez créer une classe simple puis une classe de test permettant de la tester.
+
+<div class="exercise">
+
+1. Créez une classe `Calculatrice` dans le dossier `Test`. Cette classe doit gérer un attribut `$resultat` initialisé à `0` (qui représente le résultat courant). Les différentes méthodes de cette classe devront permettre de modifier ce résultat.
+
+2. Ajoutez les méthodes suivantes :
+
+   * `additionner($nombre)` : ajoute le nombre passé en paramètre au résultat.
+   * `multipler($nombre)` : multiplie le résultat par le nombre passé en paramètre.
+   * `soustraire($nombre)` : soustrait le nombre passé en paramètre au résultat.
+   * `diviser($nombre)` : divise le résultat par le nombre passé en paramètre. Si le nombre passé en paramètre vaut 0, il faut lever une `Exception`.
+   * `reset()` : remet le résultat à 0.
+   * `getResultat()` : un getter pour le résultat.
+
+3. Créez une classe `CalculatriceTest` dans le dossier `Test`. Cette classe a pour but de tester votre classe 
+`Calculatrice`. À vous d'écrire les tests qui vous semblent adéquat. Il faut penser à tester les enchainements d'appels de méthodes.
+
+1. Lancez les tests unitaires. 
+</div>
+
+Veillez à bien comprendre cette étape. L'exemple choisi est volontairement simpliste pour vous permettre de vous
+focaliser sur l'écriture de tests. Si vous avez des difficultés, n'hésitez pas à demander des précisions à votre enseignant.  -->
+
+## La couche Service
+
+Nous avons réalisé des premiers tests simples afin de comprendre le fonctionnement de **PHPUnit**. Maintenant, nous allons mettre en œuvre cet outil de manière plus concrète en testant notre application web. Néanmoins, vous allez constater un problème majeur : l'application n'est pas testable en l'état.
+
+En effet, pour tester, nous avons besoin de faire des **assertions** sur des résultats (ou des comportements) spécifiques obtenus lors de l'exécution d'une fonctionnalité. Actuellement, les fonctionnalités sont réalisées par les **contrôleurs**.
+Or, les différentes fonctions des contrôleurs renvoient un objet `Response` qui n'est pas bien exploitable. Cet objet contient le code complet de la page `HTML` renvoyée au client, ce qui n'est donc pas (ou difficilement) testable en l'état. Ce problème est lié au fait que les **contrôleurs** ont beaucoup trop de responsabilités et ne répartissent pas le travail. De l'extérieur, ils agissent comme une boîte noire et il est alors difficile de récupérer des données intéressantes pour les tests. Il semble aussi difficile de fournir des données aux contrôleurs car ceux-ci se servent directement des données de la requête HTTP.
+
+Une **application web** comme tout **logiciel** peut être organisé selon une architecture qui sépare de manière optimisée les classes du programme en **couches** selon leur **rôle**.
+
+Dans un logiciel, on peut trouver différents types de **couche**. Par exemple (sans être exhaustif) :
+
+* La couche **présentation** qui permet de gérer les différentes parties graphiques et surtout l'interaction avec l'utilisateur. Pour une application web, cela va correspondre à la partie contenant les **vues**, c'est-à-dire les fichiers responsables de générer le code HTML (et également les ressources JavaScript, CSS, etc.)
+
+* La couche **métier** qui contient le cœur de l'application, à savoir les différentes **entités** manipulées (essentiellement, les classes dans `DataObject`) ainsi que des classes de **services** qui permettent de manipuler ces entités et d'implémenter la **partie logique** de votre application.
+
+* La couche **application** qui permet de faire le lien entre la couche **présentation** et la couche **métier**. Elle contient les différents **contrôleurs** dont le rôle est de gérer les **évènements** de l'interface, de vérifier les droits d'accès, d'interagir avec la couche **métier** et de transmettre les résultats obtenus à l'IHM. Dans une application web, les événements sont les requêtes reçues par l'application web (et ses paramètres, via l'URL). Une requête est décomposée puis la bonne méthode du contrôleur est exécutée avec les paramètres correspondants.
+
+* La couche **de persistance** (stockage) qui permet de gérer la **persistance des données** à travers une forme de stockage configurée (base de données, fichier...). Son rôle va donc être de sauvegarder et charger les données des différentes entités de la couche **métier**. C'est cette couche qui va contenir les différents **repositories**.
+
+* Parfois, une couche **réseau** dans le cadre d'une application **client/serveur**. Cette couche va gérer la transmission des données entre deux programmes (avec des sockets, etc.). Dans une application web, il n'y a pas besoin de gérer explicitement cette couche qui est prise en charge par le protocole **HTTP** ou **HTTPS**.
+
+Bref, ces différentes couches permettent de définir et de séparer les zones d'activités du logiciel. Tout l'intérêt est de faire communiquer ces couches entre elles.
+
+La connaissance de ces couches ne donne pas encore la structure de l'application : il faut choisir une architecture qui permet de les structurer, de les exploiter et de définir comment elles communiquent concrètement. Il en existe plusieurs, et pour une application web (comme celle manipulée dans ce TP) on peut choisir l'architecture `MVC` que vous connaissez déjà.
+
+Cette architecture permet de séparer les entités, les vues et les contrôleurs de l'application et de les faire communiquer :
+
+* La partie **modèle** (M) stocke les différentes **entités** (nos `DataObject`) que l'on retrouve dans la couche **métier** ainsi que des classes liées à la couche **stockage** (les classes type `Repository`). 
+
+* Les différentes **vues** (V) correspondent à la couche **présentation**.
+
+* Les différents **contrôleurs** (C) gèrent la couche **application** et une partie de la couche (logique) **métier** (ils reçoivent les requêtes, vérifient les droits d'accès (est-ce que l'utilisateur courant a le droit d'exécuter cette requête?), vérifient les données, effectuent les opérations, etc.)
+
+
+Néanmoins, il n'est pas explicitement fait mention des **services** dans cette architecture. En fait, dans une architecture `MVC` classique, le **contrôleur** a le rôle des **services** et effectue une grande partie (voir la totalité) partie de la logique métier. Néanmoins, cela peut vite créer des contrôleurs énormes ayant beaucoup trop de responsabilités. C'est pourquoi il est possible de venir placer une couche **service** entre les **contrôleurs**, les **entités** et la couche **stockage**. Ainsi, le contrôleur n'effectue pas de logique métier et on a une séparation plus forte.
+
+Ici, la couche **métier** est séparée entre la partie **modèle** (nos **entités**) et les **services** qui manipulent ces entités. Ainsi, les différents **contrôleurs** n'interagissent pas directement avec les entités, mais plutôt avec des **services**. On pourrait alors qualifier les services de **couche de validation** voir de **couche logique** (car elle effectue d'autres opérations en plus de la validation des données).
+
+Les interactions se dérouleraient alors dans ce sens : Vue ↔ Contrôleur ↔ Services ↔ Modèle (entités, repositories) au lieu du traditionnel Vue ↔ Contrôleur ↔ Modèle.
+
+Dans ce cas, on étend l'architecture classique `MVC` et on pourrait alors parler de `MVCS` où le `S` désignerait les **services**. Il n'y a pas de règles précise quant à l'utilisation de telle ou telle architecture, mais dans le cas de notre application, nous allons plutôt tendre vers une architecture utilisant les services. Créer une telle séparation permettra alors de pouvoir tester la logique métier indépendamment au travers des tests unitaires sur les **services** plutôt que sur les **contrôleurs**. D'une part, il sera alors possible de passer des données à ces services autrement que par une requête HTTP, et d'autre part, on pourra également obtenir un résultat exploitable et pas une page web complète.
+
+### Un service pour gérer les publications
+
+Nous allons commencer à extraire la logique métier de notre application en créant un **service** pour gérer les différentes **publications**. Au-delà d'alléger le contrôleur des publications du code métier, nous allons aussi pouvoir considérablement réduire la partie dédiée à la gestion des erreurs !
+
+<div class="exercise">
+
+1. Créez un dossier `Service` dans `src`.
+
+2. Dans ce nouveau dossier, créez une classe `PublicationService`.
+
+3. Créez une méthode 
+   ```php
+   public function recupererPublications(): array
+   ```
+   qui permet de récupérer toutes les publications depuis le *repository* correspondant **et de les renvoyer**. Vous pouvez directement copier le code correspondant depuis la méthode `afficherListe` de `ControleurPublication`.
+
+4. Modifiez le code de la méthode `afficherListe` de `ControleurPublication` pour utiliser votre nouveau **service** au lieu de faire appel au *repository*.
+
+5. Vérifiez que votre site fonctionne toujours bien.
+
+</div>
+
+Bien, vous avez créé votre premier service ! Mais l'intérêt d'avoir séparé ce petit bout de code n'apparait pas encore clairement. Nous allons donc pousser les choses un peu plus loin lors de la prochaine étape.
+
+Nous allons nous intéresser à la création des publications. Actuellement, dès qu'il détecte une erreur dans la formation du message, le **contrôleur** ajoute un message flash d'erreur et redirige l'utilisateur. Ces vérifications font partie de la logique **métier** et peuvent être gérées à l'aide d'exceptions. La logique à appliquer serait plutôt la suivante :
+
+* Le contrôleur vérifie les droits d'accès (est-ce que l'utilisateur est connecté, est-ce qu'il a le droit d'accéder à cette route ?) puis récupère les valeurs des paramètres depuis la requête et les passe au service.
+* Le service a pour but de réaliser une action (et éventuellement d'envoyer un résultat). S'il y a un problème (notamment par rapport aux paramètres), il lève une exception.
+* Le contrôleur attrape les éventuelles exceptions et redirige l'utilisateur en conséquence.
+
+<div class="exercise">
+
+1. Dans le dossier `Service`, créez un sous-dossier `Exception` puis à l'intérieur de ce nouveau répertoire, une classe `ServiceException` :
+
+   ```php
+   <?php
+
+   namespace TheFeed\Service\Exception;
+
+   use Exception;
+
+   class ServiceException extends Exception
+   {
 
    }
    ```
 
-2. Générer votre secret en exécutant la méthode suivante, qui vous avait déjà
-   servie pour générer le poivre :  
+2. Dans `PublicationService`, créez une méthode `creerPublication` qui prend en paramètre un **idUtilisateur** et un **message**. La méthode doit déplacer et réadapter (en grande partie) le code de la méthode `creerDepuisFormulaire` de `ControleurPublication` :
+
    ```php
-   var_dump(MotDePasse::genererChaineAleatoire());
-   ```
-
-</div>
-
-### Connexion utilisateur par `JWT`
-
-Avant de rendre notre API REST sans état, nous devons régler un problème de
-conception des précédents TDs. La couche *Service* doit être indépendante de
-l'interface, et donc de toute la couche de transfert de donnée *HTTP*. Du coup,
-nous n'avons pas le droit d'appeler la classe `ConnexionUtilisateur`, qui est
-basée sur les mécanismes Web cookie et session, dans les services. 
-
-Comme `UtilisateurService` appelle plusieurs fois `ConnexionUtilisateur`, nous
-allons devoir réusiner le code (*code refactoring* en anglais).
-
-<div class="exercise">
-
-1. Comme `UtilisateurService::deconnecter()` n'est composé que d'appels à
-   `ConnexionUtilisateur`, nous allons supprimer cette méthode et transférer son
-   code dans `ControleurUtilisateur::deconnecter()`.  
-   **Supprimez** `UtilisateurService::deconnecter()` (et mettez à jour son interface) 
-   puis changez `ControleurUtilisateur::deconnecter()` avec le code suivant : 
-   ```php
-   public function deconnecter(): Response
-   {
-       if (!ConnexionUtilisateur::estConnecte()) {
-           MessageFlash::ajouter("error", "Utilisateur non connecté.");
+   public function creerPublication(?int $idUtilisateur, ?string $message) {
+       $utilisateur = new UtilisateurRepository()->recupererParClePrimaire($idUtilisateur);
+       if(is_null($utilisateur)) {
+           MessageFlash::ajouter("error", "Utilisateur inexistant!");
            return ControleurPublication::rediriger('afficherListe');
        }
-       ConnexionUtilisateur::deconnecter();
-       MessageFlash::ajouter("success", "L'utilisateur a bien été déconnecté.");
-       return ControleurUtilisateur::rediriger('afficherListe');
-   }
-   ```
-
-2. Concernant la méthode `UtilisateurService::connecter()`, nous allons
-   seulement déplacer son appel à `ConnexionUtilisateur::connecter` ; à la fin de la méthode, changez
-
-   ```diff
-    if (!MotDePasse::verifier($motDePasse, $utilisateur->getPassword()))
-       throw new ServiceException("Mot de passe incorrect.", Response::HTTP_BAD_REQUEST);
-
-   - ConnexionUtilisateur::connecter($utilisateur->getIdUtilisateur());
-   + return $utilisateur->getIdUtilisateur();
-    }
-   ```
-
-   Changez donc aussi le type de retour de la méthode (pour `int`) et mettez aussi à jour l'interface.
-   
-   **Adaptez** `ControleurUtilisateur::connecter()` en conséquence. Vu que `UtilisateurService::connecter()` ne connecte plus, nous vous proposons de la **renommer** `UtilisateurService::verifierIdentifiantUtilisateur` (clic droit → *Refactor* → *Rename* ou `Maj+F6` sous *PhpStorm*).
-
-</div>
-
-Notre site va donc proposer deux mécanismes d'authentification : 
-1. un mécanisme basé sur les sessions, qui ne sera utilisé que sur le site Web
-   (`ControleurUtilisateur` et `ControleurPublication`),
-2. un mécanisme basé sur les `JWT`. Ce mécanisme sera utilisé à la fois dans
-   l'API REST (pour devenir *Stateless*), et dans le site classique pour que les
-   fonctionnalités JavaScript puissent appeler l'API REST.
-
-Qui dit deux codes pour le même problème, dit héritage et en particulier interface.
-
-<div class="exercise">
-
-1. Modifiez la classe `ConnexionUtilisateur` pour passer tous ses attributs et
-   méthodes en dynamique (pas statique). Corrigez les appels *internes* à ces
-   attributs et méthodes.  
-   Renommez le fichier en `ConnexionUtilisateurSession.php`, ce qui aura pour
-   effet de renommer la classe (sous *PhpStorm*, clic droit sur le fichier →
-   *Refactor* → *Rename* ou `Maj+F6`).
-
-2. Utiliser *PhpStorm* pour créer une interface `ConnexionUtilisateurInterface`
-   à partir de la classe `ConnexionUtilisateurSession` (clic droit sur le nom de classe
-   → *Refactor* → *Extract Interface*). Rajouter l'instruction qui indique que `ConnexionUtilisateurSession` implémente `ConnexionUtilisateurInterface`.
-
-3. Créez une nouvelle classe `src/Lib/ConnexionUtilisateurJWT.php` avec le code suivant : 
-   ```php
-   namespace TheFeed\Lib;
-
-   use TheFeed\Modele\HTTP\Cookie;
-
-   class ConnexionUtilisateurJWT implements ConnexionUtilisateurInterface
-   {
-
-      public function connecter(string $idUtilisateur): void
-      {
-         Cookie::enregistrer("auth_token", JsonWebToken::encoder(["idUtilisateur" => $idUtilisateur]));
-      }
-
-      public function estConnecte(): bool
-      {
-         return !is_null($this->getIdUtilisateurConnecte());
-      }
-
-      public function deconnecter(): void
-      {
-         if (Cookie::existeCle("auth_token"))
-               Cookie::supprimer("auth_token");
-      }
-
-      public function getIdUtilisateurConnecte(): ?string
-      {
-         if (Cookie::existeCle("auth_token")) {
-               $jwt = Cookie::lire("auth_token");
-               $donnees = JsonWebToken::decoder($jwt);
-               return $donnees["idUtilisateur"] ?? null;
-         } else
-               return null;
-      }
-   }
-   ```
-
-   *Remarque :* nous stockons notre `JWT` dans un cookie `auth_token` pour qu'il soit automatiquement envoyé par le navigateur à chaque requête.
-
-4. Nous souhaitons injecter les deux services de connexion utilisateur dans les contrôleurs : 
-   1. Enregistrez des services liés à `ConnexionUtilisateurSession` et
-      `ConnexionUtilisateurJWT` dans le conteneur de services (via `conteneur.yml`).
-
-   2. Rajouter un service `ConnexionUtilisateurInterface $connexionUtilisateur` à tous les contrôleurs (excepté le **générique**), sauf à `ControleurUtilisateur` qui possède deux tels services : 
-      ```php
-      public function __construct(
-         private readonly PublicationServiceInterface $publicationService,
-         private readonly UtilisateurServiceInterface $utilisateurService,
-         private readonly ConnexionUtilisateurInterface $connexionUtilisateurSession,
-         private readonly ConnexionUtilisateurInterface $connexionUtilisateurJWT,
-      )
-      {
-         ...
-      }
-      ```
-   3. Modifiez l'enregistrement des services liés aux contrôleurs pour y rajouter une référence : 
-      * au service lié à `ConnexionUtilisateurSession` dans `ControleurPublication`,
-      * au service lié à `ConnexionUtilisateurJWT` dans `ControleurPublicationAPI` et `ControleurUtilisateurAPI`,
-      * aux services liés à `ConnexionUtilisateurSession` et `ConnexionUtilisateurJWT` dans `ControleurUtilisateur` (attention à l'ordre).  
-        **Attention :** Si vous êtes passés à l'*autowiring* et l'*autoloading*
-        de service comme indiqué dans [le complément *Configuration automatique
-        des services*]({{site.baseurl}}/tutorials/complement_autowiring), il
-        vous faudra aller y voir la section *Cas particulier de
-        `ConnexionUtilisateurInterface`* pour lier les paramètres
-        `$connexionUtilisateurSession` et `$connexionUtilisateurJWT` aux bons
-        services.
-   4. Dans `ControleurUtilisateur` et `ControleurPublication`, remplacez les
-      appels aux méthodes statiques `ConnexionUtilisateurSession` par des appels
-      dynamiques au service.
-   5. Dans `ControleurUtilisateurAPI` et `ControleurPublicationAPI`, remplacez les
-      appels aux méthodes statiques `ConnexionUtilisateurSession` par des appels
-      dynamiques au service (qui sera `ConnexionUtilisateurJWT`).
-
-5. Changez le code de `ControleurUtilisateur::connecter()` pour connecter
-   l'utilisateur avec les deux mécanismes. Faites de même pour que `ControleurUtilisateur::deconnecter()` déconnecte l'utilisateur à la fois dans au niveau de la session, mais aussi au niveau du service gérant la connexion par `jwt`.
-
-6. Il reste un dernier endroit où `ConnexionUtilisateurSession` appelle une
-   méthode statique : dans l'ajout d'une variable globale
-   `idUtilisateurConnecte` à *Twig*. Puisque nous ne voulons pas appeler
-   systématiquement `ConnexionUtilisateurSession::getIdUtilisateurConnecte()`,
-   qui a pour effet de lancer la session (via `Session::getInstance()`), changez le code suivant dans
-   `RouteurURL` : 
-
-   ```diff
-   - $twig->addGlobal('idUtilisateurConnecte', ConnexionUtilisateurSession::getIdUtilisateurConnecte());
-   + $twig->addGlobal('connexionUtilisateur', new ConnexionUtilisateurSession());
-   ```
-   Et **changez** toutes les `idUtilisateurConnecte` en
-   `connexionUtilisateur.idUtilisateurConnecte` dans `base.html.twig` et
-   `feed.html.twig`.
-
-7. Testez votre site Web. Vérifiez que la connexion utilisateur sur le site marche
-   toujours. Vérifiez aussi que les fonctionnalités dynamiques *AJAX* marchent toujours.
-
-</div>
-
-<div class="exercise">
-
-1. Pour qu'un utilisateur de l'API puisse s'authentifier sans passer par le site
-   Web, créez une nouvelle route `/api/auth` de méthode `POST` et nommée `api_auth` affectée à une nouvelle action dans `ControleurUtilisateurAPI` (à compléter) : 
-   ```php
-   public function connecter(Request $request): Response
-   {
-       try {
-           // TODO : Récupération du login et mot de passe (password)
-           // depuis le corps de requête au format JSON
-           $jsonObject = json_decode($request->getContent(), flags: JSON_THROW_ON_ERROR);
-           //$login = ...
-           //$password = ...
-           $idUtilisateur = $this->utilisateurService->verifierIdentifiantUtilisateur($login, $password);
-           // TODO : Appel du service connexionUtilisateur 
-           // pour connecter l'utilisateur avec son identifiant
-           return new JsonResponse();
-       } catch (ServiceException $exception) {
-           return new JsonResponse(["error" => $exception->getMessage()], $exception->getCode());
-       } catch (\JsonException $exception) {
-           return new JsonResponse(
-               ["error" => "Corps de la requête mal formé"],
-               Response::HTTP_BAD_REQUEST
-           );
+       if (is_null($message) || $message == "") {
+           MessageFlash::ajouter("error", "Le message ne peut pas être vide!");
+           return ControleurPublication::rediriger('afficherListe');
        }
-   }
-    ```
+       if (strlen($message) > 250) {
+           MessageFlash::ajouter("error", "Le message ne peut pas dépasser 250 caractères!");
+           return ControleurPublication::rediriger('afficherListe');
+       }
 
-2. Modifiez la méthode `verifierIdentifiantUtilisateur` de `UtilisateurService` afin de rajouter les codes d'erreurs HTTP adéquats lors de la levée de `ServiceException`.
-
-3. Testez l'authentification en appelant dans *Postman* la route précédente avec
-   le corps de requête
-   ```json
-   {
-      "login": "votre_login",
-      "password" : "votre_mot_de_passe"
+       $publication = Publication::construire($message, $utilisateur);
+       (new PublicationRepository())->ajouter($publication);
    }
    ```
-   Observez que la réponse dépose un seul cookie `auth_token` comme voulu
+
+    **Note :** Si vous avez une erreur de l'IDE *`rediriger` has protected
+    visibility*, ce n'est pas grave, elle sera réglée avec la prochaine question.
+
+    Vous aurez aussi probablement des erreurs liées à ce que retourne la méthode, mais n'y prêtez pas attention pour l'instant.
+
+3. Dans la nouvelle méthode `creerPublication`, remplacez toutes les lignes qui ajoutent un message flash et redirigent l'utilisateur par le déclenchement d'une **ServiceException** contenant le message flash initialement prévu comme message flash. La syntaxe est la suivante :
+
+   ```php
+   throw new ServiceException("Mon message d'erreur!");
+   ```
+
+   Enfin, vous pourrez changer le type de retour de la méthode par `void`.
+
+4. Modifiez la méthode `creerDepuisFormulaire` de `ControleurPublication` afin d'utiliser le service de publications et de gérer l'exception. Dans le cas où une **ServiceException** est interceptée, vous devez ajouter le message de l'exception comme message flash puis rediriger l'utilisateur vers la route `afficherListe`. Globalement, cela doit ressembler à quelque chose comme ça :
+
+   ```php
+   public static function creerDepuisFormulaire() : Response
+   {
+       //La gestion des droits d'accès aux routes est de la responsabilité du contrôleur
+       if(!ConnexionUtilisateur::estConnecte()) {
+            MessageFlash::ajouter("error", "Il faut être connecté pour publier!");
+            return ControleurPublication::rediriger('afficherFormulaireConnexion');
+        }
+       $idUtilisateurConnecte = ConnexionUtilisateur::getIdUtilisateurConnecte();
+       $message = $_POST['message'];
+       try {
+           //Utilisation du service
+           //Les règles métiers liées aux publications sont gérées dans le service correspondant
+       }
+       catch(ServiceException $e) {
+           //Ajout du message flash
+       }
+
+       return ControleurPublication::rediriger('afficherListe');
+   }
+   ```
+
+    *Aide :* Allez voir si nécessaire la 
+    [documentation de la classe `Exception`](https://www.php.net/manual/fr/class.exception.php).
+
+5. Comme d'habitude, vérifiez votre application pour vous assurer que rien n'a été cassé.
+</div>
+
+Ici, la séparation entre la couche **service** et **application** est bien visible ! Le contrôleur récupère les éléments nécessaires depuis la requête et le service, lui n'interagit pas directement avec les données de la requête (pas d'accès à `$_POST`) et ne s'intéresse pas aux notions liées à la couche **présentation** (pas de redirection, pas de sélection de vue, pas de messages flash...). Il agit comme un module quasi indépendant des autres couches.
+
+Concernant les droits d'accès simples (par exemple, vérifier que l'utilisateur est connecté, qu'il a un rôle suffisant pour visualiser la page souhaitée, etc), cela relève de la **responsabilité du contrôleur** qui prend en charge la requête. C'est lui qui vérifie que l'utilisateur a le droit d'accéder à une **route** donnée. Cependant, selon la situation, certains droits peuvent aussi être vérifiés du côté des services, si cela dépend de la logique métier. Par exemple, si on avait une fonctionnalité permettant de **supprimer une publication**, il faudrait vérifier que l'utilisateur est bien propriétaire de la publication (ou bien qu'il est administrateur et qu'il a donc tous les droits...). Cette vérification pourrait alors plutôt se faire du côté du **service**, dans la méthode qui permet de supprimer une publication.
+
+En résumé :
+* Si un droit d'accès ne relève que de l'accès à une route donnée, on gère cela au niveau du contrôleur (comme dans `creerDepuisFormulaire` de `ControleurPublication`).
+* Si le droit d'accus relève plutôt de la logique métier (ex : vérifier que l'utilisateur qui modifie une ressource en est bien le propriétaire, ou qu'il est administrateur), cela peut se faire du côté du service.
+
+Du côté de Symfony (que vous étudierez l'année prochaine), un système sophistiqué de "**voters**" permet de déléguer la gestion des droits d'accès à des services de vérification de droits dédiés qui sont généralement appelés dans le contrôleur et les vues, mais qui peuvent aussi être utilisés ailleurs.
+
+### Un service pour gérer les utilisateurs
+
+Nous allons continuer dans notre lancée et extraire la partie **métier** du contrôleur gérant les fonctionnalités liées aux utilisateurs.
+
+Pour les fonctions qui permettent d'afficher la page de connexion ou d'inscription, il n'y a pas besoin de créer une fonctionnalité sur un service, car il s'agit juste d'un affichage de page simple.
+
+Débutons avec la création d'un nouvel utilisateur. 
+
+<div class="exercise">
+
+1. Créez une classe `UtilisateurService` dans le dossier `Service`.
+
+2. Ajoutez une méthode `creerUtilisateur` qui prend en paramètre un *login*, un *mot de passe*, une *adresse mail* et enfin un tableau de *données de l'image de profil*. Cette méthode reprendra en grande partie le code de `creerDepuisFormulaire` du contrôleur `ControleurUtilisateur`.
+
+    Comme d'habitude, **il ne faudra pas faire appels aux variables liées à la requête dans cette méthode** (`$_POST`, `$_FILES`, etc.). Ces données vous sont fournies par le contrôleur et peuvent être `null`. Il faudra d'ailleurs penser à vérifier si ces valeurs sont nulles ou non. La méthode ne doit rien retourner (simplement créer l'utilisateur) et lever des `ServiceException` si différentes contraintes sont violées (taille du login, mot de passe, format de l'adresse mail, etc.). Le paramètre `$donneesPhotoDeProfil` correspond au tableau obtenu par lecture de `$_FILES["..."]`.
+
+   ```php
+   public function creerUtilisateur(?string $login, ?string $motDePasse, ?string $email, ?string $donneesPhotoDeProfil) : void {
+       //TO-DO
+       //Verifier que les attributs ne sont pas null
+       //Verifier la taille du login
+       //Verifier la validité du mot de passe
+       //Verifier le format de l'adresse mail
+       //Verifier que l'utilisateur n'existe pas déjà
+       //Verifier que l'adresse mail n'est pas prise
+       //Verifier extension photo de profil
+       //Enregistrer la photo de profil
+       //Chiffrer le mot de passe
+       //Enregistrer l'utilisateur...
+   }
+   ```
+
+3. Adaptez la méthode `creerDepuisFormulaire` de `ControleurUtilisateur` pour utiliser votre nouveau service. Attention, il ne faut plus vérifier ici le fait qu'une donnée est nulle ou non (on doit pouvoir passer une donnée nulle au service). En remplacement, vous pouvez utiliser l'**expression** suivante :
+
+   ```php
+   // Si $_POST["donnee"] n'existe pas, $donnee prend la valeur null.
+   $donnee = $_POST["donnee"] ?? null; 
+   ```
+
+    Le nouveau code aura donc cette allure :
+
+   ```php
+   public static function creerDepuisFormulaire(): Response {
+       //Recupérer les différentes variables (login, mot de passe, adresse mail, données photo de profil...)
+       try {
+           //Enregistrer l'utilisateur via le service
+       }
+       catch(ServiceException $e) {
+           //Ajouter message flash d'erreur
+           //Rediriger sur le formulaire de création
+       }
+       //Ajouter un message flash de succès (L'utilisateur a bien été créé !)
+       //Rediriger sur la page d'accueil (route afficherListe)
+   }
+   ```
+
+   Comme tout le monde peut s'inscrire, il n'y a pas de droits d'accès à gérer ici.
+
+4. Comme toujours, vérifiez l'état de votre application.
 
 </div>
 
-## Bilan sur les API REST
+Maintenant, passons au cas de la fonctionnalité permettant d'afficher une page personnelle.
 
-En se basant sur le protocole de transfert *HTTP* et le format de donnée *JSON*,
-les API REST permettent l'interopérabilité en services Web *Restful*. Quelques
-avantages clés des API REST sont les suivants :
-* la séparation du client et du serveur : il est plus facile de fournir de nouvelles interfaces (par ex. une application mobile),
-* le fait d’être *Stateless* permet la mise en cache, qui permet aux clients
-  d'économiser des requêtes aux serveurs. 
-* Dans le cas d'un site Web déployé sur plusieurs serveurs, l'élimination des
-  sessions évite de devoir synchroniser ces informations de sessions entre
-  serveurs, et les problèmes difficiles qui en découlent.
+Afin de diminuer le **couplage** entre nos classes, nous allons progressivement faire en sorte que seuls les **services** utilisent les **repositories** et que les contrôleurs utilisent les **services** (et donc ne se servent plus des repositories).
 
-Dans ce TD, nous n'avons pas eu le temps d'évoquer quelques aspects importants : 
-* un service Web *Restful* doit être un service découvrable, c'est-à-dire qu'il
-  fournit des liens dans ses réponses qui permettent de découvrir les
-  fonctionnalités du service sans documentation.  
-  Par exemple, 
-  * lors de la création d'une ressource, on renvoie des liens sur les actions liées à
-    la ressource créée (lire, modifier, supprimer),
-  * lors de la lecture d'une collection, chaque entité renvoie ses liens d'actions,
-  * toujours lors de la lecture d'une collection, des liens `first`, `last`,
-    `next` et `prev` sont un minimum pour permettre de pouvoir naviguer
-    facilement dans la collection,
-* un service Web *RESTful* professionnel devrait aussi supporter le format `XML`
-  et passer de l'un à l'autre en fonction de l'en-tête 
-  [*HTTP Accept*](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept).
-*  Le filtrage, la recherche et le tri sont des moyens d’ajouter de la
-   complexité à vos requêtes API. La pagination aide vos clients et utilisateurs
-   API à éviter d’être submergés par trop de données. Le versionnage vous permet
-   de continuer à mettre à jour votre API sans casser le code des personnes qui
-   en dépendent déjà.
-* Nous avons construit une sorte d'hybride entre site web et API. Cependant, une API s'implémente généralement de façon indépendante (comme nous le verrons l'année prochaine). Dans ce cas, lors de la connexion, l'API renvoie le JWT qu'il faudra envoyer à chaque requête dans un en-tête particulier (`Authorization`) tant qu'il n'a pas expiré. Il existe aussi un mécanisme de rafraichissement des `JWT` dont nous parlerons aussi l'an prochain lors de l'utilisation du framework `Symfony` et de l'outil `API Platform`.
+La méthode `afficherPublications` effectue deux actions : récupération de l'utilisateur concerné d'une part (pour afficher son login) et, d'autre part, récupération des publications de l'utilisateur. Il va donc y avoir deux actions à effectuer, dans deux services différents.
 
-Sources du TD :
-[OpenClassrooms](https://openclassrooms.com/fr/courses/6573181-adoptez-les-api-rest-pour-vos-projets-web/), [Wikipédia](https://fr.wikipedia.org/wiki/Representational_state_transfer), [RestAPITutorial.com](https://www.restapitutorial.com/lessons/restquicktips.html) et [ChatGPT](https://chat.openai.com/chat)
+<div class="exercise">
 
-## Pour finir (bonus)
+1.  Dans la classe `UtilisateurService`, créez une méthode `recupererUtilisateurParId` qui prend en paramètre un identifiant d'utilisateur et renvoie l'utilisateur ciblé par cet identifiant (en se servant du *repository*), ou `null`, s'il n'existe pas.
 
-Il y a quelques petites choses que nous pouvons encore améliorer :
+   ```php
+   public function recupererUtilisateurOuNullParId(?int $idUtilisateur) : ?Utilisateur {
+       $utilisateur = ...
+       return $utilisateur;
+   }
+   ```
 
-* Migrer les différentes classes restantes dans `Lib` vers le **conteneur**, en tant que **services**.
+2. Toujours dans `UtilisateurService`, créez une méthode `recupererUtilisateurExistantParId` qui prend en paramètre un identifiant d'utilisateur et renvoie l'utilisateur ciblé par cet identifiant. Si l'utilisateur n'existe pas, une `ServiceException` est levée qui doit signaler que l'utilisateur n'existe pas. Évitez la duplication de code ou vous servant de la méthode codée lors de la question précédente :
 
-* Refactoriser pour introduire un `ControleurGeneriqueSession` et un `ControleurGeneriqueAPI`...
+   ```php
+   public function recupererUtilisateurExistantParId(?int $idUtilisateur) : Utilisateur {
+       $utilisateur = ...
+       //Lève une exception si l'utilisateur n'existe pas...
+       return $utilisateur;
+   }
+   ```
 
-Si le temps vous le permet, vous pouvez donc essayer d'encore plus optimiser l'application avec ces pistes !
+   Dans la plupart des cas où on souhaite que l'utilisateur recherché existe, on utilisera cette méthode.
+
+3. Mettez à jour le code de `creerPublication` de `Publicationservice` afin de ne plus utiliser `UtilisateurRepository`, mais plutôt `UtilisateurService` et sa méthode `recupererUtilisateurExistantParId`.
+
+4. La partie qui a pour but de récupérer des publications d'un utilisateur doit plutôt être codée au niveau de la classe `PublicationService`. Ajoutez donc une méthode `recupererPublicationsUtilisateur(?int $idUtilisateur) : array` à ce service qui reprend en partie le code de `afficherPublications` qui récupère les publications en faisant appel au repository. La méthode doit :
+    * Récupérer l'utilisateur ciblé par l'identifiant (grâce à `UtilisateurService`) afin d'être sûr qu'il existe.
+    * Récupérer les publications de l'utilisateur ciblé.
+
+4. {% raw %}
+    **Si vous n'aviez pas fait le bonus du dernier TD** : ajoutez une vue `utilisateur/page_perso.html.twig` qui étend le template `publication/feed.html.twig` et modifie simplement `{% block page_title %}` pour que le titre de la page devienne soit `Page perso de login_de_l_utilisateur`.
+   {% endraw %}
+
+5. Remplacez le code de `afficherPublications` de `ControleurUtilisateur` afin d'utiliser vos nouvelles méthodes `recupererPublicationsUtilisateur` de `PublicationService` pour récupérer les publications de l'utilisateur ciblé puis `recupererUtilisateurParId` de `UtilisateurService` pour obtenir les données de l'utilisateur. Enfin, vous devrez passer le login de l'utilisateur récupéré à la vue `utilisateur/page_perso.html.twig`, en plus des publications, afin que le titre de la page personnelle s'affiche correctement. Veillez à bien traiter une éventuelle `ServiceException`.
+
+6. Vérifiez que tout fonctionne bien. Notamment, vérifiez qu'un message flash est bien affiché quand on essaye de visiter la page personnelle d'un utilisateur qui n'existe pas.
+
+</div>
+
+Si tout marche bien, vous commencez à maîtriser le processus ! Terminons donc le travail avec ce contrôleur avant de passer à la seconde phase de tests.
+
+<div class="exercise">
+
+1. En vous inspirant du travail réalisé lors des questions précédentes, adaptez la méthode `connecter` afin de faire migrer une partie de la logique du code dans une méthode adaptée dans la classe `UtilisateurService` qui pourra prendre un login et un mot de passe en paramètre.
+
+2. Faites de même pour la méthode `deconnecter`.
+
+3. Vérifiez le fonctionnement de l'application.
+
+</div>
+
+### Premiers tests sur l'application
+
+Maintenant que la partie **métier** de notre application est (partiellement) extraite, nous allons pouvoir faire nos premiers tests.
+
+<div class="exercise">
+
+1. Créez une classe de test `PublicationServiceTest` (qui étend `TestCase`) dans le répertoire `tests\unit`.
+
+2. Ajoutez un attribut `service` qui sera ré-instancié par un `PublicationService` avant chaque test (via le `setUp`).
+
+3. Créez un test `testCreerPublicationUtilisateurInexistant` qui teste de créer une publication en précisant un identifiant d'un utilisateur qui n'est pas enregistré dans la base (par exemple, l'identifiant `-1`). Votre test doit vérifier qu'une `ServiceException` est bien levée et que le message d'erreur correspond bien à celui attendu. 
+
+4. Créez un test `testCreerPublicationVide` qui teste de créer une publication sans aucun contenu. Attention, ici, il faut préciser un identifiant d'utilisateur valide (qui est enregistré dans la base). Comme à la question précédente, votre test doit vérifier qu'une `ServiceException` est bien levée et que le message d'erreur correspond bien à celui attendu.
+
+5. Créez un test `testCreerPublicationTropGrande` qui teste de créer une publication avec un contenu dépassant 250 caractères. Pour vous faciliter la tâche, vous pouvez utiliser la fonction `str_repeat(chaine, nb)` qui permet d'obtenir une chaîne de caractères correspondant à `nb` répétitions de la chaîne de caractères `chaine`. Mêmes vérifications à faire que précédemment.
+
+6. Créez un test `testNombrePublications` qui teste la récupération toutes les publications (via le service) et vérifie le nombre de publications récupérées. Il faudra donc compter combien de publications il y a dans votre base au préalable.
+
+7. Créez un test `testNombrePublicationsUtilisateur` qui teste la récupération de toutes les publications d'un utilisateur. Il faudra préciser un identifiant d'utilisateur existant et vérifier que le compte est bon.
+
+8. Enfin, créez un test `testNombrePublicationsUtilisateurInexistant` qui teste la récupération de toutes les publications d'un utilisateur inexistant (par exemple, `-1`). Ici aussi, une exception doit être levée (car l'utilisateur est inexistant).
+
+9. Si ce n'est pas déjà fait, lancez les tests unitaires et vérifiez que tous les tests passent !
+
+</div>
+
+Relisez les tests que vous venez d'écrire. Ne remarquez-vous pas quelques éléments étranges et même dérangeants ? Pensez sur le long terme. Nous reviendrons sur tout cela assez vite et nous n'écrirons pas de tests sur le service des utilisateurs pour le moment.
+
+### Couverture de code et portée des tests
+
+Il est temps pour vous de découvrir un outil fort utile pour pouvoir mesurer (en partie) la qualité de vos tests : la **couverture de code**. Cet outil permet de réaliser des statistiques sur les portions de code que vos tests permettent de tester. Après l'exécution des tests, on peut alors visualiser le pourcentage de code testé sur une classe et on peut même aller dans le détail en visualisant les lignes de code qui ont été franchies par les tests et celles qui n'ont jamais été franchies.
+
+Il est difficile de savoir jusqu'où tester une application. Le but des tests n'est en réalité pas de vérifier que tout fonctionne, mais plutôt de trouver des dysfonctionnements. Le nombre et la variété des tests à produire dépendent donc fortement du contexte. Néanmoins, une couverture de code de **100%** (donc, des tests qui passent au moins une fois par chaque ligne de code du programme) est un premier indicateur de la qualité des tests. Dans ce cas, on peut alors considérer qu'il y a un nombre assez important de tests et qu'ils sont assez variés. Néanmoins, cela ne signifie pas nécessairement qu'il faut s'arrêter de tester à partir de là. Il faut prévoir le plus de scénarios possibles (deux scénarios différents peuvent déclencher les mêmes lignes de code).
+
+Il faut également se poser la question de **la portée** des tests. Doit-on (peut-on ?) tout tester ? Par exemple, est-il pertinent d'écrire des tests unitaires pour les contrôleurs dans leur état actuel vu que leur rôle se limite à la réalisation d'un pont entre la couche présentation (les vues, la requête HTTP) et la couche service ? Cela relève plutôt de tests réalisés directement sur l'interface (ce que vous faisiez jusqu'ici). Il est possible de mettre en place des tests unitaires sur à peu près tous les éléments du programme, mais généralement, on va plutôt se concentrer sur la partie métier avec les **services** puis la partie **modèle**. Obtenir une couverture proche de 100% sur ces parties constitue un premier critère de qualité.
+
+<!--
+<div class="exercise">
+
+1. Si vous travaillez sur votre machine, vérifiez que l'extension `xdebug` est installée. Pour cela, cliquez sur `Run` puis `Edit Configurations`. Au niveau de la configuration de `Tests Unitaires`, vérifiez que la case `Prefered Covered Engine` est bien réglée sur `XDdebug`. Si un message d'erreur "XDebug extension is not installed" est présent, il va donc falloir installer cette extension. Pour obtenir les détails d'installation pour votre machine, vous pouvez notamment utiliser [cette page](https://xdebug.org/wizard).
+
+2. Lancez vos tests unitaires **avec couverture de code**. Pour cela, rendez-vous dans le menu `Run` puis `Run ... with  Coverage`.
+
+   *Aide :* Si `Run ... with  Coverage` tourne longtemps puis s'arrête avec une erreur `Memory exhausted`, il faut dans *PHPStorm* faire clic droit sur le dossier `src/` → `Mark Directory As` → `Sources Root`.
+
+3. Un panneau d'analyse s'ouvre à droite. Explorez son contenu. Si rien n'est affiché sur ce panneau, cliquez sur "show uncommited files".
+
+4. Parcourez les différents fichiers de l'application (notamment `PublicationService`) et observez les lignes de code. Au niveau des numéros de lignes, une section verte indique que la ligne a été parcourue (et bien sûr, une section rouge indique l'inverse).
+
+</div>
+-->
+
+<div class="exercise">
+
+1. Après chaque lancement des tests unitaires, un fichier de **couverture de code** est généré par PHPUnit. Il s'agit du fichier `reports/coverage.xml`. En l'état, ce fichier est assez illisible, mais **PHPStorm** va nous permettre d'en analyser les données facilement. Si vous n'utilisez pas **PHPStorm**, rendez-vous au point 6 pour une solution alternative.
+
+2. Sur **PHPStorm**, ouvrez le menu de couverture de code en cliquant sur `View` → `Tool Windows` → `Coverage`. Un panneau s'ouvre à droite (il peut être fermé et rouvert grâce à l'icône de bouclier). À l'intérieur de ce menu, cliquez sur **Import a report collected in CI from disk**. Choisissez ensuite le fichier `reports/coverage/coverage.xml`.
+
+3. **PHPStorm** fait un rapport vis-à-vis du contenu du fichier. Explorez son contenu. Il est notamment indiqué les fichiers qui ont été sollicités par les tests, le pourcentage de lignes de codes couvertes, etc.
+
+4. Parcourez les différents fichiers de l'application (notamment `PublicationService`) et observez les lignes de code. Au niveau des numéros de lignes, une section verte indique que la ligne a été parcourue (et bien sûr, une section rouge indique l'inverse).
+
+5. Après exécution des tests, il faut réimporter le fichier `coverage.xml` afin de mettre à jour l'analyse menée par **PHPStorm**. pour cela, vous pouvez utiliser le troisième bouton situé en haut du panneau d'analyse de la couverture de code. 
+
+6. Si vous n'utilisez pas **PHPStorm**, il est sans doute possible de faire quelque-chose de similaire avec votre IDE. Il est aussi possible de générer un rapport en HTML (pour afficher un mini-site) en ajoutant la section suivante dans la partie `coverage` de `phpunit.xml` :
+
+   ```xml
+   <coverage>
+       <report>
+           ...
+           <html outputDirectory="reports"/>
+       </report>
+   </coverage>
+   ```
+
+    Après exécution des tests, le site web sera généré dans `reports` et il est accessible en ouvrant le fichier `index.html` avec un navigateur.
+
+</div>
+
+Maintenant, prenez l'habitude de vérifier la couverture de code de vos tests !
