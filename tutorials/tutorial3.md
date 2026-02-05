@@ -29,7 +29,7 @@ Comme toute librairie PHP, **PHPUnit** s'installe à l'aide de **composer**.
 
 <div class="exercise">
 
-1. Exécutez la commande suivante dans le terminal docker ouvert au niveau de la racine
+1. Exécutez la commande suivante dans le **terminal docker** ouvert au niveau de la racine
    de votre projet :
 
    ```bash
@@ -110,6 +110,8 @@ Comme toute librairie PHP, **PHPUnit** s'installe à l'aide de **composer**.
    php -d xdebug.mode=coverage ./vendor/bin/phpunit
    ```
 
+    Avec le projet sous Docker, cela peut éventuellement prendre du temps à s'exécuter.
+
     Il n'y a pas de résultat pour le moment, mais c'est normal, vous n'avez pas encore de tests !
 
 5. Deux dossiers ont été générés : `reports` et `.phpunit.cache`. Ces répertoires ne doivent pas être versionnés, excluez-les donc dans votre fichier `.gitignore`.
@@ -142,7 +144,7 @@ Parmi les méthodes d'assertion, on peut citer :
 Cette liste est bien sûr non exhaustive et vous pourrez explorer plus en détail toutes les assertions disponibles sur la [documentation officielle](https://docs.phpunit.de/en/10.5/assertions.html).
 
 Une autre méthode bien pratique est aussi `expectException(exceptionClass)`. Cette méthode est à utiliser avant 
-d'exécuter un bout de code et permet de vérifier que l'exception précisée a bien été levée. On peut aussi utiliser `expectExceptionMessage(message)` pour vérifier le message de l'exception levée.
+d'exécuter un bout de code et permet de vérifier que l'exception précisée a bien été levée. On peut aussi utiliser `expectExceptionMessage(message)` ou bien `expectExceptionCode(code)` pour vérifier le message et le code de l'exception levée.
 
 Enfin, dans chaque classe de test, il est possible de redéfinir deux méthodes bien utiles :
 
@@ -472,6 +474,8 @@ En résumé :
 
 Du côté de Symfony (que vous étudierez l'année prochaine), un système sophistiqué de "**voters**" permet de déléguer la gestion des droits d'accès à des services de vérification de droits dédiés qui sont généralement appelés dans le contrôleur et les vues, mais qui peuvent aussi être utilisés ailleurs.
 
+Concernant `ServiceException`, pour ne pas allourdir le TP, nous allons quasi-exclusivement l'utiliser pour gérer toutes les erreurs. Mais en réalité, il faudrait créer toute une **famille d'exceptions spécialisées** (qui héritent de `ServiceException`, par exemple) pour permettre de mieux cibler le problème remonté (par exemple `ContentTooLongException`, `RessourceNotFoundException`, etc). On pourrait aussi leur associer un **code d'erreur** unique.
+
 ### Un service pour gérer les utilisateurs
 
 Nous allons continuer dans notre lancée et extraire la partie **métier** du contrôleur gérant les fonctionnalités liées aux utilisateurs.
@@ -489,7 +493,7 @@ Débutons avec la création d'un nouvel utilisateur.
     Comme d'habitude, **il ne faudra pas faire appels aux variables liées à la requête dans cette méthode** (`$_POST`, `$_FILES`, etc.). Ces données vous sont fournies par le contrôleur et peuvent être `null`. Il faudra d'ailleurs penser à vérifier si ces valeurs sont nulles ou non. La méthode ne doit rien retourner (simplement créer l'utilisateur) et lever des `ServiceException` si différentes contraintes sont violées (taille du login, mot de passe, format de l'adresse mail, etc.). Le paramètre `$donneesPhotoDeProfil` correspond au tableau obtenu par lecture de `$_FILES["..."]`.
 
    ```php
-   public function creerUtilisateur(?string $login, ?string $motDePasse, ?string $email, ?string $donneesPhotoDeProfil) : void {
+   public function creerUtilisateur(?string $login, ?string $motDePasse, ?string $email, ?array $donneesPhotoDeProfil) : void {
        //TO-DO
        //Verifier que les attributs ne sont pas null
        //Verifier la taille du login
@@ -542,14 +546,17 @@ La méthode `afficherPublications` effectue deux actions : récupération de l'u
 
 <div class="exercise">
 
-1.  Dans la classe `UtilisateurService`, créez une méthode `recupererUtilisateurParId` qui prend en paramètre un identifiant d'utilisateur et renvoie l'utilisateur ciblé par cet identifiant (en se servant du *repository*), ou `null`, s'il n'existe pas.
+1.  Dans la classe `UtilisateurService`, créez une méthode `recupererUtilisateurOuNullParId` qui prend en paramètre un identifiant d'utilisateur et renvoie l'utilisateur ciblé par cet identifiant (en se servant du *repository*), ou `null`, s'il n'existe pas :
 
-   ```php
-   public function recupererUtilisateurOuNullParId(?int $idUtilisateur) : ?Utilisateur {
-       $utilisateur = ...
-       return $utilisateur;
-   }
-   ```
+    ```php
+    public function recupererUtilisateurOuNullParId(?int $idUtilisateur) : ?Utilisateur {
+        $utilisateur = ...
+        return $utilisateur;
+    }
+    ```
+
+    On utilisera cette méthode dans le cas où on accepte que l'utilisateur recherché n'existe pas et que la fonction renvoie donc `null`, sans déclencher d'exception.
+
 
 2. Toujours dans `UtilisateurService`, créez une méthode `recupererUtilisateurExistantParId` qui prend en paramètre un identifiant d'utilisateur et renvoie l'utilisateur ciblé par cet identifiant. Si l'utilisateur n'existe pas, une `ServiceException` est levée qui doit signaler que l'utilisateur n'existe pas. Évitez la duplication de code ou vous servant de la méthode codée lors de la question précédente :
 
@@ -561,7 +568,7 @@ La méthode `afficherPublications` effectue deux actions : récupération de l'u
    }
    ```
 
-   Dans la plupart des cas où on souhaite que l'utilisateur recherché existe, on utilisera cette méthode.
+   Dans la plupart des cas où on souhaite absolument vérifier que l'utilisateur recherché existe avant de poursuivre le traitement, on utilisera cette méthode.
 
 3. Mettez à jour le code de `creerPublication` de `Publicationservice` afin de ne plus utiliser `UtilisateurRepository`, mais plutôt `UtilisateurService` et sa méthode `recupererUtilisateurExistantParId`.
 
@@ -583,9 +590,18 @@ Si tout marche bien, vous commencez à maîtriser le processus ! Terminons don
 
 <div class="exercise">
 
-1. En vous inspirant du travail réalisé lors des questions précédentes, adaptez la méthode `connecter` afin de faire migrer une partie de la logique du code dans une méthode adaptée dans la classe `UtilisateurService` qui pourra prendre un login et un mot de passe en paramètre.
+1. En vous inspirant du travail réalisé lors des questions précédentes, adaptez la méthode de l'action `connecter` du contrôleur afin de faire migrer une partie de la logique du code vers une méthode `authentifier` de la classe `UtilisateurService` :
 
-2. Faites de même pour la méthode `deconnecter`.
+    ```php
+    public function authentifier(?string $login, ?string $motDePasse) : Utilisateur {
+
+    }
+    ```
+    Cette méthode (qui a pour but d'être appelée par le contrôleur) doit faire les diverses vérifications requises (utilisateur existant, mot de passe, etc) et lever une `ServiceException` si une vérification échoue. Si tout se passe bien, elle renvoie l'utilisateur correspondant au login donné en paramètre.
+
+    Attention, l'appel à `ConnexionUtilisateur::connecter` doit toujours se faire du côté de l'action `connecter` du contrôleur : en effet, cette fonction va permettre de stocker l'identifiant de l'utilisateur connecté dans la session, ce qui n'est à priori pas de la logique métier (on ne va pas faire de tests dessus).
+
+2. Généralement, ce n'est pas une bonne pratique d'indiquer qu'un login n'existe pas lorsqu'un utilisateur tente de se connecter avec un compte qui n'est pas enregistré. Dans la majorité des sites professionnels, on va plutôt indiquer que **les identifiants sont invalides** si le login n'existe pas et/ou que le mot de passe ne correspond pas. Faites les modifications nécessaires dans `authentifier` pour implémenter ce comportement.
 
 3. Vérifiez le fonctionnement de l'application.
 
@@ -601,13 +617,13 @@ Maintenant que la partie **métier** de notre application est (partiellement) ex
 
 2. Ajoutez un attribut `service` qui sera ré-instancié par un `PublicationService` avant chaque test (via le `setUp`).
 
-3. Créez un test `testCreerPublicationUtilisateurInexistant` qui teste de créer une publication en précisant un identifiant d'un utilisateur qui n'est pas enregistré dans la base (par exemple, l'identifiant `-1`). Votre test doit vérifier qu'une `ServiceException` est bien levée et que le message d'erreur correspond bien à celui attendu. 
+3. Créez un test `testCreerPublicationUtilisateurInexistant` qui teste de créer une publication en précisant un identifiant d'un utilisateur qui n'est pas enregistré dans la base (par exemple, l'identifiant `-1`). Votre test doit vérifier qu'une `ServiceException` est bien levée et que le message d'erreur correspond bien à celui attendu (vous pouvez aller voir le test `testPop` de `EnsembleTest` pour voir comment faire). 
 
 4. Créez un test `testCreerPublicationVide` qui teste de créer une publication sans aucun contenu. Attention, ici, il faut préciser un identifiant d'utilisateur valide (qui est enregistré dans la base). Comme à la question précédente, votre test doit vérifier qu'une `ServiceException` est bien levée et que le message d'erreur correspond bien à celui attendu.
 
 5. Créez un test `testCreerPublicationTropGrande` qui teste de créer une publication avec un contenu dépassant 250 caractères. Pour vous faciliter la tâche, vous pouvez utiliser la fonction `str_repeat(chaine, nb)` qui permet d'obtenir une chaîne de caractères correspondant à `nb` répétitions de la chaîne de caractères `chaine`. Mêmes vérifications à faire que précédemment.
 
-6. Créez un test `testNombrePublications` qui teste la récupération toutes les publications (via le service) et vérifie le nombre de publications récupérées. Il faudra donc compter combien de publications il y a dans votre base au préalable.
+6. Créez un test `testNombrePublications` qui teste la récupération toutes les publications (via le service) et vérifie le nombre de publications récupérées (rappel : une méthode `assertCount` permet de tester la taille d'une collection/tableau). Il faudra donc compter combien de publications il y a dans votre base au préalable.
 
 7. Créez un test `testNombrePublicationsUtilisateur` qui teste la récupération de toutes les publications d'un utilisateur. Il faudra préciser un identifiant d'utilisateur existant et vérifier que le compte est bon.
 
@@ -618,6 +634,8 @@ Maintenant que la partie **métier** de notre application est (partiellement) ex
 </div>
 
 Relisez les tests que vous venez d'écrire. Ne remarquez-vous pas quelques éléments étranges et même dérangeants ? Pensez sur le long terme. Nous reviendrons sur tout cela assez vite et nous n'écrirons pas de tests sur le service des utilisateurs pour le moment.
+
+Dans les tests que nous venons d'effectuer, nous vérifions le message de l'exception soulevée, notamment, car un même appel de méthode peut lever différentes `ServiceException`, ce qui nous permet donc de les différencier. Une meilleure approche serait de créer plusieurs types de `ServiceException` selon le type d'erreur et/ou ajouter un **code d'erreur** à l'exception. La classe `Exception` (dont hérite `ServiceException`) permet de définir un code d'erreur lors de l'initialisation de l'exception (via le constructeur). Pour plus de qualité, on pourrait donc adapter `ServiceException` dans ce sens puis appeler `expectExceptionCode` et/ou créer des familles d'exceptions plus spécialisées. Dans le dernier TD, nous gérerons justement des codes d'erreurs sur `ServiceException` afin que notre API puisse répondre avec un code de status HTTP adéquat.
 
 ### Couverture de code et portée des tests
 

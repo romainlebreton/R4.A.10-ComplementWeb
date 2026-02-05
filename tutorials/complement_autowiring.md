@@ -122,7 +122,7 @@ classe, nous avons besoin au moins des paquets *composer* suivants :
    services:
      App\A:
        class: App\A
-       autowire: true # Optionel car pas de dépendances
+       autowire: true # Optionnel car pas de dépendances
    
      App\B:
        class: App\B

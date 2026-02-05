@@ -185,31 +185,25 @@ Notre prochain objectif est donc de remanier les classes des contrôleurs, des s
    }
    ```
 
-2. Nous voulons que la dépendance vers `ConfigurationBDDMySQL` soit injectée via
-   le constructeur. 
-   ```php
-   public function __construct(ConfigurationBDDMySQL $configurationBDD)
-   {
-       // Connexion à la base de données
-       $this->pdo = ...
-   } 
-   ```
-   
-3. Comme expliqué précédemment, nous souhaitons plutôt injecter l'interface
-   existante `ConfigurationBDDInterface` que son implémentation
-   `ConfigurationBDDMySQL`.
-   ```php
-   public function __construct(ConfigurationBDDInterface $configurationBDD)
-   {
-       // Connexion à la base de données
-       $this->pdo = ...
-   } 
-   ```
+2. Nous voulons que la dépendance vers (actuellement, `ConfigurationBDDMySQL`) soit 
+   injectée via le constructeur. Comme expliqué précédemment, nous souhaitons plutôt 
+   injecter l'interface existante `ConfigurationBDDInterface` que son implémentation
+   `ConfigurationBDDMySQL`. Adaptez donc le code en ce sens.
 
-4. <!-- Pour anticiper la suite... Ou déplacer ??? -->
-   Créez une interface à partir de la classe `ConnexionBaseDeDonnees` (et
-   appliquez-la). Cette opération peut être automatisée avec votre `IDE` :
-   `Refactor` → `Extract` → `Interface`.
+    ```php
+    use TheFeed\Configuration\ConfigurationBDDInterface;
+
+    public function __construct(ConfigurationBDDInterface $configurationBDD)
+    {
+        // Connexion à la base de données
+        $this->pdo = ...
+    } 
+    ```
+
+3. <!-- Pour anticiper la suite... Ou déplacer ??? -->
+   Maintenant, créez une interface à partir de la classe `ConnexionBaseDeDonnees` 
+   (et appliquez-la). Cette opération peut être automatisée avec votre `IDE` :
+   clic droit sur le nom de la classe, puis `Refactor` → `Extract` → `Interface`.
 
 </div>
 
@@ -242,21 +236,44 @@ Notre prochain objectif est donc de remanier les classes des contrôleurs, des s
    bientôt une autre implémentation avec des *mocks* pour les tests.
 
 3. Faites une opération similaire au niveau des deux classes `PublicationService` et `UtilisateurService` : 
-   * Injectez les classes `repository` comme dépendances, via le constructeur. Il faudra éliminer toutes les instanciations de *repository* pour utiliser vos nouvelles dépendances. Attention `PublicationService` utilise les deux *repositories*.
+   * Injectez les classes `repository` comme dépendances, via le constructeur. Il faudra éliminer toutes les instanciations de *repository* pour utiliser vos nouvelles dépendances.
    * Mettez en place des interfaces pour ces deux services.
 
-4. Rendez tous vos contrôleurs (même le générique) non statiques, c'est-à-dire
-   que toutes les méthodes ne doivent plus être statiques. De même, les appels
-   statiques du type `Controlleur::` doivent être remplacés par `$this->`. Par
-   exemple, `ControleurGenerique::afficherErreur` se remplace par `(new
-   ControleurGenerique())->afficherErreur`. Ici aussi, soyez malin et utilisez
-   votre IDE pour effectuer cette tâche rapidement.
+4. Dans son code, la classe `PublicationService` instancie et se sert d'objets de type `UtilisateurService`. 
+   Remplacez ces dépendances fortes en injectant l'interface correspondant à `UtilisateurService` 
+   dans `PublicationService`.
 
-5. Au niveau de `ControleurPublication` et `ControleurUtilisateur`, réalisez l'injection des deux services (toujours via leur interface). Dans chaque méthode, au lieu d'instancier un service pour réaliser une opération, vous utiliserez vos nouvelles dépendances.
+5. Rendez tous vos contrôleurs (même le générique) non statiques, c'est-à-dire
+   que toutes les méthodes ne doivent plus être statiques. De même, les appels
+   statiques du type `ControlleurXXX::` doivent être remplacés par `$this->`. Par
+   exemple, `ControleurGenerique::afficherErreur(...)` se remplace par `$this->afficherErreur(...)`. 
+   Ici aussi, soyez malin et utilisez votre IDE pour effectuer cette tâche rapidement.
+
+6. Au niveau de `ControleurPublication` et `ControleurUtilisateur`, réalisez l'injection des services utilisés par chaque contrôleur (toujours via leur interface). Dans chaque méthode, au lieu d'instancier un service pour réaliser une opération, vous utiliserez vos nouvelles dépendances. Normalement, dans l'état actuel `ControleurPublication` à seulement besoin du service publication alors que `ControleurUtilisateur` a besoin du service utilisateur et du service publication.
 
 </div>
 
 Après toutes ces opérations, votre application ne doit plus fonctionner ! Pas de panique, c'est tout à fait normal. En effet, il y a besoin d'indiquer quelque part comment sont construits tous ces services et surtout, réaliser concrètement l'injection des différentes dépendances. Cela va être le rôle de la prochaine section dédiée au `conteneur de services`.
+
+Vous remarquerez également que dans les contrôleurs (du moins, sous `PHPStorm`) les blocs `catch` qui permettent de traiter `ServiceException` sont grisés. C'est normal, car, maintenant que nous utilisons des interfaces comme dépendances, l'IDE ne peut pas savoir qu'une exception sera potentiellement levée à l'exécution du code selon l'instance manipulée. On peut éventuellement réparer cela en rajoutant de la **documentation** au niveau des méthodes dans les interfaces correspondantes :
+
+```php
+namespace TheFeed\Service;
+use TheFeed\Service\Exception\ServiceException;
+
+interface PublicationServiceInterface
+{
+    /**
+     * @param int|null $idUtilisateur L'id de l'auteur de la publication
+     * @param string|null $message Le message de la publication
+     * @return void
+     * @throws ServiceException
+     */
+    public function creerPublication(?int $idUtilisateur, ?string $message): void;
+
+    ...
+}
+```
 
 ### Le conteneur de services
 
@@ -267,7 +284,7 @@ Dans une application web bien construite, la toute première étape avant de tra
 Nous pourrions continuer avec ce conteneur, mais nous allons plutôt utiliser celui de **Symfony**. Il y a principalement trois avantages à cela : 
 1. les dépendances sont gérées en mode `lazy loading`. Cela signifie qu'une dépendance concrète n'est instanciée que si on en a vraiment besoin. 
 2. ce conteneur permet de gérer les **dépendances croisées** (c'est-à-dire, si `A` a besoin de `B` et inversement). 
-3. le conteneur peut être configuré avec un fichier de configuration `.yml` sans avoir besoin d'écrire de lignes de code en PHP (ou du moins, pas beaucoup). Cette flexibilité permet d'avoir simplement plusieurs configurations possibles pour gérer les différents modules et services de notre application (et donc, avoir plusieurs environnements d'exécution, éventuellement).
+3. le conteneur peut être configuré avec un fichier de configuration `.yaml` sans avoir besoin d'écrire de lignes de code en PHP (ou du moins, pas beaucoup). Cette flexibilité permet d'avoir simplement plusieurs configurations possibles pour gérer les différents modules et services de notre application (et donc, avoir plusieurs environnements d'exécution, éventuellement).
 
 Regardons de plus près les méthodes qui vont nous intéresser dans ce conteneur :
 
@@ -310,7 +327,7 @@ Dans les paramètres injectés dans le service, on peut :
 
 Après enregistrement et configuration, à partir du **conteneur**, on peut donc récupérer n'importe quel service grâce à la méthode `get`.
 
-Quand on y regarde de plus près, ce conteneur est en fait une grande **factory** construite dynamiquement et regroupant tous les services de l'application. On passe par elle pour récupérer l'instance qui nous intéresse. Si on veut changer l'instance utilisée pour un service, il suffit alors de changer la classe spécifiée à un seul endroit, lors de la configuration du conteneur.
+Quand on y regarde de plus près, ce conteneur est en fait une grande **factory** (fabrique) construite dynamiquement et regroupant tous les services de l'application. On passe par elle pour récupérer l'instance qui nous intéresse. Si on veut changer l'instance utilisée pour un service, il suffit alors de changer la classe spécifiée à un seul endroit, lors de la configuration du conteneur.
 
 Dans un premier temps, nous allons enregistrer les services que nous venons de créer puis, plus tard, vous pourrez progressivement supprimer le conteneur que vous aviez défini auparavant.
 
@@ -326,17 +343,18 @@ Cette méthode est plus ou moins équivalente au fonctionnement de notre contene
 
 Nous utiliserons cette fonctionnalité pour quelques cas spécifiques, mais, en règle générale, nous utiliserons la configuration par lazy-loading grâce à la méthode `register`.
 
-Dans notre application, les noms des services seront les noms de classes avec espace de nom pour suivre les conventions de *Symfony*.
+Dans notre application, les noms des services seront les **noms de classes** (avec leur espace de nom complet) pour suivre les conventions de *Symfony*.
 
 <div class="exercise">
 
-1. Installez le conteneur de service de Symfony :
+1. Installez le conteneur de service de Symfony en exécutant la commande suivante dans le **terminal docker** ouvert au niveau de la racine
+   de votre projet :
 
    ```bash
    composer require symfony/dependency-injection
    ```
 
-2. Ajoutez les lignes de code suivantes au tout début de la méthode `traiterRequete` de `RouteurURL` (sauf les `use` au début de la classe) :
+2. Ajoutez les lignes de code suivantes au tout début de la méthode `traiterRequete` de `RouteurURL` (sauf les `use` qui doivent être placées au début de la classe, après le namespace) :
 
    ```php
    use TheFeed\Controleur\ControleurPublication;
@@ -352,6 +370,11 @@ Dans notre application, les noms des services seront les noms de classes avec es
 
    $conteneur = new ContainerBuilder();
 
+   /*Analysons cette ligne : 
+    - Le premier ConfigurationBDDMySQL::class permet d'obtenir le nom du service, qui sera donc TheFeed\Configuration\ConfigurationBDDMySQL. 
+    => On aurait pu indiquer une chaîne de caractères, mais on suit la convention de nommage de Symfony qui préconise d'indiquer le nom de la classe comme nom de service.
+    - Le second ConfigurationBDDMySQL::class nous permet d'indiquer la classe qui correspond à ce service.
+    */
    $conteneur->register(ConfigurationBDDMySQL::class, ConfigurationBDDMySQL::class);
 
    $connexionBaseReference = $conteneur->register(ConnexionBaseDeDonnees::class, ConnexionBaseDeDonnees::class);
@@ -363,8 +386,10 @@ Dans notre application, les noms des services seront les noms de classes avec es
    $utilisateurRepositoryReference = $conteneur->register(UtilisateurRepository::class, UtilisateurRepository::class);
    $utilisateurRepositoryReference->setArguments([new Reference(ConnexionBaseDeDonnees::class)]);
 
+   //On fait une référence vers un service UtilisateurService::class qui n'est pas encore enregistré !
+   //Cela ne pose pas de problème, nous allons le définir un peu plus tard.
    $publicationServiceReference = $conteneur->register(PublicationService::class, PublicationService::class);
-   $publicationServiceReference->setArguments([new Reference(PublicationRepository::class), new Reference(UtilisateurRepository::class)]);
+   $publicationServiceReference->setArguments([new Reference(PublicationRepository::class), new Reference(UtilisateurService::class)]);
 
    $publicationControleurReference = $conteneur->register(ControleurPublication::class, ControleurPublication::class);
    $publicationControleurReference->setArguments([new Reference(PublicationService::class)]);
@@ -372,16 +397,16 @@ Dans notre application, les noms des services seront les noms de classes avec es
 
     **Attention** : vérifiez bien l'ordre des arguments dans le service lié à `PublicationService` (selon l'ordre que vous avez défini dans le constructeur de `PublicationService`).
 
-    **Prenez le temps de comprendre ces lignes de code !** S'il y a un élément que vous ne comprenez pas, demandez à votre enseignant chargé de TD. Pour le moment, la syntaxe est assez verbeuse, mais nous allons alléger tout cela dans un futur exercice.
+    **Prenez le temps de comprendre ces lignes de code !**. S'il y a un élément que vous ne comprenez pas, demandez à votre enseignant chargé de TD. Pour le moment, la syntaxe est assez verbeuse, mais nous allons alléger tout cela dans un futur exercice.
 
-3. Nous avons enregistré la partie permettant de gérer les publications. Maintenant, il faut indiquer au `ControllerResolver` d'utiliser le contrôleur enregistré dans le conteneur ! Pour cela, remplacez la ligne instanciant un `ControllerResolver` en instanciant un `ContainerControllerResolver` à la place. Il faut donner comme arguments du constructeur de cette nouvelle classe votre conteneur (`$conteneur`).
+3. Complétez le code afin d'enregistrer le service puis le contrôleur liés aux utilisateurs dans le conteneur. Pour rappel, ce contrôleur utilise nos deux services (publication et utilisateur).
+
+4. Nous avons enregistré les services et contrôleurs qui permettent de gérer les publications et les utilisateurs. Maintenant, il faut indiquer au `ControllerResolver` d'utiliser les contrôleurs enregistrés dans le conteneur, plutôt que d'en instancier des nouveaux ! Pour cela, toujours dans `traiterRequete`, remplacez la ligne instanciant un `ControllerResolver` en instanciant un `ContainerControllerResolver` à la place. Il faut donner comme argument du constructeur de cette nouvelle classe votre conteneur (`$conteneur`).
 
     *Explication* : Les classes de résolution de contrôleur ont pour mission d'instancier des contrôleurs. Avant, `ControllerResolver->getController` retrouvait le nom de la classe du contrôleur dans la route, et instanciait un nouvel objet. Par exemple, pour une route avec `"_controller" => "TheFeed\Controleur\ControleurPublication::afficherListe"`,
     la résolution de contrôleur `ControllerResolver->getController` récupérait `"TheFeed\Controleur\ControleurPublication"`, et renvoyait l'objet `new TheFeed\Controleur\ControleurPublication()`.
 
     Désormais, `ContainerControllerResolver->getController` va chercher dans la route le nom du service-contrôleur dans le conteneur, et appellera le conteneur pour instancier le contrôleur. Par exemple, si la résolution de contrôleur `ContainerControllerResolver->getController` récupère toujours `"TheFeed\Controleur\ControleurPublication"`, il renverra l'objet `$conteneur->get("TheFeed\Controleur\ControleurPublication")`.
-
-4. Complétez le code afin d'enregistrer le service puis le contrôleur liés aux utilisateurs dans le conteneur.
 
 5. Chargez la page principale de votre application. Elle devrait fonctionner !
 
@@ -433,29 +458,32 @@ services:
     arguments: ['@TheFeed\Configuration\ConfigurationBDDMySQL']
 
   #Repositories
+  #TO-DO : repository utilisateur
   TheFeed\Modele\Repository\PublicationRepository:
       class: TheFeed\Modele\Repository\PublicationRepository
       arguments: ['@TheFeed\Modele\Repository\ConnexionBaseDeDonnees']
 
   #Services
+  #TO-DO : service utilisateur
   TheFeed\Service\PublicationService:
     class: TheFeed\Service\PublicationService
-    arguments: ['@TheFeed\Modele\Repository\PublicationRepository', '@TheFeed\Modele\Repository\UtilisateurRepository']
+    arguments: ['@TheFeed\Modele\Repository\PublicationRepository', '@TheFeed\Service\UtilisateurService']
 
   #Controleurs
+  #TO-DO : contrôleurs utilisateur et publication
 ```
 
 Nous allons donc mettre en place un fichier de configuration pour notre application.
 
 <div class="exercise">
 
-1. Importez les composants suivants :
+1. Importez les composants suivants (toujours à la racine de votre projet dans le **terminal docker**) :
 
    ```bash
    composer require symfony/yaml
    ```
 
-2. Dans le dossier `Configuration`, créez un fichier `conteneur.yml` reprenant le début de configuration présenté précédemment. Complétez ce fichier avec tous les services que vous avez déclarés dans `RouteurURL`. Ne vous occupez pas de la déclaration du paramètre concernant le dossier contenant les photos de profil pour le moment.
+2. Dans le dossier `Configuration`, créez un fichier `conteneur.yaml` reprenant le début de configuration présenté précédemment. Complétez ce fichier avec tous les services que vous avez déclarés dans `RouteurURL`.
 
 3. Dans `RouteurURL`, supprimez toutes les lignes de code qui enregistrent vos services dans le conteneur de *Symfony*. À la place, utilisez ces deux lignes de code :
 
@@ -465,7 +493,7 @@ Nous allons donc mettre en place un fichier de configuration pour notre applicat
    //On indique au FileLocator de chercher à partir du dossier de configuration
    $loader = new YamlFileLoader($conteneur, new FileLocator(__DIR__."/../Configuration"));
    //On remplit le conteneur avec les données fournies dans le fichier de configuration
-   $loader->load("conteneur.yml");
+   $loader->load("conteneur.yaml");
    ```
 
 4. Vérifiez que votre application fonctionne.
@@ -473,17 +501,17 @@ Nous allons donc mettre en place un fichier de configuration pour notre applicat
 
 ### Remplacer complètement l'ancien conteneur
 
-Actuellement, nous utilisons toujours l'ancien `Conteneur` (celui de `Lib`) dans notre contrôleur générique, notamment. Nous allons faire en sorte de refactorer tout cela en migrant les 3 services restants vers notre nouveau conteneur.
+Actuellement, nous utilisons toujours l'ancien `Conteneur` (celui de `Lib`) dans notre contrôleur générique, notamment. Nous allons faire en sorte de refactorer tout cela en migrant les deux services restants vers notre nouveau conteneur.
 
 <div class="exercise">
 
-1. Tout d'abord, nous allons définir notre premier paramètre : le `project_root`. Ce paramètre contiendra le chemin absolu de la racine du projet. Il pourra nous servir dans divers contextes dès que nous aurons besoin de construire un chemin au travers des fichiers de l'application. Nous ne pouvons malheureusement pas enregistrer ce paramètre dans le fichier de configuration, car nous avons besoin d'accéder à la valeur `__DIR__`. Par contre, nous pourrons nous en resservir pour construire d'autres paramètres ou pour configurer des services ! Ajoutez donc cette ligne dans `RouteurURL.php` après l'initialisation du conteneur de Symfony :
+1. Tout d'abord, nous allons définir notre premier paramètre : le `project_root`. Ce paramètre contiendra le chemin absolu de la racine du projet. Il pourra nous servir dans divers contextes dès que nous aurons besoin de construire un chemin au travers des fichiers de l'application. Nous ne pouvons malheureusement pas enregistrer ce paramètre dans le fichier de configuration, car nous avons besoin d'accéder à la valeur `__DIR__`. Par contre, nous pourrons nous en resservir pour construire d'autres paramètres ou pour configurer des services ! Ajoutez donc cette ligne dans `RouteurURL.php` après l'instanciation du conteneur de Symfony :
 
    ```php
    $conteneur->setParameter('project_root', __DIR__.'/../..');
    ```
 
-2. Importez maintenant dans `conteneur.yml` tout ce qui est relatif à `twig` :
+2. Importez maintenant dans `conteneur.yaml` tout ce qui est relatif à `twig` :
 
    ```yaml
    services:
@@ -502,7 +530,7 @@ Actuellement, nous utilisons toujours l'ancien `Conteneur` (celui de `Lib`) dans
    ```
    Il y a beaucoup de paramètres nécessaires à l'instanciation de ce service, donc, encore une fois, prenez le temps de comprendre ces lignes de code et appeler votre enseignant si besoin. Par exemple, comprenez-vous bien le paramètre `%project_root%/src/vue/` ?   
 
-   Concernant le `$` devant les `arguments` du service `Twig\Environment`, c'est pour utiliser les arguments nommés dans le constructeur. Par exemple, `$loader: '@Twig\Loader\FilesystemLoader'` impliquera que l'appel suivant du constructeur `new Twig\Environment(loader: new Reference('Twig\Loader\FilesystemLoader'),...)`. Cette forme de déclaration est obligatoire dans le cas présent car l'argument `options` est un tableau associatif dans le constructeur de `Environment`.
+   Concernant le `$` devant les `arguments` du service `Twig\Environment`, c'est pour utiliser les arguments nommés dans le constructeur. Par exemple, `$loader: '@Twig\Loader\FilesystemLoader'` impliquera l'appel suivant du constructeur `new Twig\Environment(loader: new Reference('Twig\Loader\FilesystemLoader'),...)`. Cette forme de déclaration est obligatoire dans le cas présent, car l'argument `options` est un tableau associatif dans le constructeur de `Environment`.
 
 3. Pour pouvoir enregistrer le service `Symfony\Component\Routing\Generator\UrlGenerator` (qui est utilisé dans `ControleurGenerique::rediriger`),
    il suffit de rajouter la ligne suivante dans `RouteurURL.php`:
@@ -511,11 +539,9 @@ Actuellement, nous utilisons toujours l'ancien `Conteneur` (celui de `Lib`) dans
    $conteneur->set(UrlGenerator::class, $generateurUrl);
    ```
 
-4. Concernant le service `UrlHelper`, comme il n'est plus utilisé que dans *Twig*,
-   vous pouvez supprimer de l'ancien conteneur `TheFeed\Lib\Conteneur` : supprimer son ajout dans `RouteurURL.php`, et sa récupération 
-   (notamment dans `vueGenerale.php`).
+   Supprimez ensuite l'enregistrement `Conteneur::ajouterService("generateurUrl", $generateurUrl);` dans notre ancien conteneur, dans `traiterRequete`.
 
-5. Dans `traiterRequete`, supprimez l'instanciation des variables `twigLoader` et `twig`. À la place, récupérez le **service** correspondant à `Twig\Environment`.
+4. Dans `traiterRequete`, supprimez l'instanciation des variables `twigLoader` et `twig`. À la place, récupérez le **service** correspondant à `Twig\Environment`.
 
    ```php
    //Remplacer :
@@ -525,7 +551,7 @@ Actuellement, nous utilisons toujours l'ancien `Conteneur` (celui de `Lib`) dans
    $twig=$conteneur->get('Twig\Environment');
    ```
 
-   Supprimez ensuite l'enregistrement `Conteneur::ajouterService("twig", $twig);` de `twig` dans l'ancien `Conteneur`.
+   Supprimez ensuite l'enregistrement `Conteneur::ajouterService("twig", $twig);` de `twig` dans notre ancien conteneur, dans `traiterRequete`.
 </div>
 
 Oh non ! L'application ne marche toujours pas ! En effet, le `ControleurGenerique` récupère toujours des services de notre ancien `Conteneur` ! Il faut donc le déclarer lui aussi comme service et lui injecter tous les services dont il a besoin... Mais, comme tous les contrôleurs héritent de ce contrôleur, il faut donc injecter à tous les sous-contrôleurs les services dont a besoin le contrôleur générique...
@@ -554,30 +580,58 @@ Plutôt que de lui injecter les services un par un, nous allons directement lui 
    }
    ```
 
-3. Comme le constructeur de `ControleurPublication`, il faut donc mettre à jour
-   les liste des `arguments` pour le service correspondant dans `conteneur.yml`.
+3. Comme le constructeur de `ControleurPublication` a été modifié, il faut donc mettre à jour
+   les liste des `arguments` pour le service correspondant dans `conteneur.yaml`.
    Heureusement, le conteneur est automatiquement référencé par *Symfony* sous
-   le nom de service `service_container`. Ajoutez une référence à ce service
-   dans la liste des `arguments` du service de `ControleurPublication`.
+   le nom de service `@service_container`. Ajoutez une référence à ce service
+   dans la liste des `arguments` du service de `ControleurPublication` (au début de la liste, car l'ordre 
+   est important pour l'instanciation vu qu'on n'utilise pas de paramètres nommés !).
 
-4. Faites de même pour `ControleurUtilisateur`.
+4. Faites de même pour `ControleurUtilisateur` (modification constructeur + modification du fichier de configuration).
 
 5. Dans `ControleurGenerique`, modifiez tous les appels à
    `Conteneur::recupererService(...)` en utilisant le nouveau conteneur injecté
-   dans la classe. Attention, `generateurUrl` est devenu `Symfony\Component\Routing\Generator\UrlGenerator`, et `twig` est devenu `Twig\Environment`.
+   dans la classe. Attention, `generateurUrl` est devenu `Symfony\Component\Routing\Generator\UrlGenerator`, et `twig` est devenu `Twig\Environment`. On peut utiliser directement `UrlGenerator::class` et `Environment::class` pour récupérer
+   le service si on réalise les imports correspondants dans le contrôleur.
 
-   Normalement, vous venez de supprimer les derniers appels à l'ancien conteneur `TheFeed\Lib\Conteneur`.
+   Normalement, vous venez de supprimer les derniers appels à l'ancien conteneur `TheFeed\Lib\Conteneur` : vous pouvez donc éventuellement supprimer ce fichier.
 
 6. Enfin, vous aurez peut-être remarqué que votre `IDE` râle au niveau de la fin
    de la méthode `traiterRequete` (dans le `catch`), car il manque un paramètre
    pour instancier `ControleurGenerique`. Pour régler cet ultime problème :
 
-   * Enregistrez un **service** (dans `conteneur.yml`) correspondant au `ControleurGenerique`.
+   * Enregistrez un **service** (dans `conteneur.yaml`) correspondant au `ControleurGenerique`.
 
    * Dans la méthode `traiterRequete`, récupérer ce service à partir du
      conteneur au lieu d'instancier directement `ControleurGenerique`.
 
 7.  Vérifiez que votre application fonctionne de nouveau.
+</div>
+
+### Traitement des requêtes
+
+Dans le cadre de tests futurs (notamment pour l'`API REST` que vous allez créer lors du **TD5**) nous allons modifier la méthode `RouteurURL::traiterRequete` afin que celle-ci prenne une requête en paramètre et renvoie la réponse plutôt que de tout traiter d'un seul bloc en "boîte noire". Par la suite, cela pourra permettre de simuler des requêtes et d'analyser la réponse renvoyée.
+
+<div class="exercise">
+
+1. Ajoutez un paramètre `Request $requete` dans la fonction `RouteurURL::traiterRequete`.
+
+2. Déplacez l'instruction suivante depuis `RouteurURL::traiterRequete` vers le fichier `web/controleurFrontal.php` : 
+
+   ```php
+   use Symfony\Component\HttpFoundation\Request;
+
+   $requete = Request::createFromGlobals()
+   ```
+
+   Et passez cette variable comme paramètre lors de l'appel de `RouteurURL::traiterRequete`.
+
+3. Faites en sorte de déclarer que la fonction `RouteurURL::traiterRequete` retourne un objet de type `Response` puis supprimez le code effectuant un `send` sur la réponse obtenue dans cette fonction. Renvoyez la réponse à la place.
+
+4. Enfin, dans `web/controleurFrontal.php`, récupérez la réponse retournée par `RouteurURL::traiterRequete` et envoyez-la (toujours avec `send`).
+
+5. Vérifiez que votre site fonctionne toujours comme il faut.
+
 </div>
 
 ## À vos tests !
@@ -608,34 +662,51 @@ $mockedService->method("traitementA")->willReturn([7,8]);
 $mockedService->method("traitementABis")->with(5)->willReturn(10);
 
 // On fait en sorte qu'un appel à la méthode traitementSpecial déclenche une exception
-$mockedService->method("traitementSpecial")->willThrowException(ExempleException::class);
+$mockedService->method("traitementSpecial")->willThrowException(new ExempleException());
 ```
 
-Prenons l'exemple de votre classe `PublicationServiceTest`. Celle-ci ne doit plus bien fonctionner car le `service` manipulé par les tests attend des dépendances (*repositories* utilisateur et publication).
+Prenons l'exemple de votre classe `PublicationServiceTest`. Celle-ci ne doit plus bien fonctionner car le `service` manipulé par les tests attend des dépendances (*repository* publication et *service* utilisateur).
 
-Nous pourrions réécrire le test `testNombrePublications` comme suit :
+Nous pourrions réécrire plusieurs tests comme suit :
 
 ```php
 namespace Tests\Unit;
 
 use TheFeed\Modele\Repository\PublicationRepositoryInterface;
-use TheFeed\Modele\Repository\UtilisateurRepositoryInterface;
+use TheFeed\Service\UtilisateurServiceInterface;
 
 class PublicationServiceTest extends TestCase
 {
 
-    private $service;
+    private PublicationService $service;
 
-    private $publicationRepositoryMock;
+    private PublicationRepositoryInterface $publicationRepositoryMock;
 
-    private $utilisateurRepositoryMock;
+    private UtilisateurServiceInterface $utilisateurServiceMock;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->publicationRepositoryMock = $this->createMock(PublicationRepositoryInterface::class);
-        $this->utilisateurRepositoryMock = $this->createMock(UtilisateurRepositoryInterface::class);
+        $this->utilisateurServiceMock = $this->createMock(UtilisateurServiceInterface::class);
         $this->service = new PublicationService($this->publicationRepositoryMock, $this->utilisateurRepositoryMock);
+    }
+
+    public function testCreerPublicationUtilisateurInexistant() {
+        //On fait en sorte que l'appel à recupererUtilisateurExistantParId lève une exception, car l'utilisateur n'existe pas.
+        $this->utilisateurServiceMock->method("recupererUtilisateurExistantParId")->willThrowException(new ServiceException());
+        //C'est un test assez basique et pas très intéressant, car c'est de la logique gérée plutôt du côté de ServiceUtilisateur
+        //Cela sera la même chose pour testNombrePublicationsUtilisateurInexistant qui va renvoyer la même exception.
+        $this->expectException(ServiceException::class);
+        $this->service->creerPublication(-1, "Bonjour!");
+    }
+
+    public function testCreerPublicationVide() {
+        $fakeUtilisateur = new Utilisateur();
+        $this->utilisateurServiceMock->method("recupererUtilisateurExistantParId")->willReturn($fakeUtilisateur);
+        $this->expectException(ServiceException::class);
+        $this->expectExceptionMessage("Le message ne peut pas être vide!");
+        $this->service->creerPublication(1, "");
     }
 
     public function testNombrePublications() {
@@ -701,9 +772,9 @@ Maintenant que vous connaissez les **mocks**, vous allez pouvoir les utiliser po
 
 <div class="exercise">
 
-1. Reprenez votre classe `PublicationServiceTest` et adaptez-la pour faire fonctionner vos anciens tests en utilisant des **mocks** pour les dépendances du service. Vous pouvez repartir de l'exemple `testNombrePublications` donné dans la section précédente. Dans certains tests, pour la partie concernant les **utilisateurs**, il faudra bien configurer votre *mock* afin qu'il renvoie un faux utilisateur (parfois **null** et parfois non... Tout dépend du contexte du test !).
+1. Reprenez votre classe `PublicationServiceTest` et adaptez-la pour faire fonctionner vos anciens tests en utilisant des **mocks** pour les dépendances des deux services (repository publication et service des utilisateurs). Vous pouvez repartir des exemples donnés dans la section précédente et adapter les trois tests manquants.
 
-2. Créez un test `testCreerPublicationValide`. Le but de ce test est de vérifier que tout fonctionne bien lorsque les spécifications de création d'une publication sont respectées. En utilisant votre **mock** du *repository* des publications, vous devrez intercepter l'appel à **ajouter** afin de vérifier que les données transmises sont bien conformes.
+2. Créez un test `testCreerPublicationValide`. Le but de ce test est de vérifier que tout fonctionne bien lorsque les spécifications de création d'une publication sont respectées. En utilisant votre **mock** du *repository* des publications, vous devrez intercepter l'appel à **ajouter** afin de vérifier que les données transmises sont bien conformes (aidez-vous de `willReturnCallback`).
 
 3. Ajoutez des tests qui vous semblent pertinents !
 
@@ -712,30 +783,6 @@ Maintenant que vous connaissez les **mocks**, vous allez pouvoir les utiliser po
 </div>
 
 Bien sûr, notre contexte de test dans ce sujet reste assez simpliste, mais cela vous donne déjà une idée de comment réaliser des tests unitaires assez précis et indépendants du contexte de l'application. Vous l'aurez remarqué, avec cette nouvelle façon de fonctionner, la base de données n'est pas sollicitée et on ne dépend plus des utilisateurs réellement inscrits ou des publications réellement créées. Et on ne risque pas de créer une nouvelle publication après chaque exécution des tests !
-
-### Traitement des requêtes
-
-Dans le cadre de tests futurs (notamment pour l'`API REST` que vous allez créer lors du **TD5**) nous allons modifier la méthode `RouteurURL::traiterRequete` afin que celle-ci prenne une requête en paramètre et renvoie la réponse plutôt que de tout traiter d'un seul bloc en "boîte noire". Par la suite, cela pourra permettre de simuler des requêtes et d'analyser la réponse renvoyée.
-
-<div class="exercise">
-
-1. Ajoutez un paramètre `Request $requete` dans la fonction `RouteurURL::traiterRequete`.
-
-2. Déplacez l'instruction suivante depuis `RouteurURL::traiterRequete` vers le fichier `web/controleurFrontal.php` : 
-
-   ```php
-   $requete = Request::createFromGlobals()
-   ```
-
-   Et passez cette variable comme paramètre lors de l'appel de `RouteurURL::traiterRequete`.
-
-3. Faites en sorte de déclarer que la fonction `RouteurURL::traiterRequete` retourne un objet de type `Response` puis supprimez le code effectuant un `send` sur la réponse obtenue dans cette fonction. Renvoyez la réponse à la place.
-
-4. Enfin, dans `web/controleurFrontal.php`, récupérez la réponse retournée par `RouteurURL::traiterRequete` et envoyez-la (toujours avec `send`).
-
-5. Vérifiez que votre site fonctionne toujours comme il faut.
-
-</div>
 
 ## Concernant la *SAÉ*
 
@@ -746,6 +793,160 @@ Un premier objectif à vous fixer serait d'obtenir une couverture de code (proch
 ## Extensions
 
 Nous allons maintenant travailler différentes extensions de ce TD afin de pouvoir tester plus d'aspects de l'application, régler des problèmes que vous pourriez rencontrer lors des tests unitaires, améliorer encore plus l'architecture de l'application et l'indépendance de ses classes en transformant plus d'entités en **services**.
+
+### Tester le service utilisateur
+
+Pour la plupart des méthodes de `UtilisateurService`, vous devriez être en mesure d'écrire des tests unitaires comme vous l'avez fait pour `PublicationService`. Néanmoins, il y a un **effet de bord** indésirable qui se produit lors de l'exécution de la méthode `creerUtilisateur`. En effet, même si dans le cadre des tests, nous pouvons *mocker* le *repository*, cette méthode va placer une image (la photo de profil) dans le dossier `ressources/img/utilisateurs` ! 
+
+Mais pas de panique, nous pouvons utiliser notre `conteneur de services` pour contourner ce problème. L'idée est de transformer le dossier de destination en un paramètre du service qui sera injecté.
+
+<div class="exercise">
+
+1. Dans `UtilisateurService`, ajoutez un paramètre `$dossierPhotoDeProfil` (de type `string`) dans le constructeur, qui devra être défini comme attribut de la classe (donc il faut utiliser la syntaxe avec `private`). Cet attribut contiendra le chemin du répertoire stockant les photos de profil.
+
+2. Dans la méthode `creerUtilisateur`, lors de la construction du chemin du fichier contenant la photo de profil, utilisez votre nouvel attribut.
+
+3. Dans `conteneur.yaml`, enregistrez un **paramètre** correspondant au chemin du dossier contenant les photos de profil en utilisant le paramètre `project_root`. Comme pour les services, il est possible d'utiliser un paramètre lors de la définition d'un autre paramètre, ainsi : `%project_root%/chemin/vers/dossier`.
+
+4. Injectez ce nouveau paramètre comme `argument` du `TheFeed\Service\UtilisateurService` en utilisant sa **référence**. Pour rappel, on peut faire référence à un attribut du conteneur avec la syntaxe : `%nom_attribut%`.
+
+5. Vérifiez que l'inscription fonctionne toujours bien (et que l'image arrive là où il faut).
+
+</div>
+
+Maintenant que le répertoire de destination des photos de profil est configurable, vous pouvez en créer un dédié pour vos tests ! (et le vider après l'exécution des tests, avec `tearDown`). Pour vérifier l'existence d'un fichier, il y a une assertion dédiée : `assertFileExists`. La fonction `mkdir` peut vous permettre de créer le dossier contenant les images tandis que la fonction `rmdir` vous permet de le supprimer.
+
+Attention, dans les paramètres de la méthode `creerUtilisateur` de la classe `UtilisateurService`, vous devez fournir en paramètre un tableau `$donneesPhotoDeProfil`. Ce tableau doit essentiellement contenir deux données :
+
+* `name` : Le nom du fichier original sur la machine du client (avec son extension)
+* `tmp_name` : Le nom temporaire du fichier (donné par *PHP*, quand il est uploadé). Dans le cadre des tests, cette donnée sera la même que pour `name`.
+
+Dans vos tests, il vous faudra remplir ce tableau. On vous recommande donc de créer un dossier `assets` dans `Test` dans l'objectif est de contenir différents fichiers utiles pour les tests (notamment, ici, une photo de profil de test).
+
+Néanmoins, il y a un autre problème ! Avez-vous remarqué l'instruction `move_uploaded_file` dans `creerUtilisateur` ? Cette fonction permet de déplacer un fichier qui a été uploadé vers un nouveau dossier. Or, dans nos tests, nous ne pouvons pas uploader de fichiers ! Nous allons donc transformer cette partie du code en **service** !
+
+Dans le contexte concret de l'application, ce service exécutera la fonction `move_uploaded_file`. Dans nos tests, on exécutera une fonction pour copier la photo contenu dans notre dossier `assets` (de test) vers un dossier temporaire.
+
+<div class="exercise">
+
+1. Dans le dossier `Service`, créez l'interface suivante :
+
+   ```php
+   namespace TheFeed\Service;
+
+   interface FileMovingServiceInterface
+   {
+       public function moveFile($fileName, $pathDestination);
+   }
+   ```
+
+2. Toujours dans `Service`, créez une classe `UploadedFileMovingService` implémentant cette interface :
+
+   ```php
+   namespace TheFeed\Service;
+
+   class UploadedFileMovingService implements FileMovingServiceInterface
+   {
+       public function moveFile($fileName, $pathDestination)
+       {
+           move_uploaded_file($fileName, $pathDestination);
+       }
+   }
+   ```
+
+3. Enfin, dans le dossier `tests/unit`, créez un dossier `Mocks` puis à l'intérieur, une classe `FileMovingServiceMock` comme suit :
+
+   ```php
+   namespace Tests\Unit\Mocks;
+
+   use TheFeed\Service\FileMovingServiceInterface;
+
+   class FileMovingServiceMock implements FileMovingServiceInterface
+   {
+       private static string $ASSETS_FOLDER = __DIR__."/../../assets/";
+
+       public function moveFile($fileName, $pathDestination)
+       {
+           copy(self::$ASSETS_FOLDER.$fileName, $pathDestination);
+       }
+   }
+   ```
+
+4. Faites en sorte d'injecter et d'utiliser un service de type `FileMovingServiceInterface` dans `UtilisateurService` à la place de l'instruction `move_uploaded_file` (vous devriez savoir comment faire, maintenant).
+
+5. N'oubliez pas d'enregistrer votre nouveau service dans votre conteneur (en utilisant la classe concrète `UploadedFileMovingService`) et pensez bien à passer ce service comme argument du service gérant les utilisateurs.
+
+6. Vérifiez que l'inscription fonctionne toujours comme attendu.
+
+</div>
+
+Maintenant que nous avons réglé tous les problèmes liés aux effets de bord de la méthode `creerUtilisateur`, nous pouvons commencer à tester !
+
+<div class="exercise">
+
+1. Créez un dossier `assets` dans `tests` puis placez-y une photo de profil quelconque au format `PNG` et renommez-la `test.png`.
+
+2. Créez une classe `UtilisateurServiceTest` avec le squelette de code suivant et complétez-le :
+
+   ```php
+   namespace Tests\Unit;
+
+   use PHPUnit\Framework\TestCase;
+   use TheFeed\Modele\Repository\UtilisateurRepositoryInterface;
+   use TheFeed\Service\FileMovingServiceInterface;
+   use TheFeed\Service\UtilisateurService;
+
+   class UtilisateurServiceTest extends TestCase
+   {
+
+       private $service;
+
+       private $utilisateurRepositoryMock;
+
+       //Dossier où seront déplacés les fichiers pendant les tests
+       private  $dossierPhotoDeProfil = __DIR__."/../tmp/";
+
+       private FileMovingServiceInterface $fileMovingService;
+
+       protected function setUp(): void
+       {
+           parent::setUp();
+           $this->utilisateurRepositoryMock = /* TODO */
+           $this->fileMovingService = /* TODO */
+           mkdir($this->dossierPhotoDeProfil);
+           $this->service = new UtilisateurService(/* TODO */);
+       }
+
+       public function testCreerUtilisateurPhotoDeProfil() {
+           $donneesPhotoDeProfil = [];
+           $donneesPhotoDeProfil["name"] = "test.png";
+           $donneesPhotoDeProfil["tmp_name"] = "test.png";
+           $this->utilisateurRepositoryMock->method("recupererParLogin")->willReturn(null);
+           $this->utilisateurRepositoryMock->method("recupererParEmail")->willReturn(null);
+           $this->utilisateurRepositoryMock->method("ajouter")->willReturnCallback(function ($utilisateur) {
+               /* TODO : Tester l'existence du fichier (et eventuellement d'autres tests) */ 
+           });
+           $this->service->creerUtilisateur("test", "TestMdp123", "test@example.com", $donneesPhotoDeProfil);
+       }
+
+       protected function tearDown(): void
+       {
+           //Nettoyage
+           parent::tearDown();
+           foreach(scandir($this->dossierPhotoDeProfil) as $file) {
+               if ('.' === $file || '..' === $file) continue;
+               unlink($this->dossierPhotoDeProfil.$file);
+           }
+           rmdir($this->dossierPhotoDeProfil);
+       }
+
+   }
+   ```
+
+3. Lancez les tests unitaires, vérifiez qu'ils passent.
+
+4. Complétez la classe en écrivant plus de tests unitaires pertinents, au moins jusqu'à atteindre une couverture de code de 100% pour cette classe.
+</div>
 
 ### Tester les *repositories*
 
@@ -932,160 +1133,6 @@ Nous allons réaliser une première classe de test pour le *repository* des **ut
 </div>
 
 Bien sûr, si vous testez plusieurs *repositories*, il est possible de mutualiser les lignes de code de la méthode `setUp` dont le but est de remplir la base de données (avec de l'héritage, par exemple). On pourrait aussi avoir un système dans lequel on définit un script de remplissage de la base qui est chargé et exécuté avant chaque test.
-
-### Tester le service utilisateur
-
-Pour la plupart des méthodes de `UtilisateurService`, vous devriez être en mesure d'écrire des tests unitaires comme vous l'avez fait pour `PublicationService`. Néanmoins, il y a un **effet de bord** indésirable qui se produit lors de l'exécution de la méthode `creerUtilisateur`. En effet, même si dans le cadre des tests, nous pouvons *mocker* le *repository*, cette méthode va placer une image (la photo de profil) dans le dossier `ressources/img/utilisateurs` ! 
-
-Mais pas de panique, nous pouvons utiliser notre `conteneur de services` pour contourner ce problème. L'idée est de transformer le dossier de destination en un paramètre du service qui sera injecté.
-
-<div class="exercise">
-
-1. Dans `UtilisateurService`, ajoutez un paramètre `$dossierPhotoDeProfil` (de type `string`) dans le constructeur, qui devra être défini comme attribut de la classe (donc il faut utiliser la syntaxe avec `private`). Cet attribut contiendra le chemin du répertoire stockant les photos de profil.
-
-2. Dans la méthode `creerUtilisateur`, lors de la construction du chemin du fichier contenant la photo de profil, utilisez votre nouvel attribut.
-
-3. Dans `conteneur.yml`, enregistrez un `paramètre` correspondant au chemin du dossier contenant les photos de profil en utilisant le paramètre `project_root`. Comme pour les services, il est possible d'utiliser un paramètre lors de la définition d'un autre paramètre, ainsi : `%project_root%/chemin/vers/dossier`.
-
-4. Injectez ce nouveau paramètre comme `argument` du `TheFeed\Service\UtilisateurService` en utilisant sa **référence**. Pour rappel, on peut faire référence à un attribut du conteneur avec la syntaxe : `%nom_attribut%`.
-
-5. Vérifiez que l'inscription fonctionne toujours bien (et que l'image arrive là où il faut).
-
-</div>
-
-Maintenant que le répertoire de destination des photos de profil est configurable, vous pouvez en créer un dédié pour vos tests ! (et le vider après l'exécution des tests, avec `tearDown`). Pour vérifier l'existence d'un fichier, il y a une assertion dédiée : `assertFileExists`. La fonction `mkdir` peut vous permettre de créer le dossier contenant les images tandis que la fonction `rmdir` vous permet de le supprimer.
-
-Attention, dans les paramètres de la méthode `creerUtilisateur` de la classe `UtilisateurService`, vous devez fournir en paramètre un tableau `$donneesPhotoDeProfil`. Ce tableau doit essentiellement contenir deux données :
-
-* `name` : Le nom du fichier original sur la machine du client (avec son extension)
-* `tmp_name` : Le nom temporaire du fichier (donné par *PHP*, quand il est uploadé). Dans le cadre des tests, cette donnée sera la même que pour `name`.
-
-Dans vos tests, il vous faudra remplir ce tableau. On vous recommande donc de créer un dossier `assets` dans `Test` dans l'objectif est de contenir différents fichiers utiles pour les tests (notamment, ici, une photo de profil de test).
-
-Néanmoins, il y a un autre problème ! Avez-vous remarqué l'instruction `move_uploaded_file` dans `creerUtilisateur` ? Cette fonction permet de déplacer un fichier qui a été uploadé vers un nouveau dossier. Or, dans nos tests, nous ne pouvons pas uploader de fichiers ! Nous allons donc transformer cette partie du code en **service** !
-
-Dans le contexte concret de l'application, ce service exécutera la fonction `move_uploaded_file`. Dans nos tests, on exécutera une fonction pour copier la photo contenu dans notre dossier `assets` (de test) vers un dossier temporaire.
-
-<div class="exercise">
-
-1. Dans le dossier `Service`, créez l'interface suivante :
-
-   ```php
-   namespace TheFeed\Service;
-
-   interface FileMovingServiceInterface
-   {
-       public function moveFile($fileName, $pathDestination);
-   }
-   ```
-
-2. Toujours dans `Service`, créez une classe `UploadedFileMovingService` implémentant cette interface :
-
-   ```php
-   namespace TheFeed\Service;
-
-   class UploadedFileMovingService implements FileMovingServiceInterface
-   {
-       public function moveFile($fileName, $pathDestination)
-       {
-           move_uploaded_file($fileName, $pathDestination);
-       }
-   }
-   ```
-
-3. Enfin, dans le dossier `tests/unit`, créez un dossier `Mocks` puis à l'intérieur, une classe `FileMovingServiceMock` comme suit :
-
-   ```php
-   namespace Tests\Unit\Mocks;
-
-   use TheFeed\Service\FileMovingServiceInterface;
-
-   class FileMovingServiceMock implements FileMovingServiceInterface
-   {
-       private static string $ASSETS_FOLDER = __DIR__."/../../assets/";
-
-       public function moveFile($fileName, $pathDestination)
-       {
-           copy(self::$ASSETS_FOLDER.$fileName, $pathDestination);
-       }
-   }
-   ```
-
-4. Faites en sorte d'injecter et d'utiliser un service de type `FileMovingServiceInterface` dans `UtilisateurService` à la place de l'instruction `move_uploaded_file` (vous devriez savoir comment faire, maintenant).
-
-5. N'oubliez pas d'enregistrer votre nouveau service dans votre conteneur (en utilisant la classe concrète `UploadedFileMovingService`) et pensez bien à passer ce service comme argument du service gérant les utilisateurs.
-
-6. Vérifiez que l'inscription fonctionne toujours comme attendu.
-
-</div>
-
-Maintenant que nous avons réglé tous les problèmes liés aux effets de bord de la méthode `creerUtilisateur`, nous pouvons commencer à tester !
-
-<div class="exercise">
-
-1. Créez un dossier `assets` dans `tests` puis placez-y une photo de profil quelconque au format `PNG` et renommez-la `test.png`.
-
-2. Créez une classe `UtilisateurServiceTest` avec le squelette de code suivant et complétez-le :
-
-   ```php
-   namespace Tests\Unit;
-
-   use PHPUnit\Framework\TestCase;
-   use TheFeed\Modele\Repository\UtilisateurRepositoryInterface;
-   use TheFeed\Service\FileMovingServiceInterface;
-   use TheFeed\Service\UtilisateurService;
-
-   class UtilisateurServiceTest extends TestCase
-   {
-
-       private $service;
-
-       private $utilisateurRepositoryMock;
-
-       //Dossier où seront déplacés les fichiers pendant les tests
-       private  $dossierPhotoDeProfil = __DIR__."/../tmp/";
-
-       private FileMovingServiceInterface $fileMovingService;
-
-       protected function setUp(): void
-       {
-           parent::setUp();
-           $this->utilisateurRepositoryMock = /* TODO */
-           $this->fileMovingService = /* TODO */
-           mkdir($this->dossierPhotoDeProfil);
-           $this->service = new UtilisateurService(/* TODO */);
-       }
-
-       public function testCreerUtilisateurPhotoDeProfil() {
-           $donneesPhotoDeProfil = [];
-           $donneesPhotoDeProfil["name"] = "test.png";
-           $donneesPhotoDeProfil["tmp_name"] = "test.png";
-           $this->utilisateurRepositoryMock->method("recupererParLogin")->willReturn(null);
-           $this->utilisateurRepositoryMock->method("recupererParEmail")->willReturn(null);
-           $this->utilisateurRepositoryMock->method("ajouter")->willReturnCallback(function ($utilisateur) {
-               /* TODO : Tester l'existence du fichier (et eventuellement d'autres tests) */ 
-           });
-           $this->service->creerUtilisateur("test", "TestMdp123", "test@example.com", $donneesPhotoDeProfil);
-       }
-
-       protected function tearDown(): void
-       {
-           //Nettoyage
-           parent::tearDown();
-           foreach(scandir($this->dossierPhotoDeProfil) as $file) {
-               if ('.' === $file || '..' === $file) continue;
-               unlink($this->dossierPhotoDeProfil.$file);
-           }
-           rmdir($this->dossierPhotoDeProfil);
-       }
-
-   }
-   ```
-
-3. Lancez les tests unitaires, vérifiez qu'ils passent.
-
-4. Complétez la classe en écrivant plus de tests unitaires pertinents, au moins jusqu'à atteindre une couverture de code de 100% pour cette classe.
-</div>
 
 ### Pour aller plus loin
 

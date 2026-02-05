@@ -296,7 +296,7 @@ Voici quelques codes de réponse *HTTP* utiles :
        $reponse = ControleurGenerique::afficherVue('vueGenerale.php', [
            "pagetitle" => "Problème",
            "cheminVueBody" => "erreur.php",
-           "errorMessage" => $messageErreur
+           "messageErreur" => $messageErreur
        ]);
 
        $reponse->setStatusCode($statusCode);
