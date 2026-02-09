@@ -689,7 +689,7 @@ class PublicationServiceTest extends TestCase
         parent::setUp();
         $this->publicationRepositoryMock = $this->createMock(PublicationRepositoryInterface::class);
         $this->utilisateurServiceMock = $this->createMock(UtilisateurServiceInterface::class);
-        $this->service = new PublicationService($this->publicationRepositoryMock, $this->utilisateurRepositoryMock);
+        $this->service = new PublicationService($this->publicationRepositoryMock, $this->utilisateurServiceMock);
     }
 
     public function testCreerPublicationUtilisateurInexistant() {
@@ -825,7 +825,7 @@ Dans vos tests, il vous faudra remplir ce tableau. On vous recommande donc de cr
 
 Néanmoins, il y a un autre problème ! Avez-vous remarqué l'instruction `move_uploaded_file` dans `creerUtilisateur` ? Cette fonction permet de déplacer un fichier qui a été uploadé vers un nouveau dossier. Or, dans nos tests, nous ne pouvons pas uploader de fichiers ! Nous allons donc transformer cette partie du code en **service** !
 
-Dans le contexte concret de l'application, ce service exécutera la fonction `move_uploaded_file`. Dans nos tests, on exécutera une fonction pour copier la photo contenu dans notre dossier `assets` (de test) vers un dossier temporaire.
+Dans le contexte concret de l'application, ce service exécutera la fonction `move_uploaded_file`. Dans nos tests, on exécutera une fonction pour récupérer les paramètres donnés à notre fonction de déplacement pour en vérifier la cohérence.
 
 <div class="exercise">
 
@@ -834,49 +834,31 @@ Dans le contexte concret de l'application, ce service exécutera la fonction `mo
    ```php
    namespace TheFeed\Service;
 
-   interface FileMovingServiceInterface
+   interface UploadedFileServiceInterface
    {
-       public function moveFile($fileName, $pathDestination);
+       public function move($fileName, $pathDestination) : bool;
    }
    ```
 
-2. Toujours dans `Service`, créez une classe `UploadedFileMovingService` implémentant cette interface :
+2. Toujours dans `Service`, créez une classe `UploadedFileService` implémentant cette interface :
 
    ```php
    namespace TheFeed\Service;
 
-   class UploadedFileMovingService implements FileMovingServiceInterface
+   class UploadedFileService implements UploadedFileServiceInterface
    {
-       public function moveFile($fileName, $pathDestination)
+       public function move($fileName, $pathDestination) : bool
        {
-           move_uploaded_file($fileName, $pathDestination);
+           return move_uploaded_file($fileName, $pathDestination);
        }
    }
    ```
 
-3. Enfin, dans le dossier `tests/unit`, créez un dossier `Mocks` puis à l'intérieur, une classe `FileMovingServiceMock` comme suit :
+3. Faites en sorte d'injecter et d'utiliser un service de type `UploadedFileServiceInterface` dans `UtilisateurService` à la place de l'instruction `move_uploaded_file` (vous devriez savoir comment faire, maintenant).
 
-   ```php
-   namespace Tests\Unit\Mocks;
+4. N'oubliez pas d'enregistrer votre nouveau service dans votre conteneur (en utilisant la classe concrète `UploadedFileService`) et pensez bien à passer ce service comme argument du service gérant les utilisateurs.
 
-   use TheFeed\Service\FileMovingServiceInterface;
-
-   class FileMovingServiceMock implements FileMovingServiceInterface
-   {
-       private static string $ASSETS_FOLDER = __DIR__."/../../assets/";
-
-       public function moveFile($fileName, $pathDestination)
-       {
-           copy(self::$ASSETS_FOLDER.$fileName, $pathDestination);
-       }
-   }
-   ```
-
-4. Faites en sorte d'injecter et d'utiliser un service de type `FileMovingServiceInterface` dans `UtilisateurService` à la place de l'instruction `move_uploaded_file` (vous devriez savoir comment faire, maintenant).
-
-5. N'oubliez pas d'enregistrer votre nouveau service dans votre conteneur (en utilisant la classe concrète `UploadedFileMovingService`) et pensez bien à passer ce service comme argument du service gérant les utilisateurs.
-
-6. Vérifiez que l'inscription fonctionne toujours comme attendu.
+5. Vérifiez que l'inscription fonctionne toujours comme attendu.
 
 </div>
 
@@ -884,68 +866,63 @@ Maintenant que nous avons réglé tous les problèmes liés aux effets de bord d
 
 <div class="exercise">
 
-1. Créez un dossier `assets` dans `tests` puis placez-y une photo de profil quelconque au format `PNG` et renommez-la `test.png`.
+1. Créez une classe `UtilisateurServiceTest` avec le code suivant et analysez-le :
 
-2. Créez une classe `UtilisateurServiceTest` avec le squelette de code suivant et complétez-le :
+    ```php
+    namespace Tests\Unit;
 
-   ```php
-   namespace Tests\Unit;
+    use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
+    use PHPUnit\Framework\TestCase;
+    use TheFeed\Modele\Repository\UtilisateurRepositoryInterface;
+    use TheFeed\Service\FileMovingServiceInterface;
+    use TheFeed\Service\UtilisateurService;
 
-   use PHPUnit\Framework\TestCase;
-   use TheFeed\Modele\Repository\UtilisateurRepositoryInterface;
-   use TheFeed\Service\FileMovingServiceInterface;
-   use TheFeed\Service\UtilisateurService;
+    #[AllowMockObjectsWithoutExpectations]
+    class UtilisateurServiceTest extends TestCase
+    {
 
-   class UtilisateurServiceTest extends TestCase
-   {
+        private UtilisateurService $service;
+        private UtilisateurRepositoryInterface $utilisateurRepositoryMock;
+        private UploadedFileServiceInterface $uploadedFileServiceMock;
+        private $fauxDossierTest = "/tests/img/";
 
-       private $service;
+        protected function setUp(): void
+        {
+            parent::setUp();
+            $this->utilisateurRepositoryMock = $this->createMock(UtilisateurRepositoryInterface::class);
+            $this->fileMovingServiceMock = $this->createMock(UploadedFileServiceInterface::class);
+            $this->service = new UtilisateurService($this->utilisateurRepositoryMock, $this->fauxDossierTest, $this->uploadedFileServiceMock);
+        }
 
-       private $utilisateurRepositoryMock;
+        public function testCreerUtilisateurPhotoDeProfilErreurTransfert() {
+            $donneesPhotoDeProfil["name"] = "test.jpg";
+            $donneesPhotoDeProfil["tmp_name"] = "test.jpg";
+            $this->utilisateurRepositoryMock->method("recupererParLogin")->willReturn(null);
+            $this->utilisateurRepositoryMock->method("recupererParEmail")->willReturn(null);
+            $this->uploadedFileServiceMock->method('move')->willReturn(false);
+            $this->expectException(ServiceException::class);
+            $this->service->creerUtilisateur("test", "TestMdp123", "test@example.com", $donneesPhotoDeProfil);
+        }
 
-       //Dossier où seront déplacés les fichiers pendant les tests
-       private  $dossierPhotoDeProfil = __DIR__."/../tmp/";
+        public function testCreerUtilisateurPhotoDeProfilBonPath() {
+            $donneesPhotoDeProfil["name"] = "test.jpg";
+            $donneesPhotoDeProfil["tmp_name"] = "test.jpg";
+            $this->utilisateurRepositoryMock->method("recupererParLogin")->willReturn(null);
+            $this->utilisateurRepositoryMock->method("recupererParEmail")->willReturn(null);
+            $this->uploadedFileServiceMock->method('move')->willReturn(true);
+            $this->uploadedFileServiceMock->method("move")->willReturnCallback(function ($fileName, $pathDestination) {
+                $this->assertEquals("test.jpg", $fileName);
+                $this->assertStringStartsWith($this->fauxDossierTest, $pathDestination);
+            });
+            $this->service->creerUtilisateur("test", "TestMdp123", "test@example.com", $donneesPhotoDeProfil);
+        }
 
-       private FileMovingServiceInterface $fileMovingService;
-
-       protected function setUp(): void
-       {
-           parent::setUp();
-           $this->utilisateurRepositoryMock = /* TODO */
-           $this->fileMovingService = /* TODO */
-           mkdir($this->dossierPhotoDeProfil);
-           $this->service = new UtilisateurService(/* TODO */);
-       }
-
-       public function testCreerUtilisateurPhotoDeProfil() {
-           $donneesPhotoDeProfil = [];
-           $donneesPhotoDeProfil["name"] = "test.png";
-           $donneesPhotoDeProfil["tmp_name"] = "test.png";
-           $this->utilisateurRepositoryMock->method("recupererParLogin")->willReturn(null);
-           $this->utilisateurRepositoryMock->method("recupererParEmail")->willReturn(null);
-           $this->utilisateurRepositoryMock->method("ajouter")->willReturnCallback(function ($utilisateur) {
-               /* TODO : Tester l'existence du fichier (et eventuellement d'autres tests) */ 
-           });
-           $this->service->creerUtilisateur("test", "TestMdp123", "test@example.com", $donneesPhotoDeProfil);
-       }
-
-       protected function tearDown(): void
-       {
-           //Nettoyage
-           parent::tearDown();
-           foreach(scandir($this->dossierPhotoDeProfil) as $file) {
-               if ('.' === $file || '..' === $file) continue;
-               unlink($this->dossierPhotoDeProfil.$file);
-           }
-           rmdir($this->dossierPhotoDeProfil);
-       }
-
-   }
+    }
    ```
 
-3. Lancez les tests unitaires, vérifiez qu'ils passent.
+2. Lancez les tests unitaires, vérifiez qu'ils passent.
 
-4. Complétez la classe en écrivant plus de tests unitaires pertinents, au moins jusqu'à atteindre une couverture de code de 100% pour cette classe.
+3. Complétez la classe en écrivant plus de tests unitaires pertinents, au moins jusqu'à atteindre une couverture de code de 100% pour cette classe.
 </div>
 
 ### Tester les *repositories*
@@ -958,18 +935,20 @@ Généralement, pour la base de données de tests, deux choix sont possibles :
 
 * On réalise une copie de la structure de la base, sur le même type de SGBD (dans notre cas, MySQL). Il faut donc que le serveur gérant la base de données soit allumé au moment des tests.
 
-* On réalise nos tests avec une base de données **SQLite** qui est une base de données stockée dans un fichier qui ne nécessite pas de serveur.
+* On réalise nos tests avec une base de données **SQLite** qui est une base de données stockée en mémoire (ou dans un fichier) qui ne nécessite pas de serveur.
 
-Généralement, quand cela est possible, on préfère choisir la seconde option, mais ce n'est pas toujours envisageable, notamment quand la structure de la base de données ou les requêtes utilisent des concepts spécifiques à un SGBD donné.
-<!-- (c'est le cas dans votre *SAÉ* avec *PostGIS*).  -->
-Dans ce cas, on réalisera une copie locale de la structure de la base, sur le même type de SGBD.
+Généralement, quand cela est possible, on préfère choisir la première option, notamment quand la structure de la base de données ou les requêtes utilisent des concepts spécifiques à un SGBD donné. Dans ce cas, on réalisera une copie locale de la structure de la base, sur le même type de SGBD.
 
-En tout cas, dans le contexte de l'application **The Feed**, il vous faudra créer un fichier de configuration dédié ou bien un *mock* de `ConfigurationBDDInterface`.
+Comme nous réalisons des tests qui agissent sur une structure externe au programme (la base de données), nous parlons plutôt de **tests d'intégrations** plutôt que de tests unitaires.
 
-Dans le cas de tests unitaires sur des *repositories*, on peut imaginer que la fonction `setUp` va remplir la base avec différentes données initiales et que la fonction `tearDown` va nettoyer la base (la vider). Par exemple :
+Dans le cadre du TD, afin de faciliter la mise en place des tests, nous allons plutôt utiliser une base de données SQLite en mémoire.
+
+Dans le contexte de l'application **The Feed**, il vous faudra créer un fichier de configuration dédié ou bien un *mock* de `ConfigurationBDDInterface`.
+
+Dans le cas de tests sur des *repositories*, on peut imaginer que la fonction `setUp` va remplir la base avec différentes données initiales et que la fonction `tearDown` va nettoyer la base (la vider). Par exemple :
 
 ```php
-namespace Tests\Unit\Configuration;
+namespace Tests\Integration\Configuration;
 
 use TheFeed\Modele\Repository\ConnexionBaseDeDonneesInterface;
 
@@ -996,11 +975,11 @@ class ConfigurationBDDTestUnitaire implements ConfigurationBDDInterface {
 ```
 
 ```php
-namespace Tests\Unit;
+namespace Tests\Integration;
 
 use TheFeed\Modele\Repository\ConnexionBaseDeDonneesInterface;
 use TheFeed\Modele\Repository\ConnexionBaseDeDonnees;
-use Tests\Unit\Configuration\ConfigurationBDDTestUnitaire;
+use Tests\Integration\Configuration\ConfigurationBDDTestUnitaire;
 
 class ExempleRepositoryTest extends TestCase {
 
@@ -1016,9 +995,9 @@ class ExempleRepositoryTest extends TestCase {
 
     public function setUp() {
         //On remplit la base de test avant chaque test
-        self::$connexion->getPdo()->query("INSERT INTO ...");
-        self::$connexion->getPdo()->query("INSERT INTO ...");
-        self::$connexion->getPdo()->query("INSERT INTO ...");
+        self::$connexion->getPdo()->exec("INSERT INTO ...");
+        self::$connexion->getPdo()->exec("INSERT INTO ...");
+        self::$connexion->getPdo()->exec("INSERT INTO ...");
         ...
     }
 
@@ -1032,7 +1011,7 @@ class ExempleRepositoryTest extends TestCase {
 
     public function tearDown() {
         //On vide la base après chaque test
-        self::$connexion->getPdo()->query("DELETE FROM ...");
+        self::$connexion->getPdo()->exec("DELETE FROM ...");
     }
 
 }
@@ -1044,12 +1023,45 @@ Nous allons réaliser une première classe de test pour le *repository* des **ut
 
 <!-- 1. **Si vous travaillez sur votre serveur local** veillez à activer l'extension `pdo_sqlite` au niveau de votre fichier `php.ini` (il faut décommenter la ligne `;extension=pdo_sqlite`). -->
 
-1. Téléchargez [ce fichier]({{site.baseurl}}/assets/TD_SAE_Test_Archi/db_test.db) qui contient la structure de la base de données de `The Feed` sous le format `SQLite`. Placez ce fichier dans un nouveau dossier `Configuration` situé dans `tests\unit`.
+1. Dans le dossier `tests` créez un dossier `integration`, puis, à l'intérieur de ce dossier, un autre répertoire `Configuration`. Ensuite, ajoutez une nouvelle suite de tests dans le fichier `phpunit.xml` à la racine de votre projet :
 
-2. Dans le dossier `tests/unit/Configuration`, créez un fichier `ConfigurationBDDTestUnitaire` avec le contenu suivant :
+    ```xml
+    ...
+    <testsuites>
+        ...
+        <testsuite name="integration">
+            <directory>./tests/integration</directory>
+        </testsuite>
+    </testsuites>
+    ...
+    ```
+
+2. Dans le fichier `composer.json` déclarez le nouveau **namespace** correspondant aux tests d"intégrations :
+
+    ```json
+    {
+        "autoload": {
+            "psr-4": {
+                "TheFeed\\": "src",
+                "Tests\\Unit\\": "tests/unit",
+                "Tests\\Integration\\": "tests/integration" //A ajouter
+            }
+        },
+        ...
+    }
+    ```
+
+   Ensuite, exécutez la commande suivante (toujours dans le terminal docker ouvert au niveau de la racine
+   de votre projet), afin de mettre à jour le fichier `autoloader.php` :
+
+   ```bash
+   composer dump-autoload
+   ```
+
+3. Dans le dossier `tests/integration/Configuration`, créez un fichier `ConfigurationBDDTestUnitaire` avec le contenu suivant :
 
    ```php
-   namespace Tests\Unit\Configuration;
+   namespace Tests\Integration\Configuration;
 
    use TheFeed\Configuration\ConfigurationBDDInterface;
 
@@ -1067,7 +1079,8 @@ Nous allons réaliser une première classe de test pour le *repository* des **ut
 
        public function getDSN(): string
        {
-           return "sqlite:".__DIR__."/db_test.db";
+            //Base SQLite chargée en mémoire
+            return "sqlite::memory:";
        }
 
        public function getOptions(): array
@@ -1077,54 +1090,59 @@ Nous allons réaliser une première classe de test pour le *repository* des **ut
    }
    ```
 
-3. Créez une classe de test `UtilisateurRepositoryTest` avec le contenu suivant :
+3. Dans le dossier `tests/integration`, créez une classe de test `UtilisateurRepositoryTest` avec le contenu suivant :
 
-   ```php
-   namespace Tests\Unit;
+    ```php
+    namespace Tests\Integration;
+    use PHPUnit\Framework\TestCase;
+    use Tests\Integration\Configuration\ConfigurationBDDTestUnitaire;
+    use TheFeed\Modele\Repository\ConnexionBaseDeDonnees;
+    use TheFeed\Modele\Repository\ConnexionBaseDeDonneesInterface;
+    use TheFeed\Modele\Repository\UtilisateurRepository;
+    use TheFeed\Modele\Repository\UtilisateurRepositoryInterface;
 
-   use PHPUnit\Framework\TestCase;
-   use TheFeed\Modele\Repository\ConnexionBaseDeDonnees;
-   use TheFeed\Modele\Repository\ConnexionBaseDeDonneesInterface;
-   use TheFeed\Modele\Repository\UtilisateurRepository;
-   use TheFeed\Modele\Repository\UtilisateurRepositoryInterface;
-   use Tests\Unit\Configuration\ConfigurationBDDTestUnitaire;
+    class UtilisateurRepositoryTest extends TestCase
+    {
+        private static UtilisateurRepositoryInterface  $utilisateurRepository;
 
-   class UtilisateurRepositoryTest extends TestCase
-   {
-       private static UtilisateurRepositoryInterface  $utilisateurRepository;
+        private static ConnexionBaseDeDonneesInterface $connexionBaseDeDonnees;
 
-       private static ConnexionBaseDeDonneesInterface $connexionBaseDeDonnees;
+        public static function setUpBeforeClass(): void
+        {
+            parent::setUpBeforeClass();
+            self::$connexionBaseDeDonnees = new ConnexionBaseDeDonnees(new ConfigurationBDDTestUnitaire());
+            self::$utilisateurRepository = new UtilisateurRepository(self::$connexionBaseDeDonnees);
+            self::$connexionBaseDeDonnees->getPdo()->exec("CREATE TABLE utilisateurs 
+                                                                    (idUtilisateur INT, 
+                                                                    login VARCHAR(255), 
+                                                                    mdpHache VARCHAR(255), 
+                                                                    email VARCHAR(255), 
+                                                                    nomPhotoDeProfil VARCHAR(255),
+                                                                    PRIMARY KEY(idUtilisateur))");
+        }
+        protected function setUp(): void
+        {
+            parent::setUp();
+            self::$connexionBaseDeDonnees->getPdo()->exec("INSERT INTO 
+                                                            utilisateurs (idUtilisateur, login, mdpHache, email, nomPhotoDeProfil) 
+                                                            VALUES (1, 'test', 'test', 'test@example.com', 'test.png')");
+            self::$connexionBaseDeDonnees->getPdo()->exec("INSERT INTO 
+                                                            utilisateurs (idUtilisateur, login, mdpHache, email, nomPhotoDeProfil) 
+                                                            VALUES (2, 'test2', 'test2', 'test2@example.com', 'test2.png')");
+        }
 
-       public static function setUpBeforeClass(): void
-       {
-           parent::setUpBeforeClass();
-           self::$connexionBaseDeDonnees = new ConnexionBaseDeDonnees(new ConfigurationBDDTestUnitaire());
-           self::$utilisateurRepository = new UtilisateurRepository(self::$connexionBaseDeDonnees);
-       }
+        public function testSimpleNombreUtilisateurs() {
+            $this->assertCount(2, self::$utilisateurRepository->recuperer());
+        }
 
-       protected function setUp(): void
-       {
-           parent::setUp();
-           self::$connexionBaseDeDonnees->getPdo()->query("INSERT INTO 
-                                                           utilisateurs (idUtilisateur, login, mdpHache, email, nomPhotoDeProfil) 
-                                                           VALUES (1, 'test', 'test', 'test@example.com', 'test.png')");
-           self::$connexionBaseDeDonnees->getPdo()->query("INSERT INTO 
-                                                           utilisateurs (idUtilisateur, login, mdpHache, email, nomPhotoDeProfil) 
-                                                           VALUES (2, 'test2', 'test2', 'test2@example.com', 'test2.png')");
-       }
+        protected function tearDown(): void
+        {
+            parent::tearDown();
+            self::$connexionBaseDeDonnees->getPdo()->exec("DELETE FROM utilisateurs");
+        }
 
-       public function testSimpleNombreUtilisateurs() {
-           $this->assertCount(2, self::$utilisateurRepository->recuperer());
-       }
-
-       protected function tearDown(): void
-       {
-           parent::tearDown();
-           self::$connexionBaseDeDonnees->getPdo()->query("DELETE FROM utilisateurs");
-       }
-
-   }
-   ```
+    }
+    ```
 
 4. Comprenez ce que fait cette classe. Prenez le temps de bien l'étudier.
 
@@ -1132,7 +1150,7 @@ Nous allons réaliser une première classe de test pour le *repository* des **ut
 
 </div>
 
-Bien sûr, si vous testez plusieurs *repositories*, il est possible de mutualiser les lignes de code de la méthode `setUp` dont le but est de remplir la base de données (avec de l'héritage, par exemple). On pourrait aussi avoir un système dans lequel on définit un script de remplissage de la base qui est chargé et exécuté avant chaque test.
+Bien sûr, si vous testez plusieurs *repositories*, il est possible de mutualiser les lignes de code de la méthode `setUp` (et `setupBeforeClass`) dont le but est de remplir la base de données (avec de l'héritage, par exemple). On pourrait aussi avoir un système dans lequel on définit un script de remplissage de la base qui est chargé et exécuté avant chaque test.
 
 ### Pour aller plus loin
 

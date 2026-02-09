@@ -613,7 +613,22 @@ Maintenant que la partie **métier** de notre application est (partiellement) ex
 
 <div class="exercise">
 
-1. Créez une classe de test `PublicationServiceTest` (qui étend `TestCase`) dans le répertoire `tests\unit`.
+1. Créez une classe de test `PublicationServiceTest` (qui étend `TestCase`) dans le répertoire `tests\unit` :
+
+    ```php
+    namespace Tests\Unit;
+
+    use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
+    use PHPUnit\Framework\TestCase;
+
+    #[AllowMockObjectsWithoutExpectations]
+    class PublicationServiceTest extends TestCase
+    {
+
+    }
+    ```
+
+    L'attribut `AllowMockObjectsWithoutExpectations` nous permettra d'ignorer des warnings liés à l'utilisation de mocks "simples" (qui ne sont pas totalement exploités/configurés) lors des tests.
 
 2. Ajoutez un attribut `service` qui sera ré-instancié par un `PublicationService` avant chaque test (via le `setUp`).
 

@@ -112,25 +112,20 @@ regroupées sous l'URL `web/api/`.
 1. Commençons par la méthode `supprimerPublication` dans `PublicationService` qui
    appellera la méthode existante `supprimer` dans l'instance de `PublicationRepository` injectée dans ce service. Comme la
    couche *Service* s'occupe de la validation, notre méthode
-   `supprimerPublication` va s'assurer que toutes les données sont correctes. Sinon, elle lancera une `ServiceException` avec un message et un code d'erreur. Le code d'erreur reprendra les codes de statut *HTTP*.
+   `supprimerPublication` va s'assurer que toutes les données sont correctes. Sinon, elle lancera une `ServiceException` avec un message et un code d'erreur (second paramètre à donner au constructeur, après le message d'erreur). Le code d'erreur reprendra les codes de statut *HTTP*.
 
    **Créez** la méthode
    `supprimerPublication()` et **ajoutez** les codes suivants
    lors des différents lancements d'exceptions : 
    * `Response::HTTP_FORBIDDEN` : l'utilisateur est connecté, mais n'a pas l'autorisation.
    * `Response::HTTP_NOT_FOUND` : la ressource est inconnue.
-   * `Response::HTTP_UNAUTHORIZED` : l'utilisateur n'est pas connecté.
   
    ```php
    use Symfony\Component\HttpFoundation\Response;
 
-   public function supprimerPublication(int $idPublication, ?string $idUtilisateurConnecte): void
+   public function supprimerPublication(?int $idPublication, ?int $idUtilisateurConnecte): void
    {
       $publication = $this->publicationRepository->recupererParClePrimaire($idPublication);
-
-      if (is_null($idUtilisateurConnecte))
-         throw new ServiceException("Il faut être connecté pour supprimer une publication", Response::XXX);
-
       if ($publication === null)
          throw new ServiceException("Publication inconnue.", Response::XXX);
 
@@ -141,11 +136,14 @@ regroupées sous l'URL `web/api/`.
    }
    ```
 
-   Mettez également à jour **l'interface** `PublicationServiceInterface` afin d'y inclure la signature de cette nouvelle méthode.
+   Mettez également à jour **l'interface** `PublicationServiceInterface` afin d'y inclure la signature de cette nouvelle méthode. Cela peut être réalisé facilement avec `PHPStorm` : clic droit sur le nom de la méthode, puis `Refactor` et `Pull Members Up`.
 
 2. Créez un nouveau contrôleur `ControleurPublicationAPI` et une nouvelle
-   action `supprimer($idPublication)` avec le code suivant. Indiquez le bon code
-   de réponse en cas de succès.
+   action `supprimer($idPublication)` avec le code suivant. Indiquez les bons codes
+   de réponse :
+
+   * `Response::HTTP_UNAUTHORIZED` : code d'erreur si l’utilisateur n’est pas autorisé à accéder à la route.
+   * `Response::HTTP_NO_CONTENT` : code de succès, qui indique que la réponse n'a pas de contenu.
 
    ```php
    namespace TheFeed\Controleur;
@@ -171,11 +169,14 @@ regroupées sous l'URL `web/api/`.
       public function supprimer($idPublication): Response
       {
          try {
+               if(!ConnexionUtilisateur::estConnecte()) {
+                  return new JsonResponse(['error' => 'Il faut être connecté pour supprimer une publication!'], Response::XXX);
+               }
                $idUtilisateurConnecte = ConnexionUtilisateur::getIdUtilisateurConnecte();
                $this->publicationService->supprimerPublication($idPublication, $idUtilisateurConnecte);
                return new JsonResponse('', Response::XXX);
          } catch (ServiceException $exception) {
-               return new JsonResponse(["error" => $exception->getMessage()], $exception->getCode());
+               return new JsonResponse(['error' => $exception->getMessage()], $exception->getCode());
          }
       }
    }
@@ -183,7 +184,7 @@ regroupées sous l'URL `web/api/`.
 
 3. Pour pouvoir faire référence à la nouvelle action `supprimer()` dans les
    routes, il faut d'abord enregistrer `ControleurPublicationAPI` dans le
-   conteneur de services  (`Configuration/conteneur.yml`).  
+   conteneur de services (`Configuration/conteneur.yml`).  
    **Enregistrez** un service `TheFeed\Controleur\ControleurPublicationAPI` lié à la classe
    `ControleurPublicationAPI`. Ce service injectera les services
    `service_container` et `TheFeed\Service\PublicationService` au contrôleur.
@@ -192,8 +193,8 @@ regroupées sous l'URL `web/api/`.
    `TheFeed\Controleur\ControleurPublication`.
 
 4. Affectez la route `/api/publications/{idPublication}` de méthode *HTTP*
-   `DELETE` à votre action, au niveau de sa déclaration dans le contrôleur.
-   N'oubliez pas de nommer cette route.
+   `DELETE` à votre action, au niveau de sa déclaration dans le contrôleur
+   (via l'attribut `#[Route(...)]`). N'oubliez pas de nommer cette route.
 
 </div>
 
@@ -215,7 +216,7 @@ Le logiciel est installé sur les machines de l'IUT. Chez vous, vous pouvez le
     ![Postman config 1](/R4.A.10-ComplementWeb/assets/TD5/postman1.PNG){: .blockcenter}
 
     * Méthode `DELETE`
-    * Adresse : [https://localhost/chemin_vers_TD5/web/api/publications/3](https://localhost/chemin_vers_TD5/web/api/publications/3)
+    * Adresse : [http://localhost/ComplementWeb/TheFeed/web/api/publications/3](http://localhost/ComplementWeb/TheFeed/web/api/publications/3)
 
 3. Cliquez sur "**Send**" et observez la réponse. Vous devriez obtenir le message d'erreur "Il faut être connecté pour supprimer une publication" car vous n'êtes en effet pas connecté !
 
@@ -231,12 +232,11 @@ Le logiciel est installé sur les machines de l'IUT. Chez vous, vous pouvez le
 
 5. Sur *Postman*, cliquez sur le bouton **Cookies** à proximité du bouton **SEND**.
    Dans la fenêtre qui s'ouvre, cliquez sur le cookie `PHPSESSID`.
-   Remplacez ensuite la valeur associé à la clé `PHPSESSID` par la valeur copiée à l'étape précédente.
+   Remplacez ensuite la valeur associée à la clé `PHPSESSID` par la valeur copiée à l'étape précédente.
 
    ![Postman config 2](/R4.A.10-ComplementWeb/assets/TD5/postman2.PNG){: .blockcenter}
 
-6. Envoyez la requête de nouveau (vérifiez d'être bien connecté sur le site avant).
-   Si vous rechargez votre site Web, la publication correspondante doit avoir disparue.
+6. Envoyez la requête de nouveau (vérifiez d'être bien connecté sur le site avant). Si vous obtenez une erreur, c'est que vous n'êtes pas connecté avec le compte propriétaire de la publication `3`. Si c'est le cas, sélectionnez un id de publication lié au compte avec lequel vous êtes connecté (vous pouvez compter les publications ou bien aller voir en BDD, par exemple) et modifiez l'URL sur **Postman**. Une fois la requête correctement exécutée via Postman, rechargez votre site Web : la publication correspondante doit avoir disparue.
 
 </div>
 
@@ -270,7 +270,7 @@ en attribut JS `indexNumber` avec un nommage *camelCase*.
 
 <div class="exercise">
 
-1. Rajouter dans `feed.html.twig` un bouton juste après le paragraphe contenant
+1. Rajouter dans `publication/feed.html.twig` un bouton juste après le paragraphe contenant
    le message lors de l'affichage des publications. 
    Remplacez les commentaires *Twig* par le code adéquat.
 
@@ -282,7 +282,16 @@ en attribut JS `indexNumber` avec un nommage *camelCase*.
    {#  fin si #}
    ```
 
-2. Créez un script `ressources/js/main.js` avec le contenu suivant. Remplacez
+   *Note* : si vous avez fait les bonus du TD2, le code à modifier se trouve dans
+   `publication/composant/publication.html.twig`.
+
+2. Vérifiez que le bouton apparaît bien au niveau de la page d'accueil (seulement sur 
+   les publications de l'utilisateur connecté) et mettez à jour la vue 
+   `utilisateur/page_perso.html.twig` par la  même occasion (afin d'afficher le même bouton).
+
+   *Note* : si vous aviez fait les bonus du TD2, il n'y a rien à faire, à priori.
+
+3. Créez un script `ressources/js/main.js` avec le contenu suivant. Remplacez
    `XXX` par le code de succès émis par votre API REST (*cf.* Exercice 1.2) : 
 
    ```js
@@ -307,11 +316,11 @@ en attribut JS `indexNumber` avec un nommage *camelCase*.
 
    Ne vous souciez pas encore du warning sur `apiBase`, nous allons définir cette variable prochainement.
 
-3. Ajouter un `addEventListener` sur les boutons `<button class="delete-feedy">`
+4. Ajouter un `addEventListener` sur les boutons `<button class="delete-feedy">`
    pour appeler la méthode précédente lors d'un clic (en lui fournissant le bouton 
    sur lequel est déclenché l'événement).
 
-3. Changez `base.html.twig` pour faire appel au script `main.js` et rajouter quelques variables globales dans *JavaScript*.
+5. Changez `base.html.twig` pour faire appel au script `main.js` et rajouter quelques variables globales dans *JavaScript*.
 
    ```diff
       <link rel="stylesheet" type="text/css" href="{{ asset("../ressources/css/styles.css") }}">
@@ -327,7 +336,7 @@ en attribut JS `indexNumber` avec un nommage *camelCase*.
    <header>
    ```
 
-4. Testez votre site. Un utilisateur connecté doit pouvoir effacer ses publications
+6. Testez votre site. Un utilisateur connecté doit pouvoir effacer ses publications
    en cliquant sur le bouton *Supprimer*.
 
    *Aide :* Si cela ne marche pas, ouvrez l'onglet *Réseau* des outils de
@@ -349,10 +358,10 @@ The JsonEncoder encodes to and decodes from JSON strings, based on the PHP json_
 
 <!-- Quelles actions veut-on pour notre API ? -->
 
-Nous avons déjà vu la fonction 
-[`json_encode()`](https://www.php.net/manual/fr/function.json-encode.php) pour encoder une variable *PHP*
-en une chaîne de caractères au format *JSON*. Quand il encode un objet, le
-comportement par défaut de *PHP* est d'encoder uniquement les attributs
+La fonction [`json_encode()`](https://www.php.net/manual/fr/function.json-encode.php)
+permet d'encoder une variable *PHP* en une chaîne de caractères au format *JSON*. 
+
+Quand il encode un objet, le comportement par défaut de *PHP* est d'encoder uniquement les attributs
 publics. Pour pouvoir personnaliser l'encodage *JSON*, une classe doit implémenter l'interface 
 [`JsonSerializable`](https://www.php.net/manual/fr/class.jsonserializable.php), c'est-à-dire fournir une méthode 
 ```php
@@ -388,29 +397,34 @@ Nous allons utiliser ces notions lors de la création d'une requête qui renvoie
 
    Il faudra aussi injecter une instance de `UtilisateurServiceInterface`.
 
-3. Dans votre nouveau contrôleur, ajoutez une nouvelle action
+3. Enregistrez votre nouveau contrôleur dans le **conteneur de service** (`Configuration/conteneur.yml`).
+
+4. Dans votre nouveau contrôleur, ajoutez une nouvelle action
    ```php
+   use Symfony\Component\HttpFoundation\Response;
+
    public function afficherDetail($idUtilisateur): Response
    ```
    qui récupère l'utilisateur d'identifiant `$idUtilisateur` et renvoie l'utilisateur au
-   format *JSON*. Inspirez-vous de `supprimer` de `ControleurPublicationAPI`. 
-   Vous utiliserez le constructeur `new JsonResponse($object)` qui permet de créer une 
-   réponse qui contient l'encodage *JSON* de `$object`.
+   format *JSON*. Vous pouvez vous inspirer de `supprimer` de `ControleurPublicationAPI`.
+   Il faut cependant préciser deux choses :
+   * Il n'y a pas besoin d'être connecté pour récupérer les détails d'un utilisateur.
+   * Si l'utilisateur n'existe pas, il faut renvoyer une erreur (il faut donc appeller une
+   *certaine méthode* de `UtilisateurService`...)
+
+   Pour la réponse contenant l'utilisateur, ous utiliserez le constructeur `new JsonResponse($object)` 
+   qui permet de créer une réponse qui contient l'encodage *JSON* de `$object`.
 
    *Note* : il n'y a pas besoin d'appeler explicitement `json_encode`! Comme notre 
    objet `Utilisateur` est du type `JsonSerializable`, l'appel à `new JsonResponse($object)` effectue
    implicitement un appel à cette méthode.
 
-4. Enregistrez votre nouveau contrôleur dans le **conteneur de service** (`Configuration/conteneur.yml`).
-
 5. Configurez une route `GET` sur l'URL `/api/utilisateurs/{idUtilisateur}` au niveau de la déclaration de cette action.
-   Testez votre route directement dans le navigateur avec un identifiant d'utilisateur existant.
-   N'oubliez pas de nommer votre route. 
+   N'oubliez pas de nommer votre route puis testez-là dans **Postman** avec un identifiant d'utilisateur existant.
    
-6. Dans la méthode `recupererUtilisateurParId` de `UtilisateurService`, rajoutez le code
+6. Dans la méthode `recupererUtilisateurExistantParId` de `UtilisateurService`, rajoutez le code
    d'erreur *HTTP* adéquat si l'utilisateur est inconnu. Testez la route avec un
-   identifiant inconnu (utilisez l'onglet Réseau ou *Postman* pour voir le code
-   de réponse).
+   identifiant inconnu (et vérifiez que le code de réponse correspond bien à `404`).
 
    <!-- Response::HTTP_NOT_FOUND -->
 </div>
@@ -420,21 +434,25 @@ Nous allons utiliser ces notions lors de la création d'une requête qui renvoie
 1. Dans `PublicationService`, ajoutez la méthode suivante :
 
    ```php
+    public function recupererPublicationOuNullParId(?int $idPublication) : ?Publication {
+        return $this->publicationRepository->recupererParClePrimaire($idPublication);
+    }
+
    /**
     * @throws ServiceException
     */
-   public function recupererPublicationParId($idPublication, $autoriserNull = true) : ?Publication {
-      $publication = $this->publicationRepository->recupererParClePrimaire($idPublication);
-      if(!$autoriserNull && $publication == null) {
-         throw new ServiceException("La publication n'existe pas.", Response::HTTP_NOT_FOUND);
-      }
-      return $publication;
-   }
+    public function recupererPublicationExistanteParId(?int $idPublication) : Publication {
+        $publication = $this->recupererPublicationOuNullParId($idPublication);
+        if(!$publication) {
+            throw new ServiceException("La publication n'existe pas.", Response::HTTP_NOT_FOUND);
+        }
+        return $publication;
+    }
    ```
 
    Mettez aussi à jour l'interface de ce service en conséquence.
 
-1. Faites en sorte que la route `GET` d'URL
+2. Faites en sorte que la route `GET` d'URL
    `/api/publications/{idPublication}` appelle sur une action
    `afficherDetail($idPublication)` dans `ControleurPublicationAPI` et qui renvoie une
    réponse JSON. Voici, sur un exemple, les informations sur la publication
@@ -445,24 +463,42 @@ Nous allons utiliser ces notions lors de la création d'une requête qui renvoie
       "message": "Un exemple de publication",
       "date": "30 January 2023",
       "auteur": {
-         "idUtilisateur": 1
+         "idUtilisateur": 1,
+         "login" : "userExemple",
+         "nomPhotoDeProfil": "exemple.png"
       }
    }
    ```
 
-   N'oubliez pas de nommer votre nouvelle route. 
+   N'oubliez pas de nommer votre nouvelle route.
 
    **Rappel :** Vous avez déjà formaté des dates dans la vue Twig
-   `feed.html.twig`. En PHP, vous pourrez faire en même avec
+   `publication/feed.html.twig`. En PHP, vous pourrez faire en même avec
    ```php
    $dateTime->format('d F Y');
    ```
 
-2. Testez la route avec un identifiant de publication connu et un inconnu.
+   **Indice** : afin d'ibriquer un autre objet dans un objet `JSON`, il suffit
+   d'associer un tableau associatif à la clé correspondante dans `jsonSerialize`:
+
+   ```php
+   public function jsonSerialize(): array
+   {
+      return [
+         "propriete1" => $this->getPropriete1(),
+         "propriete2" => [
+            "val1" => $this->getPropriete2()->getVal1(),
+            "val2" => $this->getPropriete2()->getVal2()
+         ]
+      ];
+   }
+   ```
+
+3. Testez la route avec un identifiant de publication connu et un inconnu.
 </div>
 
 L'exercice précédent a montré un autre avantage de la couche service. Le code de
-`PublicationService::recupererPublicationParId` est utilisé à la fois par
+`PublicationService::recupererPublicationExistanteParId` est utilisé à la fois par
 `ControleurPublicationAPI` et par `ControleurPublication`. Seule l'interface
 change entre l'API et la page Web classique, tandis que le code *métier* reste
 le même.
@@ -471,7 +507,11 @@ le même.
 
 1. Définissez une route `GET` d'URL `/api/publications` qui appelle
    une action `afficherListe` (définie dans `ControleurPublicationAPI`) 
-   et renvoie la liste des publications au format JSON. N'oubliez pas de nommer votre route. 
+   et renvoie la liste des publications au format JSON. N'oubliez pas de nommer votre route.
+
+   *Note* : l'objet `JsonResponse` peut aussi prendre un tableau en entrée.
+   Chaque objet sera formaté adéquatement grâce à la fonction `jsonSerialize` 
+   normalement implémentée dans `Publication` à ce stade.
    
 2. Testez.
 
@@ -486,19 +526,19 @@ utiliser : *JSON* bien sûr !
 
 <div class="exercise">
 
-1. Changer votre fonction `creerPublication()` dans `PublicationService` pour le code
-   suivant, qui gère le cas `$idUtilisateur==null` et récupère l'identifiant de publication depuis le *repository* : 
+1. Changer votre méthode `creerPublication` dans `PublicationService` pour le code
+   suivant qui récupère et affecte l'identifiant de publication depuis le *repository* : 
 
    ```php
-   public function creerPublication($idUtilisateur, $message): Publication
-   {
-      if ($idUtilisateur == null) throw new ServiceException("Il faut être connecté pour publier un feed", Response::HTTP_UNAUTHORIZED);
-      if ($message == null || $message == "") throw new ServiceException("Le message ne peut pas être vide!", Response::HTTP_BAD_REQUEST);
-      if (strlen($message) > 250) throw new ServiceException("Le message ne peut pas dépasser 250 caractères!", Response::HTTP_BAD_REQUEST);
-
-      $auteur = new Utilisateur();
-      $auteur->setIdUtilisateur($idUtilisateur);
-      $publication = Publication::construire($message, $auteur);
+   public function creerPublication(?int $idUtilisateur, ?string $message) : Publication {
+      $utilisateur = $this->utilisateurService->recupererUtilisateurExistantParId($idUtilisateur);
+      if ($message == null || $message == "") {
+         throw new ServiceException("Le message ne peut pas être vide!", Response::HTTP_BAD_REQUEST);
+      }
+      if (strlen($message) > 250) {
+         throw new ServiceException("Le message ne peut pas dépasser 250 caractères!", Response::HTTP_BAD_REQUEST);
+      }
+      $publication = Publication::construire($message, $utilisateur);
       $idPublication = $this->publicationRepository->ajouter($publication);
       $publication->setIdPublication($idPublication);
       return $publication;
@@ -515,6 +555,9 @@ utiliser : *JSON* bien sûr !
 
    public function posterPublication(Request $request): Response
    {
+      if(!ConnexionUtilisateur::estConnecte()) {
+         return new JsonResponse(['error' => 'Il faut être connecté pour poster une publication!'], Response::HTTP_UNAUTHORIZED);
+      }
       try {
          // TODO : récupérer le message inclus dans la requête dans une variable $message
 
@@ -550,6 +593,8 @@ utiliser : *JSON* bien sûr !
 
    **Appliquez** ce code et traitez l'exception en rajoutant un nouveau `catch`
    ```php
+   use JsonException;
+
    catch (JsonException $exception) {
         return new JsonResponse(
             ["error" => "Corps de la requête mal formé"],
@@ -568,10 +613,11 @@ Nous allons maintenant tester notre route avec *Postman*.
 
 1. Créez une nouvelle requête *Postman* (bouton `+`) pointant vers la route 
 `/api/publications` de votre application avec une méthode `POST`. 
-Indiquer le corps de requête suivant dans `Body` → `raw` : 
+Indiquer le corps de requête suivant dans `Body` → `raw`, puis dans 
+la liste, sélectionnez `JSON` (au lieu de `Text`) : 
    ```json
    {
-      "message": "test API!"
+      "message": "Test API!"
    }
    ```
 
@@ -595,19 +641,19 @@ Indiquer le corps de requête suivant dans `Body` → `raw` :
    publication dont les données sont données en argument. **Copiez** ce code dans `main.js`.
 
    ```js
-   function templatePublication(publication, utilisateur) {
+   function templatePublication(publication) {
       return `<div class="feedy">
-      <div class="feedy-header">
-         <a href="${pagePersoBase + publication.auteur.idUtilisateur}">
-               <img alt="profile picture" src="${imgBase}/utilisateurs/${utilisateur.nomPhotoDeProfil}" class="avatar">
-         </a>
-         <div class="feedy-info">
-               <span>${utilisateur.login}</span><span> - </span><span>${publication.date}</span>
-               <p>${publication.message}</p>
-               <button class="delete-feedy" data-id-publication="${publication.idPublication}" onclick="supprimerPublication(this)">Supprimer</button>
+         <div class="feedy-header">
+            <a href="${pagePersoBase + publication.auteur.idUtilisateur}">
+                  <img alt="profile picture" src="${imgBase}/utilisateurs/${publication.auteur.nomPhotoDeProfil}" class="avatar">
+            </a>
+            <div class="feedy-info">
+                  <span>${publication.auteur.login}</span><span> - </span><span>${publication.date}</span>
+                  <p>${publication.message}</p>
+                  <button class="delete-feedy" data-id-publication="${publication.idPublication}" onclick="supprimerPublication(this)">Supprimer</button>
+            </div>
          </div>
-      </div>
-   </div>`;
+      </div>`;
    }
    ```
 
@@ -616,7 +662,9 @@ Indiquer le corps de requête suivant dans `Body` → `raw` :
    émis par votre API REST.
 
    ```js
-   async function soumettrePublication() {
+   async function soumettrePublication(event) {
+      //Empêche la soumission "normale" du formulaire.
+      event.preventDefault();
       const messageElement = document.getElementById('message')
       // On récupère le message 
       let message = messageElement.value;
@@ -638,10 +686,8 @@ Indiquer le corps de requête suivant dans `Body` → `raw` :
          // (Hors TD) Il faudrait traiter l'erreur 
          return; 
       let publication = await response.json();
-      // Utilisateur par défaut en attendant la suite
-      let utilisateur = {nomPhotoDeProfil : "anonyme.jpg", login: "Inconnu"};
       let formElement = document.getElementById("feedy-new");
-      formElement.insertAdjacentHTML('afterend', templatePublication(publication, utilisateur));
+      formElement.insertAdjacentHTML('afterend', templatePublication(publication));
    }
    ```
 3. Vous allez compléter le deuxième argument
@@ -665,12 +711,14 @@ Indiquer le corps de requête suivant dans `Body` → `raw` :
          },
          ```
 
-4. Rajoutez un `addEventListener` sur `<button id="feedy-new-submit">` pour
-   appeler la fonction `soumettrePublication`.
+4. Rajoutez un `addEventListener` sur le formulaire pour appeler la fonction `soumettrePublication` :
+
+   ```js
+   document.getElementById("feedy-new").addEventListener("submit", soumettrePublication);
+   ```
 
 5. Testez dans votre navigateur. La nouvelle publication doit s'afficher sans rechargement de la page.
-   Pour le moment, le login et la photo de profil ne s'affichent pas, c'est normal.  
-   On a ajouté un attribut `onclick` sur le `<button class="delete-feedy">` du template afin de faire en sorte qu'une nouvelle publication puisse être supprimée. C'est un patch nécessaire, car le `addEventListener` que vous avez codé n'a pu enregistrer la gestion de cet événement car la publication n'existait pas encore lors du chargement de la page !
+   On a ajouté un attribut `onclick` sur le `<button class="delete-feedy">` du template afin de faire en sorte qu'une nouvelle publication puisse être supprimée. C'est un patch nécessaire, car le `addEventListener` que vous avez codé n'a pu enregistrer la gestion de cet événement vu que la publication n'existait pas encore lors du chargement de la page !
 
    Plutôt que la méthode `templatePublication`, il serait préférable (dans une implémentation optimale) d'utiliser [la balise template](https://developer.mozilla.org/fr/docs/Web/HTML/Element/template). Avec cette méthode, on pourrait aussi attacher l'événement de clic sur le bouton de suppression plus proprement (pour les nouvelles publications ajoutées dynamiquement).
 
@@ -681,17 +729,10 @@ pour faire les TDs.
 
 <div class="exercise">
 
-1. Modifiez la fonction `soumettrePublication()` pour récupérer l'utilisateur dont
-   l'identifiant est `publication.auteur.idUtilisateur` par une requête à l'URL
-   `/api/utilisateurs/{idUtilisateur}`.
-
-2. Testez que la soumission d'une nouvelle publication remplit bien le *login* et
-   l'image de profil de l'utilisateur.
-
-3. Publiez le message `<h1>Hack!</h1>` et observez le problème. Rechargez la
+1. Sur le site, publiez le message `<h1>Hack!</h1>` et observez le problème. Rechargez la
    page pour que la publication soit affichée par le serveur et observez la différence.
 
-4. Nettoyer les entrées utilisateurs non fiables à l'aide de la méthode JavaScript : 
+2. Nettoyer les entrées utilisateurs non fiables à l'aide de la méthode JavaScript : 
    * le texte de la page HTML et les attributs des balises HTML doivent être échappés avec
      ```js
      function escapeHtml(text) {
@@ -704,8 +745,9 @@ pour faire les TDs.
            .replace(/'/g, "&#039;");
      }
      ```
-   * Dans une URL, la partie dangereuse provenant de l'utilisateur doit être encodée avec [encodeURIComponent](https://developer.mozilla.org/fr/docs/Web/JavaScript/Reference/Global_Objects/encodeURIComponent) comme vu lors du Cours 2 de JavaScript.
+   * Note à part : dans une URL, la partie dangereuse provenant de l'utilisateur doit être encodée avec [encodeURIComponent](https://developer.mozilla.org/fr/docs/Web/JavaScript/Reference/Global_Objects/encodeURIComponent) comme vu lors du Cours 2 de JavaScript.
 
+3. Vérifiez que publier le message `<h1>Hack!</h1>` ne casse plus l'affichage.
 </div>
 
 <!-- 
@@ -802,7 +844,8 @@ la signature :
 
 <div class="exercise">
 
-1. Pour utiliser le `JWT`, nous allons utiliser une bibliothèque externe : 
+1. Pour utiliser le `JWT`, nous allons utiliser une bibliothèque externe (à installer à la racine de votre 
+application via le **terminal Docker**) : 
    ```bash
    composer require firebase/php-jwt
    ```
@@ -834,16 +877,14 @@ la signature :
    }
    ```
 
-2. Générer votre secret en exécutant la méthode suivante, qui vous avait déjà
-   servie pour générer le poivre :  
-   ```php
-   var_dump(MotDePasse::genererChaineAleatoire());
-   ```
+3. Rendez-vous sur le site [https://randomkeygen.com/jwt-secret](https://randomkeygen.com/jwt-secret) et
+   générez un code secret. Copiez la chaîne obtenue puis placez-la comme valeur pour la propriété 
+   `$jsonSecret` de `JsonWebToken`.
 
 </div>
 
 ### Connexion utilisateur par `JWT`
-
+{% comment %}
 Avant de rendre notre API REST sans état, nous devons régler un problème de
 conception des précédents TDs. La couche *Service* doit être indépendante de
 l'interface, et donc de toute la couche de transfert de donnée *HTTP*. Du coup,
@@ -890,6 +931,7 @@ allons devoir réusiner le code (*code refactoring* en anglais).
    **Adaptez** `ControleurUtilisateur::connecter()` en conséquence. Vu que `UtilisateurService::connecter()` ne connecte plus, nous vous proposons de la **renommer** `UtilisateurService::verifierIdentifiantUtilisateur` (clic droit → *Refactor* → *Rename* ou `Maj+F6` sous *PhpStorm*).
 
 </div>
+{% endcomment %}
 
 Notre site va donc proposer deux mécanismes d'authentification : 
 1. un mécanisme basé sur les sessions, qui ne sera utilisé que sur le site Web
@@ -911,7 +953,7 @@ Qui dit deux codes pour le même problème, dit héritage et en particulier inte
 
 2. Utiliser *PhpStorm* pour créer une interface `ConnexionUtilisateurInterface`
    à partir de la classe `ConnexionUtilisateurSession` (clic droit sur le nom de classe
-   → *Refactor* → *Extract Interface*). Rajouter l'instruction qui indique que `ConnexionUtilisateurSession` implémente `ConnexionUtilisateurInterface`.
+   → *Refactor* → *Extract Interface*). Rajouter l'instruction qui indique que `ConnexionUtilisateurSession` implémente `ConnexionUtilisateurInterface` (si ce n'est pas déjà fait automatiquement).
 
 3. Créez une nouvelle classe `src/Lib/ConnexionUtilisateurJWT.php` avec le code suivant : 
    ```php
@@ -956,8 +998,10 @@ Qui dit deux codes pour le même problème, dit héritage et en particulier inte
    1. Enregistrez des services liés à `ConnexionUtilisateurSession` et
       `ConnexionUtilisateurJWT` dans le conteneur de services (via `conteneur.yml`).
 
-   2. Rajouter un service `ConnexionUtilisateurInterface $connexionUtilisateur` à tous les contrôleurs (excepté le **générique**), sauf à `ControleurUtilisateur` qui possède deux tels services : 
+   2. Rajouter un service `ConnexionUtilisateurInterface $connexionUtilisateur` à tous les contrôleurs (excepté le **générique**), sauf à `ControleurUtilisateur` qui possède deux de ces services : 
       ```php
+      use TheFeed\Lib\ConnexionUtilisateurInterface;
+
       public function __construct(
          private readonly PublicationServiceInterface $publicationService,
          private readonly UtilisateurServiceInterface $utilisateurService,
@@ -968,6 +1012,9 @@ Qui dit deux codes pour le même problème, dit héritage et en particulier inte
          ...
       }
       ```
+
+      N'oubliez pas d'importer `ConnexionUtilisateurInterface` dans chaque contrôleur.
+
    3. Modifiez l'enregistrement des services liés aux contrôleurs pour y rajouter une référence : 
       * au service lié à `ConnexionUtilisateurSession` dans `ControleurPublication`,
       * au service lié à `ConnexionUtilisateurJWT` dans `ControleurPublicationAPI` et `ControleurUtilisateurAPI`,
@@ -979,15 +1026,17 @@ Qui dit deux codes pour le même problème, dit héritage et en particulier inte
         `ConnexionUtilisateurInterface`* pour lier les paramètres
         `$connexionUtilisateurSession` et `$connexionUtilisateurJWT` aux bons
         services.
+
    4. Dans `ControleurUtilisateur` et `ControleurPublication`, remplacez les
       appels aux méthodes statiques `ConnexionUtilisateurSession` par des appels
-      dynamiques au service.
-   5. Dans `ControleurUtilisateurAPI` et `ControleurPublicationAPI`, remplacez les
+      dynamiques au service. Pour `ControleurUtilisateur`, on utilisera `$connexionUtilisateurSession`.
+
+   5. Dans `ControleurPublicationAPI`, remplacez les
       appels aux méthodes statiques `ConnexionUtilisateurSession` par des appels
-      dynamiques au service (qui sera `ConnexionUtilisateurJWT`).
+      dynamiques au service (qui sera en fait `ConnexionUtilisateurJWT`).
 
 5. Changez le code de `ControleurUtilisateur::connecter()` pour connecter
-   l'utilisateur avec les deux mécanismes. Faites de même pour que `ControleurUtilisateur::deconnecter()` déconnecte l'utilisateur à la fois dans au niveau de la session, mais aussi au niveau du service gérant la connexion par `jwt`.
+   l'utilisateur avec les deux services (session et JWT). Faites de même pour que `ControleurUtilisateur::deconnecter()` déconnecte l'utilisateur à la fois au niveau de la session, mais aussi au niveau du service gérant la connexion par `jwt`.
 
 6. Il reste un dernier endroit où `ConnexionUtilisateurSession` appelle une
    méthode statique : dans l'ajout d'une variable globale
@@ -998,14 +1047,16 @@ Qui dit deux codes pour le même problème, dit héritage et en particulier inte
 
    ```diff
    - $twig->addGlobal('idUtilisateurConnecte', ConnexionUtilisateurSession::getIdUtilisateurConnecte());
-   + $twig->addGlobal('connexionUtilisateur', new ConnexionUtilisateurSession());
+   + $twig->addGlobal('connexionUtilisateur', $conteneur->get(ConnexionUtilisateurSession::class));
    ```
    Et **changez** toutes les `idUtilisateurConnecte` en
    `connexionUtilisateur.idUtilisateurConnecte` dans `base.html.twig` et
-   `feed.html.twig`.
+   `feed.html.twig` (soyez malins et utilisez la fonctionnalité *Replace in Files* de PHPStorm).
 
-7. Testez votre site Web. Vérifiez que la connexion utilisateur sur le site marche
-   toujours. Vérifiez aussi que les fonctionnalités dynamiques *AJAX* marchent toujours.
+7. Testez votre site Web. Déconnectez-vous puis reconnectez-vous. Vérifiez que les fonctionnalités 
+   dynamiques *AJAX* marchent toujours (publier un message, supprimer une publication). Sur votre
+   navigateur, vous pouvez aller consulter le cookie contenant le `JWT` généré dans l'onglet
+   `Stockage` puis `Cookie` (il s'agit du cookie `auth_token`).
 
 </div>
 
@@ -1014,6 +1065,9 @@ Qui dit deux codes pour le même problème, dit héritage et en particulier inte
 1. Pour qu'un utilisateur de l'API puisse s'authentifier sans passer par le site
    Web, créez une nouvelle route `/api/auth` de méthode `POST` et nommée `api_auth` affectée à une nouvelle action dans `ControleurUtilisateurAPI` (à compléter) : 
    ```php
+   use Symfony\Component\HttpFoundation\Request;
+
+   #[Route(path: '/api/auth', name : 'connexionAPI', methods: ['POST'])]
    public function connecter(Request $request): Response
    {
        try {
@@ -1022,10 +1076,10 @@ Qui dit deux codes pour le même problème, dit héritage et en particulier inte
            $jsonObject = json_decode($request->getContent(), flags: JSON_THROW_ON_ERROR);
            //$login = ...
            //$password = ...
-           $idUtilisateur = $this->utilisateurService->verifierIdentifiantUtilisateur($login, $password);
+           $utilisateur = $this->utilisateurService->authentifier($login, $password);
            // TODO : Appel du service connexionUtilisateur 
            // pour connecter l'utilisateur avec son identifiant
-           return new JsonResponse();
+            return new JsonResponse('', Response::HTTP_NO_CONTENT);
        } catch (ServiceException $exception) {
            return new JsonResponse(["error" => $exception->getMessage()], $exception->getCode());
        } catch (\JsonException $exception) {
@@ -1035,11 +1089,13 @@ Qui dit deux codes pour le même problème, dit héritage et en particulier inte
            );
        }
    }
-    ```
+   ```
 
-2. Modifiez la méthode `verifierIdentifiantUtilisateur` de `UtilisateurService` afin de rajouter les codes d'erreurs HTTP adéquats lors de la levée de `ServiceException`.
+2. Modifiez la méthode `authentifier` de `UtilisateurService` afin de rajouter les codes d'erreurs HTTP adéquats lors de la levée de `ServiceException`.
 
-3. Testez l'authentification en appelant dans *Postman* la route précédente avec
+3. Sur **Postman**, supprimez votre cookie `PHPSESSID` (on y accède via le bouton `Cookies`, sur Postman).
+
+4. Testez l'authentification en appelant dans *Postman* la route précédente avec
    le corps de requête
    ```json
    {
@@ -1047,7 +1103,9 @@ Qui dit deux codes pour le même problème, dit héritage et en particulier inte
       "password" : "votre_mot_de_passe"
    }
    ```
-   Observez que la réponse dépose un seul cookie `auth_token` comme voulu
+   Observez que la réponse dépose un seul cookie `auth_token` comme voulu (toujours dans le menu `Cookies`).
+
+4. Vérifiez que la route pour créer une publication via l'api fonctionne (toujours sur Postman).
 
 </div>
 
