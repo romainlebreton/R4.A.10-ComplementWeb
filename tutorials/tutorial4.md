@@ -792,6 +792,8 @@ Un premier objectif à vous fixer serait d'obtenir une couverture de code (proch
 
 ## Extensions
 
+**Note importante** : si vous êtes en retard sur les TDs, vous pouvez directement passer au [TD5]({{site.baseurl}}/tutorials/tutorial5) puis revenir à cette section plus tard. Cette section donne des détails supplémentaires pour mieux réaliser les tests, ce qui sera notamment utile dans la SAE.
+
 Nous allons maintenant travailler différentes extensions de ce TD afin de pouvoir tester plus d'aspects de l'application, régler des problèmes que vous pourriez rencontrer lors des tests unitaires, améliorer encore plus l'architecture de l'application et l'indépendance de ses classes en transformant plus d'entités en **services**.
 
 ### Tester le service utilisateur
@@ -890,7 +892,7 @@ Maintenant que nous avons réglé tous les problèmes liés aux effets de bord d
         {
             parent::setUp();
             $this->utilisateurRepositoryMock = $this->createMock(UtilisateurRepositoryInterface::class);
-            $this->fileMovingServiceMock = $this->createMock(UploadedFileServiceInterface::class);
+            $this->uploadedFileServiceMock = $this->createMock(UploadedFileServiceInterface::class);
             $this->service = new UtilisateurService($this->utilisateurRepositoryMock, $this->fauxDossierTest, $this->uploadedFileServiceMock);
         }
 
@@ -952,7 +954,7 @@ namespace Tests\Integration\Configuration;
 
 use TheFeed\Modele\Repository\ConnexionBaseDeDonneesInterface;
 
-class ConfigurationBDDTestUnitaire implements ConfigurationBDDInterface {
+class ConfigurationBDDTestIntegration implements ConfigurationBDDInterface {
 
     public function getLogin(): string
     {
@@ -979,7 +981,7 @@ namespace Tests\Integration;
 
 use TheFeed\Modele\Repository\ConnexionBaseDeDonneesInterface;
 use TheFeed\Modele\Repository\ConnexionBaseDeDonnees;
-use Tests\Integration\Configuration\ConfigurationBDDTestUnitaire;
+use Tests\Integration\Configuration\ConfigurationBDDTestIntegration;
 
 class ExempleRepositoryTest extends TestCase {
 
@@ -989,7 +991,7 @@ class ExempleRepositoryTest extends TestCase {
 
     //On instancie une fois le repositoy, pas besoin de le ré-instancier à chaque test
     public static function setUpBeforeClass() {
-        self::$connexion = new ConnexionBaseDeDonnees(new ConfigurationBDDTestUnitaire());
+        self::$connexion = new ConnexionBaseDeDonnees(new ConfigurationBDDTestIntegration());
         self::$repository = new MonRepository(self::$connexion);
     }
 
@@ -1058,14 +1060,14 @@ Nous allons réaliser une première classe de test pour le *repository* des **ut
    composer dump-autoload
    ```
 
-3. Dans le dossier `tests/integration/Configuration`, créez un fichier `ConfigurationBDDTestUnitaire` avec le contenu suivant :
+3. Dans le dossier `tests/integration/Configuration`, créez un fichier `ConfigurationBDDTestIntegration` avec le contenu suivant :
 
    ```php
    namespace Tests\Integration\Configuration;
 
    use TheFeed\Configuration\ConfigurationBDDInterface;
 
-   class ConfigurationBDDTestUnitaire implements ConfigurationBDDInterface
+   class ConfigurationBDDTestIntegration implements ConfigurationBDDInterface
    {
        public function getLogin(): string
        {
@@ -1095,7 +1097,7 @@ Nous allons réaliser une première classe de test pour le *repository* des **ut
     ```php
     namespace Tests\Integration;
     use PHPUnit\Framework\TestCase;
-    use Tests\Integration\Configuration\ConfigurationBDDTestUnitaire;
+    use Tests\Integration\Configuration\ConfigurationBDDTestIntegration;
     use TheFeed\Modele\Repository\ConnexionBaseDeDonnees;
     use TheFeed\Modele\Repository\ConnexionBaseDeDonneesInterface;
     use TheFeed\Modele\Repository\UtilisateurRepository;
@@ -1110,7 +1112,7 @@ Nous allons réaliser une première classe de test pour le *repository* des **ut
         public static function setUpBeforeClass(): void
         {
             parent::setUpBeforeClass();
-            self::$connexionBaseDeDonnees = new ConnexionBaseDeDonnees(new ConfigurationBDDTestUnitaire());
+            self::$connexionBaseDeDonnees = new ConnexionBaseDeDonnees(new ConfigurationBDDTestIntegration());
             self::$utilisateurRepository = new UtilisateurRepository(self::$connexionBaseDeDonnees);
             self::$connexionBaseDeDonnees->getPdo()->exec("CREATE TABLE utilisateurs 
                                                                     (idUtilisateur INT, 
@@ -1146,7 +1148,7 @@ Nous allons réaliser une première classe de test pour le *repository* des **ut
 
 4. Comprenez ce que fait cette classe. Prenez le temps de bien l'étudier.
 
-5. Complétez cette classe en écrivant plusieurs autres tests unitaires.
+5. Complétez cette classe en écrivant plusieurs autres tests.
 
 </div>
 
@@ -1154,7 +1156,7 @@ Bien sûr, si vous testez plusieurs *repositories*, il est possible de mutualise
 
 ### Pour aller plus loin
 
-Durant ce TD, nous avons exploré beaucoup d'aspects liés à l'architecture de l'application et la mise en place de tests unitaires. Néanmoins, il reste du travail à effectuer pour correctement finir de refactoriser et tester notre application. Quelques pistes :
+Durant ce TD, nous avons exploré beaucoup d'aspects liés à l'architecture de l'application et la mise en place de tests. Néanmoins, il reste du travail à effectuer pour correctement finir de refactoriser et tester notre application. Quelques pistes :
 
 * Définir plus de services ! Dès que dans une classe donnée, il y a une instanciation d'une classe concrète ou bien l'utilisation d'une classe de manière statique (par exemple, quand on utilise la plupart des classes du dossier `Lib`) on peut créer un service à la place et l'injecter à la classe qui en a besoin. Par exemple, dans `UtilisateurService`, il y a l'utilisation de la classe `MotDePasse` et aussi `ConnexionUtilisateur` qui pourraient être remplacées par des services. On a aussi `MessageFlash` qui pourrait être transformé en service et en méthode adéquate dans `ControleurGenerique`...
 
