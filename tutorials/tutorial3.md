@@ -336,18 +336,17 @@ La connaissance de ces couches ne donne pas encore la structure de l'application
 
 Cette architecture permet de séparer les entités, les vues et les contrôleurs de l'application et de les faire communiquer :
 
-* La partie **modèle** (M) stocke les différentes **entités** (nos `DataObject`) que l'on retrouve dans la couche **métier** ainsi que des classes liées à la couche **stockage** (les classes type `Repository`). 
+* La partie **modèle** (M) stocke les différentes **entités** (nos `DataObject`) que l'on retrouve dans la couche **métier** ainsi que des classes liées à la couche **stockage** (les classes type `Repository`) et encapsule la **logique métier** (vérification des données, déclenchement d'opérations...). 
 
 * Les différentes **vues** (V) correspondent à la couche **présentation**.
 
-* Les différents **contrôleurs** (C) gèrent la couche **application** et une partie de la couche (logique) **métier** (ils reçoivent les requêtes, vérifient les droits d'accès (est-ce que l'utilisateur courant a le droit d'exécuter cette requête?), vérifient les données, effectuent les opérations, etc.)
+* Les différents **contrôleurs** (C) gèrent la couche **application** : ils reçoivent les requêtes, vérifient les droits d'accès (est-ce que l'utilisateur courant a le droit d'exécuter cette requête ?), communique avec la partie "modèle" afin de déclencher des opérations, effectuer des validations, récupérer des données, puis se sert de la partie "vues" pour retourner un résultat à l'utilisateur (par exemple, la page web).
 
+Néanmoins, il n'est pas explicitement fait mention des **services** dans cette architecture. En fait, dans notre implémentation du `MVC` que nous avons réalisée jusqu'ici, le **contrôleur** a le rôle des **services** et effectue une grande partie (voir la totalité) de la logique métier et déborde ainsi un peu trop sur la partie modèle. Cela peut vite créer des contrôleurs énormes (aussi appelés **fat controllers)** ayant beaucoup trop de responsabilités. C'est pourquoi il est possible de venir placer une couche **service** entre les **contrôleurs**, les **entités** et la couche **stockage**. Ainsi, le contrôleur n'effectue pas de logique métier et on a une séparation plus forte.
 
-Néanmoins, il n'est pas explicitement fait mention des **services** dans cette architecture. En fait, dans une architecture `MVC` classique, le **contrôleur** a le rôle des **services** et effectue une grande partie (voir la totalité) partie de la logique métier. Néanmoins, cela peut vite créer des contrôleurs énormes ayant beaucoup trop de responsabilités. C'est pourquoi il est possible de venir placer une couche **service** entre les **contrôleurs**, les **entités** et la couche **stockage**. Ainsi, le contrôleur n'effectue pas de logique métier et on a une séparation plus forte.
+Dans cette logique, la couche **métier** serait alors séparée entre la partie contenant nos **entités** et les **services** qui manipulent ces entités. Ainsi, les différents **contrôleurs** n'interagissent pas directement avec les entités, mais plutôt avec des **services**. On pourrait alors qualifier les services de **couche de validation** voir de **couche logique** (car elle effectue d'autres opérations en plus de la validation des données).
 
-Ici, la couche **métier** est séparée entre la partie **modèle** (nos **entités**) et les **services** qui manipulent ces entités. Ainsi, les différents **contrôleurs** n'interagissent pas directement avec les entités, mais plutôt avec des **services**. On pourrait alors qualifier les services de **couche de validation** voir de **couche logique** (car elle effectue d'autres opérations en plus de la validation des données).
-
-Les interactions se dérouleraient alors dans ce sens : Vue ↔ Contrôleur ↔ Services ↔ Modèle (entités, repositories) au lieu du traditionnel Vue ↔ Contrôleur ↔ Modèle.
+Les interactions se dérouleraient alors dans ce sens : Vue ↔ Contrôleur ↔ Services ↔ Modèle (entités, repositories) au lieu de Vue ↔ Contrôleur ↔ Modèle.
 
 Dans ce cas, on étend l'architecture classique `MVC` et on pourrait alors parler de `MVCS` où le `S` désignerait les **services**. Il n'y a pas de règles précise quant à l'utilisation de telle ou telle architecture, mais dans le cas de notre application, nous allons plutôt tendre vers une architecture utilisant les services. Créer une telle séparation permettra alors de pouvoir tester la logique métier indépendamment au travers des tests unitaires sur les **services** plutôt que sur les **contrôleurs**. D'une part, il sera alors possible de passer des données à ces services autrement que par une requête HTTP, et d'autre part, on pourra également obtenir un résultat exploitable et pas une page web complète.
 
@@ -373,7 +372,7 @@ Nous allons commencer à extraire la logique métier de notre application en cr�
 
 </div>
 
-Bien, vous avez créé votre premier service ! Mais l'intérêt d'avoir séparé ce petit bout de code n'apparait pas encore clairement. Nous allons donc pousser les choses un peu plus loin lors de la prochaine étape.
+Bien, vous avez créé votre premier service ! Mais l'intérêt d'avoir séparé ce petit bout de code n’apparaît pas encore clairement. Nous allons donc pousser les choses un peu plus loin lors de la prochaine étape.
 
 Nous allons nous intéresser à la création des publications. Actuellement, dès qu'il détecte une erreur dans la formation du message, le **contrôleur** ajoute un message flash d'erreur et redirige l'utilisateur. Ces vérifications font partie de la logique **métier** et peuvent être gérées à l'aide d'exceptions. La logique à appliquer serait plutôt la suivante :
 
